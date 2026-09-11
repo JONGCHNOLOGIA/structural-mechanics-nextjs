@@ -17,7 +17,7 @@ npm run dev
 1. https://supabase.com 에서 새 프로젝트 생성
 2. Project Settings → API 에서 URL, anon key 복사 → `.env.local`에 붙여넣기
 3. SQL Editor에 `supabase/schema.sql` 내용 그대로 붙여넣고 실행 → 테이블 자동 생성
-4. Authentication → Providers 에서 Email(매직링크) 활성화 확인 (기본값이 켜져있을 거예요)
+4. Authentication → Sign In / Providers 에서 "Allow anonymous sign-ins" 활성화 (공모전 시연용: 이메일/비밀번호 없이 이름만 입력하면 익명 계정 생성 + DB 저장)
 
 ## 폴더 구조
 
@@ -42,7 +42,7 @@ supabase/
 ## 지금까지 포팅된 것
 
 - ✅ Composite Beams 계산기 전체 (블록 추가/삭제, 값 수정, 단면+응력 다이어그램, 기본 결과 표시)
-- ✅ 로그인 (Supabase Auth, 매직링크)
+- ✅ 로그인 (Supabase 익명 인증 + 이름 입력, 공모전 시연용)
 - ✅ DB 스키마
 - ✅ 단위 변환/포맷 유틸리티
 
