@@ -3,22 +3,26 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
+import { useUser } from '@/components/UserProvider';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
   const [activeChapter, setActiveChapter] = useState(null);
   const activeCh = activeChapter !== null ? chapters[activeChapter] : null;
+  const { displayName, studentId } = useUser();
 
   return (
     <div>
       <header>
         <div className="subject-title">구조역학 2</div>
-        <div className="user-tag">22011011 김세종</div>
+        <div className="user-tag">
+          {studentId} {displayName}
+        </div>
       </header>
 
       <div className="hero">
         <div className="hero-text">
-          <h1>안녕하세요, 세종님 👋</h1>
+          <h1>안녕하세요, {displayName}님 👋</h1>
           <p>구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요.</p>
           <div className="hero-stats">
             <div className="hero-stat">

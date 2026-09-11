@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useUser } from '@/components/UserProvider';
 
 /*
   프로토타입의 "상세 페이지" 틀(detail-header + tabs + panels)을 그대로 옮긴 것.
@@ -9,6 +10,8 @@ import Link from 'next/link';
   보이는 모습과 눌렀을 때의 결과(다른 소주제로 전환)는 동일함.
 */
 export default function CalculatorShell({ chapter, activeSlug, children }) {
+  const { displayName, studentId } = useUser();
+
   return (
     <div>
       <div className="detail-header">
@@ -18,7 +21,9 @@ export default function CalculatorShell({ chapter, activeSlug, children }) {
           </Link>
           <span>구조역학 2 — {chapter.title}</span>
         </div>
-        <div className="user-tag">22011011 김세종</div>
+        <div className="user-tag">
+          {studentId} {displayName}
+        </div>
       </div>
 
       <div className="tabs">
