@@ -35,6 +35,31 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
           ))}
         </g>
       )}
+      {/* 돌출 캔틸레버: 왼쪽 고정단 + 오른쪽 롤러 */}
+      {support === 'propped' && (
+        <g>
+          <rect x={padL - 10} y={beamY - 26} width="10" height="52" fill="#51626F" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <line key={i} x1={padL - 10} y1={beamY - 22 + i * 9} x2={padL - 20} y2={beamY - 14 + i * 9} stroke="#51626F" strokeWidth="1.2" />
+          ))}
+          <polygon points={`${padL + drawW},${beamY} ${padL + drawW - 9},${beamY + 16} ${padL + drawW + 9},${beamY + 16}`} fill="none" stroke="#51626F" strokeWidth="1.4" />
+          <circle cx={padL + drawW - 9 + 6} cy={beamY + 20} r="2.2" fill="#51626F" />
+          <circle cx={padL + drawW + 9 - 6} cy={beamY + 20} r="2.2" fill="#51626F" />
+        </g>
+      )}
+      {/* 양단고정 */}
+      {support === 'fixed-fixed' && (
+        <g>
+          <rect x={padL - 10} y={beamY - 26} width="10" height="52" fill="#51626F" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <line key={i} x1={padL - 10} y1={beamY - 22 + i * 9} x2={padL - 20} y2={beamY - 14 + i * 9} stroke="#51626F" strokeWidth="1.2" />
+          ))}
+          <rect x={padL + drawW} y={beamY - 26} width="10" height="52" fill="#51626F" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <line key={i} x1={padL + drawW + 10} y1={beamY - 22 + i * 9} x2={padL + drawW + 20} y2={beamY - 14 + i * 9} stroke="#51626F" strokeWidth="1.2" />
+          ))}
+        </g>
+      )}
 
       {/* 하중 표시 */}
       {pointLoadAt !== undefined && (
