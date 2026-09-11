@@ -36,6 +36,14 @@ header, .detail-header{
   font-size:13px; color:var(--gray);
   background:var(--bg); border-radius:20px; padding:7px 16px;
 }
+.header-right{ display:flex; align-items:center; gap:10px; }
+.logout-btn{
+  display:flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
+  background:var(--card); color:var(--gray-soft); cursor:pointer; flex-shrink:0;
+  transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.logout-btn:hover{ background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
 
 .hero{
   max-width:1600px; margin:36px auto 0; padding:0 40px;

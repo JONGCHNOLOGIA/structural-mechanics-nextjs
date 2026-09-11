@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
+import LogoutButton from '@/components/LogoutButton';
 
 /*
   프로토타입의 "상세 페이지" 틀(detail-header + tabs + panels)을 그대로 옮긴 것.
@@ -21,8 +22,11 @@ export default function CalculatorShell({ chapter, activeSlug, children }) {
           </Link>
           <span>구조역학 2 — {chapter.title}</span>
         </div>
-        <div className="user-tag">
-          {studentId} {displayName}
+        <div className="header-right">
+          <LogoutButton />
+          <div className="user-tag">
+            {studentId} {displayName}
+          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
+import LogoutButton from '@/components/LogoutButton';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
@@ -15,8 +16,11 @@ export default function HomePage() {
     <div>
       <header>
         <div className="subject-title">구조역학 2</div>
-        <div className="user-tag">
-          {studentId} {displayName}
+        <div className="header-right">
+          <LogoutButton />
+          <div className="user-tag">
+            {studentId} {displayName}
+          </div>
         </div>
       </header>
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
+import LogoutButton from '@/components/LogoutButton';
 
 export default function SubjectsPage() {
   const { displayName, studentId } = useUser();
@@ -10,8 +11,11 @@ export default function SubjectsPage() {
     <div>
       <header>
         <div className="subject-title">과목 선택</div>
-        <div className="user-tag">
-          {studentId} {displayName}
+        <div className="header-right">
+          <LogoutButton />
+          <div className="user-tag">
+            {studentId} {displayName}
+          </div>
         </div>
       </header>
 
