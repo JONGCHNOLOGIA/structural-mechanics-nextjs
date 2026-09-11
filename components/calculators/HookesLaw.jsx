@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtSci } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { computeHookesLaw } from '@/lib/calc/hookesLaw';
+import FormulaSection from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
@@ -24,144 +26,119 @@ export default function HookesLaw() {
   const disp = (b, f) => b / f;
 
   const r = useMemo(
-    () =>
-      E && nu !== null
-        ? computeHookesLaw({ mode, E, nu, sigmaX, sigmaY, tauXY, epsX, epsY, gammaXY, thickness })
-        : null,
+    () => (E && nu !== null ? computeHookesLaw({ mode, E, nu, sigmaX, sigmaY, tauXY, epsX, epsY, gammaXY, thickness }) : null),
     [mode, E, nu, sigmaX, sigmaY, tauXY, epsX, epsY, gammaXY, thickness]
   );
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
-        <p className="text-xs text-gray bg-bg rounded-xl p-3 mb-4 leading-relaxed">
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
           평면응력 상태에서 응력↔변형률을 서로 변환해요. 어느 쪽 값을 알고 있는지 선택하세요.
         </p>
-        <div className="flex gap-2 mb-4">
-          <button
-            className={'flex-1 py-2 rounded-xl text-xs font-bold ' + (mode === 'stressToStrain' ? 'bg-crimson text-white' : 'border border-line text-gray')}
-            onClick={() => setMode('stressToStrain')}
-          >
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+          <button className={'add-block' + (mode === 'stressToStrain' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setMode('stressToStrain')}>
             응력 → 변형률
           </button>
-          <button
-            className={'flex-1 py-2 rounded-xl text-xs font-bold ' + (mode === 'strainToStress' ? 'bg-crimson text-white' : 'border border-line text-gray')}
-            onClick={() => setMode('strainToStress')}
-          >
+          <button className={'add-block' + (mode === 'strainToStress' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setMode('strainToStress')}>
             변형률 → 응력
           </button>
         </div>
-        <Field label="탄성계수 E">
-          <input type="number" className="field-input" defaultValue={fmt(disp(E, stressF))} onBlur={(e) => setE(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label="포아송비 ν (0~0.5)">
-          <input type="number" className="field-input" defaultValue={nu} onBlur={(e) => setNu(parseFloat(e.target.value))} />
-        </Field>
+        <div className="field">
+          <label>탄성계수 E</label>
+          <input type="number" defaultValue={fmtInput(disp(E, stressF))} onBlur={(e) => setE(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>포아송비 ν</label>
+          <input type="number" placeholder="0~0.5" defaultValue={nu} onBlur={(e) => setNu(parseFloat(e.target.value))} />
+        </div>
         {mode === 'stressToStrain' ? (
           <>
-            <Field label="σx">
-              <input type="number" className="field-input" defaultValue={fmt(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-            </Field>
-            <Field label="σy">
-              <input type="number" className="field-input" defaultValue={fmt(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-            </Field>
-            <Field label="τxy">
-              <input type="number" className="field-input" defaultValue={fmt(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-            </Field>
-          </>
-        ) : (
-          <>
-            <Field label="εx">
-              <input type="number" className="field-input" defaultValue={epsX} onBlur={(e) => setEpsX(parseFloat(e.target.value))} />
-            </Field>
-            <Field label="εy">
-              <input type="number" className="field-input" defaultValue={epsY} onBlur={(e) => setEpsY(parseFloat(e.target.value))} />
-            </Field>
-            <Field label="γxy">
-              <input type="number" className="field-input" defaultValue={gammaXY} onBlur={(e) => setGammaXY(parseFloat(e.target.value))} />
-            </Field>
-          </>
-        )}
-        <Field label="두께 t (선택, Δt 계산용)">
-          <input
-            type="number"
-            className="field-input"
-            defaultValue={thickness === null ? '' : fmt(disp(thickness, lenF))}
-            placeholder="값 입력"
-            onBlur={(e) => setThickness(e.target.value === '' ? null : parseFloat(e.target.value) * lenF)}
-          />
-        </Field>
-      </div>
-
-      {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">VISUALIZER</h3>
-        {r ? (
-          <>
-            <ElementSVG sx={r.sx} sy={r.sy} txy={r.txy} />
-            <div className="mt-5 space-y-4 text-sm">
-              {mode === 'stressToStrain' ? (
-                <Section title="응력 → 변형률">
-                  <p>εx = (σx − ν·σy)/E &nbsp; εy = (σy − ν·σx)/E &nbsp; γxy = τxy/G</p>
-                  <p>G = E/(2(1+ν)) = {fmtSci(r.G)} Pa</p>
-                  <p className="font-extrabold mt-1">
-                    εx={r.ex.toExponential(3)} &nbsp; εy={r.ey.toExponential(3)} &nbsp; γxy={r.gxy.toExponential(3)}
-                  </p>
-                </Section>
-              ) : (
-                <Section title="변형률 → 응력">
-                  <p>σx = E/(1−ν²)·(εx + ν·εy) &nbsp; σy = E/(1−ν²)·(εy + ν·εx) &nbsp; τxy = G·γxy</p>
-                  <p className="font-extrabold mt-1">
-                    σx={fmt(disp(r.sx, stressF))} {units.stress} &nbsp; σy={fmt(disp(r.sy, stressF))} {units.stress} &nbsp; τxy={fmt(disp(r.txy, stressF))} {units.stress}
-                  </p>
-                </Section>
-              )}
-              <Section title="두께변형 · 체적변형 · 변형에너지">
-                <p>εz (두께방향) = −(ν/E)(σx+σy) = {r.ez.toExponential(3)}</p>
-                <p>체적변형(dilatation) e = εx+εy+εz = {r.e.toExponential(3)}</p>
-                <p>변형에너지밀도 u = ½(σx·εx + σy·εy + τxy·γxy) = {fmtSci(r.u)} J/m³</p>
-                {r.deltaT !== null ? (
-                  <p className="font-extrabold mt-1">두께 변화 Δt = εz × t = {fmtSci(r.deltaT)} m</p>
-                ) : (
-                  <p className="text-graySoft">두께(t)를 입력하면 Δt(두께 변화)도 계산돼요.</p>
-                )}
-              </Section>
+            <div className="field">
+              <label>σx</label>
+              <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
+            </div>
+            <div className="field">
+              <label>σy</label>
+              <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
+            </div>
+            <div className="field">
+              <label>τxy</label>
+              <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
             </div>
           </>
         ) : (
-          <div className="text-graySoft text-sm border-2 border-dashed border-line rounded-xl p-16 text-center">E와 ν를 입력하면 계산 결과가 나타납니다.</div>
+          <>
+            <div className="field">
+              <label>εx</label>
+              <input type="number" defaultValue={epsX} onBlur={(e) => setEpsX(parseFloat(e.target.value))} />
+            </div>
+            <div className="field">
+              <label>εy</label>
+              <input type="number" defaultValue={epsY} onBlur={(e) => setEpsY(parseFloat(e.target.value))} />
+            </div>
+            <div className="field">
+              <label>γxy</label>
+              <input type="number" defaultValue={gammaXY} onBlur={(e) => setGammaXY(parseFloat(e.target.value))} />
+            </div>
+          </>
+        )}
+        <div className="field">
+          <label>두께 t (선택, Δt 계산용)</label>
+          <input
+            type="number"
+            placeholder="값 입력"
+            defaultValue={thickness === null ? '' : fmt(disp(thickness, lenF))}
+            onBlur={(e) => setThickness(e.target.value === '' ? null : parseFloat(e.target.value) * lenF)}
+          />
+        </div>
+      </div>
+
+      {/* ---------------- Visualizer ---------------- */}
+      <div className="panel">
+        <h3>VISUALIZER</h3>
+        {r ? (
+          <>
+            <ElementSVG sx={r.sx} sy={r.sy} txy={r.txy} />
+            <div className="steps" style={{ marginTop: 12 }}>
+              {mode === 'stressToStrain' ? (
+                <FormulaSection title="응력 → 변형률">
+                  <div className="step-formula">εx = (σx − ν·σy)/E &nbsp; εy = (σy − ν·σx)/E &nbsp; γxy = τxy/G</div>
+                  <div className="step-row">G = E/(2(1+ν)) = {fmtSci(r.G)} Pa</div>
+                  <div className="step-final">
+                    εx={r.ex.toExponential(3)} &nbsp; εy={r.ey.toExponential(3)} &nbsp; γxy={r.gxy.toExponential(3)}
+                  </div>
+                </FormulaSection>
+              ) : (
+                <FormulaSection title="변형률 → 응력">
+                  <div className="step-formula">σx = E/(1−ν²)·(εx + ν·εy) &nbsp; σy = E/(1−ν²)·(εy + ν·εx) &nbsp; τxy = G·γxy</div>
+                  <div className="step-final">
+                    σx={fmt(disp(r.sx, stressF))} {units.stress} &nbsp; σy={fmt(disp(r.sy, stressF))} {units.stress} &nbsp; τxy={fmt(disp(r.txy, stressF))} {units.stress}
+                  </div>
+                </FormulaSection>
+              )}
+              <FormulaSection title="두께변형 · 체적변형 · 변형에너지">
+                <div className="step-row">εz (두께방향) = −(ν/E)(σx+σy) = {r.ez.toExponential(3)}</div>
+                <div className="step-row">체적변형(dilatation) e = εx+εy+εz = {r.e.toExponential(3)}</div>
+                <div className="step-row">변형에너지밀도 u = ½(σx·εx + σy·εy + τxy·γxy) = {fmtSci(r.u)} J/m³</div>
+                {r.deltaT !== null ? (
+                  <div className="step-final">두께 변화 Δt = εz × t = {fmtSci(r.deltaT)} m</div>
+                ) : (
+                  <div style={{ fontSize: 11, color: 'var(--gray-soft)' }}>두께(t)를 입력하면 Δt(두께 변화)도 계산돼요.</div>
+                )}
+              </FormulaSection>
+            </div>
+            <div className="ai-hint">💬 왜 εz가 σx, σy로만 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+          </>
+        ) : (
+          <div className="viz-placeholder" style={{ minHeight: 300 }}>E와 ν를 입력하면 계산 결과가 나타납니다.</div>
         )}
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">왜 εz가 σx, σy로만 결정되는지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.</div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <div className="border border-line rounded-xl p-3 bg-bg">
-      <div className="text-xs font-extrabold text-crimson mb-1.5">{title}</div>
-      <div className="text-xs text-gray leading-relaxed space-y-0.5">{children}</div>
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
@@ -185,7 +162,7 @@ function ElementSVG({ sx, sy, txy }) {
   const to = txy >= 0 ? 1 : -1;
   const tl = 22;
   return (
-    <svg viewBox="0 0 300 220" className="w-full max-w-[320px] mx-auto block">
+    <svg viewBox="0 0 300 220" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block' }}>
       <rect x={cx - s} y={cy - s} width={s * 2} height={s * 2} fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />
       {svgArrow(cx + s, cy, cx + s + sxo * L, cy, color, 'a1')}
       {svgArrow(cx - s, cy, cx - s - sxo * L, cy, color, 'a2')}

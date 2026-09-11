@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeMaxBeamStress } from '@/lib/calc/maxBeamStress';
+import FormulaSection, { Tip } from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
@@ -23,27 +25,32 @@ export default function MaxBeamStress() {
   const r = useMemo(() => (width && height ? computeMaxBeamStress(width, height, M, V, y) : null), [width, height, M, V, y]);
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
-        <p className="text-xs text-gray bg-bg rounded-xl p-3 mb-4 leading-relaxed">
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
           보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±h/2)에선 전단이 0, 중립축(y=0)에선 굽힘응력이 0이에요.
         </p>
-        <Field label="Width (b)">
-          <input type="number" className="field-input" defaultValue={fmt(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="Height (h)">
-          <input type="number" className="field-input" defaultValue={fmt(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="Moment M">
-          <input type="number" className="field-input" defaultValue={fmt(disp(M, momF))} onBlur={(e) => setM(parseFloat(e.target.value) * momF)} />
-        </Field>
-        <Field label="Shear V">
-          <input type="number" className="field-input" defaultValue={fmt(disp(V, forceF))} onBlur={(e) => setV(parseFloat(e.target.value) * forceF)} />
-        </Field>
+        <div className="field">
+          <label>Width (b)</label>
+          <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>Height (h)</label>
+          <input type="number" defaultValue={fmtInput(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>Moment M</label>
+          <input type="number" defaultValue={fmtInput(disp(M, momF))} onBlur={(e) => setM(parseFloat(e.target.value) * momF)} />
+        </div>
+        <div className="field">
+          <label>Shear V</label>
+          <input type="number" defaultValue={fmtInput(disp(V, forceF))} onBlur={(e) => setV(parseFloat(e.target.value) * forceF)} />
+        </div>
         {width && height && (
-          <Field label={`단면 내 위치 y — ${fmt(disp(y, lenF))} ${units.length}`}>
+          <div className="field">
+            <label>단면 내 위치 y — {fmt(disp(y, lenF))} {units.length}</label>
             <input
               type="range"
               min={-disp(height, lenF) / 2}
@@ -51,57 +58,45 @@ export default function MaxBeamStress() {
               step={disp(height, lenF) / 200}
               value={disp(y, lenF)}
               onChange={(e) => setY(parseFloat(e.target.value) * lenF)}
-              className="w-full"
+              style={{ width: '100%' }}
             />
-          </Field>
+          </div>
         )}
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          VISUALIZER <span className="ml-2 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">실시간</span>
+      <div className="panel">
+        <h3>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
         </h3>
         {r ? (
           <>
             <MaxBeamStressSVG width={width} height={height} y={y} r={r} />
-            <div className="mt-5 border border-line rounded-xl p-3 bg-bg text-xs text-gray leading-relaxed space-y-0.5">
-              <div className="text-xs font-extrabold text-crimson mb-1.5">위치별 응력·주응력</div>
-              <p>σx = −My/I &nbsp; τ = VQ/(Ib) &nbsp; Q=(b/2)(h²/4−y²)</p>
-              <p className="font-extrabold mt-1">
-                σx = {fmt(disp(r.sigmaX, stressF))} {units.stress} &nbsp; τ = {fmt(disp(r.tau, stressF))} {units.stress}
-              </p>
-              <p className="mt-1">
-                σ1,2 = σx/2 ± √[(σx/2)²+τ²] = {fmt(disp(r.sigma1, stressF))}, {fmt(disp(r.sigma2, stressF))} {units.stress}
-              </p>
-              <p>
-                τmax = {fmt(disp(r.tauMax, stressF))} {units.stress} &nbsp; 주응력 각도 θp = {r.thetaP.toFixed(1)}°
-              </p>
+            <div className="steps">
+              <FormulaSection title="위치별 응력·주응력">
+                <div className="step-formula">
+                  <Tip title="굽힘응력">σx</Tip> = −My/I &nbsp; <Tip title="전단응력">τ</Tip> = VQ/(Ib) &nbsp; Q=(b/2)(h²/4−y²)
+                </div>
+                <div className="step-final">
+                  σx = {fmt(disp(r.sigmaX, stressF))} {units.stress} &nbsp; τ = {fmt(disp(r.tau, stressF))} {units.stress}
+                </div>
+                <div className="step-row" style={{ marginTop: 8 }}>
+                  σ1,2 = σx/2 ± √[(σx/2)²+τ²] = {fmt(disp(r.sigma1, stressF))}, {fmt(disp(r.sigma2, stressF))} {units.stress}
+                </div>
+                <div className="step-row">
+                  τmax = {fmt(disp(r.tauMax, stressF))} {units.stress} &nbsp; 주응력 각도 θp = {r.thetaP.toFixed(1)}°
+                </div>
+              </FormulaSection>
             </div>
+            <div className="ai-hint">💬 왜 표면과 중립축에서 응력 요소 모양이 저렇게 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
           </>
         ) : (
-          <div className="text-graySoft text-sm border-2 border-dashed border-line rounded-xl p-16 text-center">폭과 높이를 입력하면 결과가 나타납니다.</div>
+          <div className="viz-placeholder" style={{ minHeight: 300 }}>폭과 높이를 입력하면 결과가 나타납니다.</div>
         )}
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">왜 표면과 중립축에서 응력 요소 모양이 저렇게 다른지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.</div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
@@ -148,7 +143,7 @@ function MaxBeamStressSVG({ width, height, y, r }) {
   const cx = 110, cy = 140;
   const yPx = cy - (y / height) * hPx;
   return (
-    <svg viewBox="0 0 460 300" className="w-full max-w-[500px] mx-auto block">
+    <svg viewBox="0 0 460 300" style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block' }}>
       <rect x={cx - wPx / 2} y={cy - hPx / 2} width={wPx} height={hPx} fill="#F4F1E8" stroke="#51626F" strokeWidth="1.3" />
       <line x1={cx - wPx / 2 - 10} y1={cy} x2={cx + wPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
       <circle cx={cx} cy={yPx} r="5" fill="#C3002F" />

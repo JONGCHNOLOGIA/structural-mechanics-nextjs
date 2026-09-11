@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
+import FormulaSection from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
 // 프로토타입 renderMohrCircle() / mcBuildVisuals()를 React로 옮긴 버전.
-// Plane Stress와 같은 입력(σx, σy, τxy)을 원(circle)으로 표현.
 
 export default function MohrsCircle() {
   const [units] = useState({ stress: 'psi' });
@@ -20,70 +21,58 @@ export default function MohrsCircle() {
   const r = useMemo(() => computePlaneStress(sigmaX, sigmaY, tauXY, theta), [sigmaX, sigmaY, tauXY, theta]);
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
-        <p className="text-xs text-gray bg-bg rounded-xl p-3 mb-4 leading-relaxed">
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
           Plane Stress와 <b>같은 입력</b>이에요 — 같은 계산을 숫자 대신 <b>원(circle)</b>으로 표현하는 방법입니다.
         </p>
-        <Field label="σx">
-          <input type="number" className="field-input" defaultValue={fmt(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label="σy">
-          <input type="number" className="field-input" defaultValue={fmt(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label="τxy">
-          <input type="number" className="field-input" defaultValue={fmt(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label={`회전각 θ — ${theta.toFixed(0)}°`}>
-          <input type="range" min="-90" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} className="w-full" />
-        </Field>
-        <button className="w-full py-2 mb-2 border border-line rounded-xl text-xs font-bold text-gray" onClick={() => setTheta(r.thetaPdeg)}>
-          주응력 각도로 이동
-        </button>
-        <button className="w-full py-2 border border-line rounded-xl text-xs font-bold text-gray" onClick={() => setTheta(r.thetaSdeg)}>
-          최대전단 각도로 이동
-        </button>
+        <div className="field">
+          <label>σx</label>
+          <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>σy</label>
+          <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>τxy</label>
+          <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>회전각 θ — {theta.toFixed(0)}°</label>
+          <input type="range" min="-90" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} style={{ width: '100%' }} />
+        </div>
+        <button className="add-block" onClick={() => setTheta(r.thetaPdeg)}>주응력 각도로 이동</button>
+        <button className="add-block" onClick={() => setTheta(r.thetaSdeg)}>최대전단 각도로 이동</button>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          VISUALIZER <span className="ml-2 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">실시간</span>
+      <div className="panel">
+        <h3>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
         </h3>
-        <MohrCircleSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} stressF={stressF} unitStress={units.stress} />
-        <div className="border border-line rounded-xl p-3 bg-bg text-xs text-gray leading-relaxed mt-4 space-y-0.5">
-          <div className="text-xs font-extrabold text-crimson mb-1.5">원 그리는 방법</div>
-          <p>중심 C = (σave, 0) &nbsp; 반지름 R = √[((σx−σy)/2)² + τxy²]</p>
-          <p>σave = {fmt(disp(r.avg, stressF))} {units.stress} &nbsp; R = {fmt(disp(r.R, stressF))} {units.stress}</p>
-          <p>x1면 점 = (σx1, τx1y1) = ({fmt(disp(r.sx1, stressF))}, {fmt(disp(r.tx1y1, stressF))}) {units.stress}</p>
-          <p className="mt-2">지름의 양 끝(x1면·y1면)을 중심 C를 기준으로 <b>2θ</b>만큼 돌리면, 실제 θ만큼 요소를 돌렸을 때의 응력이 나와요.</p>
+        <MohrCircleSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} />
+        <div className="steps">
+          <FormulaSection title="원 그리는 방법">
+            <div className="step-formula">중심 C = (σave, 0) &nbsp; 반지름 R = √[((σx−σy)/2)² + τxy²]</div>
+            <div className="step-row">σave = {fmt(disp(r.avg, stressF))} {units.stress} &nbsp; R = {fmt(disp(r.R, stressF))} {units.stress}</div>
+            <div className="step-row">x1면 점 = (σx1, τx1y1) = ({fmt(disp(r.sx1, stressF))}, {fmt(disp(r.tx1y1, stressF))}) {units.stress}</div>
+            <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}>
+              지름의 양 끝(x1면·y1면)을 중심 C를 기준으로 <b>2θ</b>만큼 돌리면, 실제 θ만큼 요소를 돌렸을 때의 응력이 나와요.
+            </div>
+          </FormulaSection>
         </div>
+        <div className="ai-hint">💬 왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.</div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r, stressF }) {
+function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r }) {
   const w = 480, h = 420, cx = 240, cy = 210;
   const scale = r.R > 0 ? 130 / r.R : 1;
 
@@ -94,7 +83,7 @@ function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r, stressF }) {
   const R_px = r.R * scale;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full max-w-[520px] mx-auto block">
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 520, margin: '0 auto', display: 'block' }}>
       <line x1="20" y1={cy} x2={w - 20} y2={cy} stroke="#8A97A2" strokeWidth="1.2" />
       <line x1={cx} y1="20" x2={cx} y2={h - 60} stroke="#8A97A2" strokeWidth="1.2" />
       <text x={w - 16} y={cy - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="700">σ</text>

@@ -1,12 +1,11 @@
+import CalculatorShell from '@/components/calculators/CalculatorShell';
 import CylindricalVessel from '@/components/calculators/CylindricalVessel';
+import { chapters } from '@/lib/chapters';
 
 export default function CylindricalVesselPage() {
   return (
-    <main>
-      <header className="bg-white border-b border-line px-10 py-5 flex justify-between items-center">
-        <div className="font-extrabold text-lg">구조역학 2 — Ch8. Cylindrical Pressure Vessels</div>
-      </header>
+    <CalculatorShell chapter={chapters[2]} activeSlug="cylindrical-pressure-vessels">
       <CylindricalVessel />
-    </main>
+    </CalculatorShell>
   );
 }

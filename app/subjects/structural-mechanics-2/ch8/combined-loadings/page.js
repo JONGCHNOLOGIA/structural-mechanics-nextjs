@@ -1,12 +1,11 @@
+import CalculatorShell from '@/components/calculators/CalculatorShell';
 import CombinedLoadings from '@/components/calculators/CombinedLoadings';
+import { chapters } from '@/lib/chapters';
 
 export default function CombinedLoadingsPage() {
   return (
-    <main>
-      <header className="bg-white border-b border-line px-10 py-5 flex justify-between items-center">
-        <div className="font-extrabold text-lg">구조역학 2 — Ch8. Combined Loadings</div>
-      </header>
+    <CalculatorShell chapter={chapters[2]} activeSlug="combined-loadings">
       <CombinedLoadings />
-    </main>
+    </CalculatorShell>
   );
 }

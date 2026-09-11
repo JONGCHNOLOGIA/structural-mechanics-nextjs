@@ -1,12 +1,11 @@
+import CalculatorShell from '@/components/calculators/CalculatorShell';
 import MaxBeamStress from '@/components/calculators/MaxBeamStress';
+import { chapters } from '@/lib/chapters';
 
 export default function MaxBeamStressPage() {
   return (
-    <main>
-      <header className="bg-white border-b border-line px-10 py-5 flex justify-between items-center">
-        <div className="font-extrabold text-lg">구조역학 2 — Ch8. Maximum Stresses in Beams</div>
-      </header>
+    <CalculatorShell chapter={chapters[2]} activeSlug="max-beam-stress">
       <MaxBeamStress />
-    </main>
+    </CalculatorShell>
   );
 }

@@ -1,17 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { UNIT_OPTIONS, fmt, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
 import { computeTransformed } from '@/lib/calc/transformedSection';
+import FormulaSection, { Tip } from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
-/*
-  프로토타입의 renderTransformedSection()을 React로 옮긴 버전 (CompositeBeams.jsx와 같은 방식으로 단순화).
-
-  ▸ 아직 옮기지 않은 것 (프로토타입에는 있음)
-    - 블록 드래그로 순서 바꾸기
-    - 슬라이더 입력
-    - 계산식 각 기호 툴팁
-*/
+// 프로토타입의 renderTransformedSection()을 React로 옮긴 버전 (CompositeBeams.jsx와 같은 방식으로 단순화).
 
 let nextColorId = 2;
 
@@ -23,7 +18,7 @@ function makeInitialBlocks() {
 }
 
 export default function TransformedSection() {
-  const [units, setUnits] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
+  const [units] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
   const [blocks, setBlocks] = useState(makeInitialBlocks);
   const [refIndex, setRefIndex] = useState(0);
   const [moment, setMoment] = useState(60 * 112.9848);
@@ -56,14 +51,19 @@ export default function TransformedSection() {
 
   function removeBlock(index) {
     setBlocks((prev) => prev.filter((_, i) => i !== index));
-    setRefIndex((r) => Math.min(r, blocks.length - 2 < 0 ? 0 : blocks.length - 2));
+    setRefIndex((r) => Math.min(r, Math.max(0, blocks.length - 2)));
   }
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        {blocks.length > 1 && (
+          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}>
+            ⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요. 상단폭=하단폭이면 그냥 사각형이 돼요.
+          </div>
+        )}
 
         {blocks
           .map((b, i) => i)
@@ -73,101 +73,115 @@ export default function TransformedSection() {
             const c = blockColor(b);
             const isRef = i === refIndex;
             return (
-              <div key={i} className="border border-line rounded-xl p-3 mb-3 bg-bg relative">
-                <div className="text-xs font-extrabold text-ink mb-2">
-                  <span className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5 align-middle" style={{ background: c.stroke }} />
+              <div key={i} className="block-card">
+                <span className="drag-handle" title="끌어서 순서 변경">⠿</span>
+                <div className="block-title">
+                  <span className="color-dot" style={{ background: c.stroke }} />
                   {c.name} Block{i === 0 ? ' · bottom' : i === blocks.length - 1 ? ' · top' : ''}
-                  {isRef && <span className="ml-1.5 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">기준(n=1)</span>}
+                  {isRef && <span className="badge live" style={{ marginLeft: 4 }}>기준(n=1)</span>}
                 </div>
                 {blocks.length > 1 && (
-                  <button className="absolute top-2 right-2 w-5 h-5 rounded-full border border-line text-graySoft text-xs" onClick={() => removeBlock(i)}>
-                    ×
-                  </button>
+                  <div className="remove-block" onClick={() => removeBlock(i)}>×</div>
                 )}
-                <Field label="Top Width (상단폭)">
-                  <input type="number" className="field-input" defaultValue={fmt(disp(b.topWidth, lenF))} onBlur={(e) => updateBlockField(i, 'topWidth', e.target.value)} />
-                </Field>
-                <Field label="Bottom Width (하단폭)">
-                  <input type="number" className="field-input" defaultValue={fmt(disp(b.bottomWidth, lenF))} onBlur={(e) => updateBlockField(i, 'bottomWidth', e.target.value)} />
-                </Field>
-                <Field label="Height">
-                  <input type="number" className="field-input" defaultValue={fmt(disp(b.height, lenF))} onBlur={(e) => updateBlockField(i, 'height', e.target.value)} />
-                </Field>
-                <Field label="E">
-                  <input type="number" className="field-input" defaultValue={fmt(disp(b.E, EFor(b)))} onBlur={(e) => updateBlockField(i, 'E', e.target.value)} />
-                </Field>
-                <button
-                  className={'w-full py-1.5 rounded-lg text-xs font-bold ' + (isRef ? 'bg-tealSoft text-teal' : 'border border-line text-gray')}
-                  onClick={() => setRefIndex(i)}
-                >
+                <div className="field">
+                  <label>Top Width (상단폭)</label>
+                  <div className="input-unit-group">
+                    <input type="number" defaultValue={fmtInput(disp(b.topWidth, lenF))} onBlur={(e) => updateBlockField(i, 'topWidth', e.target.value)} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Bottom Width (하단폭)</label>
+                  <div className="input-unit-group">
+                    <input type="number" defaultValue={fmtInput(disp(b.bottomWidth, lenF))} onBlur={(e) => updateBlockField(i, 'bottomWidth', e.target.value)} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Height</label>
+                  <div className="input-unit-group">
+                    <input type="number" defaultValue={fmtInput(disp(b.height, lenF))} onBlur={(e) => updateBlockField(i, 'height', e.target.value)} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>E</label>
+                  <div className="input-unit-group">
+                    <input type="number" defaultValue={fmtInput(disp(b.E, EFor(b)))} onBlur={(e) => updateBlockField(i, 'E', e.target.value)} />
+                  </div>
+                </div>
+                <button className={'add-block' + (isRef ? ' active' : '')} style={{ marginTop: 0 }} onClick={() => setRefIndex(i)}>
                   {isRef ? '✓ 기준 재료' : '기준 재료로 지정'}
                 </button>
               </div>
             );
           })}
 
-        <button className="w-full py-2 mb-4 border border-dashed border-crimson text-crimson rounded-xl text-sm font-bold" onClick={addBlock}>
-          + 블록 추가
-        </button>
+        <button className="add-block" onClick={addBlock}>+ 블록 추가</button>
 
-        <Field label="Moment M">
-          <input type="number" className="field-input" defaultValue={fmt(disp(moment, momF))} onBlur={(e) => setMoment(parseFloat(e.target.value) * momF)} />
-        </Field>
+        <div className="field">
+          <label>Moment M</label>
+          <input type="number" defaultValue={fmtInput(disp(moment, momF))} onBlur={(e) => setMoment(parseFloat(e.target.value) * momF)} />
+        </div>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          VISUALIZER <span className="ml-2 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">실시간</span>
+      <div className="panel">
+        <h3>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
         </h3>
 
         {result ? (
           <>
             <TransformedSVG result={result} refBlock={refBlock} />
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <ResultCard label="중립축 위치 (하단 기준)" value={`${fmt(disp(result.ybar, lenF))} ${units.length}`} />
-              <ResultCard label="ΣEI" value={`${fmtSci(result.EIsum)} N·m²`} />
+            <div className="result-grid">
+              <div className="result-card">
+                <div className="l">중립축 위치 (하단 기준)</div>
+                <div className="v">{fmt(disp(result.ybar, lenF))} {units.length}</div>
+              </div>
+              <div className="result-card">
+                <div className="l">ΣEI</div>
+                <div className="v">{fmtSci(result.EIsum)} N·m²</div>
+              </div>
             </div>
-            <p className="text-xs text-graySoft mt-3">
-              환산 단면법: n = Eᵢ / E_ref 를 각 블록의 폭(상단·하단)에 곱해서, 전체를 기준 재료 하나로 이루어진 단면처럼 바꿔서 풉니다. 높이는 그대로 둡니다.
+            <div className="steps">
+              <FormulaSection title="Transformed Section (환산)">
+                <div className="step-formula">
+                  <Tip title="블록 i의 환산 배율">nᵢ</Tip> = <Tip title="이 블록의 탄성계수">Eᵢ</Tip> / <Tip title="기준 재료의 탄성계수">E_ref</Tip> (폭에만 곱함, 높이는 그대로)
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
+                  기준 재료를 제외한 블록들의 폭(상단·하단 모두)에 n을 곱하면, 전체 단면이 기준 재료 하나로 이루어진 것처럼 취급할 수 있어요.
+                </div>
+                {result.blocks.map((b, k) => {
+                  const c = blockColor(b);
+                  const n = b.E / refBlock.E;
+                  return (
+                    <div className="step-row" key={k}>
+                      <span className="color-dot" style={{ background: c.stroke }} />
+                      {c.name} Block &nbsp; n = E/E_ref = {fmt(n)}
+                      {Math.abs(n - 1) < 1e-9 ? ' (기준)' : ''} &nbsp;→ 폭 ×{fmt(n)}
+                    </div>
+                  );
+                })}
+              </FormulaSection>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>
+              환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.
             </p>
+            <div className="ai-hint">💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
           </>
         ) : (
-          <div className="text-graySoft text-sm border-2 border-dashed border-line rounded-xl p-16 text-center">
-            왼쪽에서 블록을 추가하면 원래 단면과 환산 단면이 여기에 나타납니다.
+          <div className="viz-placeholder" style={{ minHeight: 400 }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 9h8M8 13h5" />
+            </svg>
+            왼쪽에서 블록을 추가하면
+            <br />
+            원래 단면과 환산 단면이 여기에 나타납니다.
           </div>
         )}
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">
-          왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.
-        </div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function ResultCard({ label, value }) {
-  return (
-    <div className="bg-bg border border-line rounded-xl p-3">
-      <div className="text-[11px] text-graySoft font-bold">{label}</div>
-      <div className="text-sm font-extrabold mt-0.5">{value}</div>
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
@@ -213,7 +227,7 @@ function TransformedSVG({ result, refBlock }) {
   const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
 
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-[720px] mx-auto block">
+    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 720, margin: '0 auto', display: 'block' }}>
       <text x={zoneA_cx} y={padTop - 14} fontSize="11" fill="#8A97A2" textAnchor="middle" fontWeight="800">원래 단면</text>
       {result.blocks.map((b, i) => {
         const c = blockColor(b);

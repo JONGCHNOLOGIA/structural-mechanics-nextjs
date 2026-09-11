@@ -1,0 +1,3238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구조역학 2 — Composite Beams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --crimson:#C3002F;
+    --crimson-soft:#F7E3E6;
+    --teal:#1E7F72;
+    --teal-soft:#E1F2EF;
+    --gray:#51626F;
+    --gray-soft:#8A97A2;
+    --bg:#FAF9F6;
+    --card:#FFFFFF;
+    --line:#EAE7E0;
+    --ink:#3A3A3A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:52px;
+  }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 40px;
+    background:var(--card);
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10;
+  }
+  .subject-title{ font-size:20px; font-weight:800; color:var(--ink); display:flex; align-items:baseline; gap:10px;}
+  .user-tag{
+    font-size:13px; color:var(--gray);
+    background:var(--bg); border-radius:20px; padding:7px 16px;
+  }
+
+  .hero{
+    max-width:1600px; margin:36px auto 0; padding:0 40px;
+    display:flex; align-items:center; gap:32px;
+  }
+  .hero-text{ flex:1; }
+  .hero-text h1{ font-size:24px; font-weight:900; margin-bottom:8px; }
+  .hero-text p{ font-size:14px; color:var(--gray); line-height:1.6; max-width:520px; }
+  .hero-stats{ display:flex; gap:14px; margin-top:18px; }
+  .hero-stat{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 18px; min-width:110px;
+  }
+  .hero-stat .n{ font-size:20px; font-weight:900; color:var(--crimson); }
+  .hero-stat .l{ font-size:11.5px; color:var(--gray-soft); font-weight:700; margin-top:2px; }
+  .hero-art{ flex-shrink:0; display:flex; align-items:center; gap:16px; }
+  .cover-placeholder{
+    width:104px; height:140px; border:1.5px dashed var(--line); border-radius:10px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    color:var(--gray-soft); background:var(--card); text-align:center; padding:8px; flex-shrink:0;
+  }
+  .cover-placeholder span{ font-size:10px; line-height:1.4; }
+  .cover-info{ font-size:12px; color:var(--gray); line-height:1.65; max-width:190px; }
+  .cover-info .book-title{ font-size:14px; font-weight:800; color:var(--ink); margin-bottom:2px; }
+
+  .board{
+    display:grid; grid-template-columns: 300px 1fr;
+    max-width:1600px; margin:40px auto; padding:0 40px; gap:28px;
+    align-items:start;
+  }
+  .col-label{ font-size:13px; font-weight:800; color:var(--crimson); margin-bottom:14px; }
+
+  .chapter-list{ display:flex; flex-direction:column; gap:10px; }
+  .chapter{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    cursor:pointer;
+    display:flex; align-items:flex-start; gap:13px;
+    transition:box-shadow 0.15s ease, transform 0.15s ease;
+    box-shadow:0 1px 3px rgba(0,0,0,0.03);
+  }
+  .chapter .icon{
+    flex-shrink:0; width:38px; height:38px; border-radius:10px;
+    background:var(--bg); display:flex; align-items:center; justify-content:center;
+    color:var(--crimson);
+  }
+  .chapter.disabled .icon{ color:var(--gray-soft); }
+  .chapter .body{ flex:1; min-width:0; }
+  .chapter .num{ font-size:12px; font-weight:800; color:var(--crimson); display:block; margin-bottom:2px;}
+  .chapter.disabled .num{ color:var(--gray-soft); }
+  .chapter .title{ font-size:15px; font-weight:700; }
+  .chapter .tag{
+    font-size:10.5px; color:var(--gray-soft); margin-left:8px; font-weight:700;
+    background:var(--bg); border-radius:8px; padding:2px 7px;
+  }
+  .chapter:hover{ box-shadow:0 4px 14px rgba(195,0,47,0.08); transform:translateY(-1px); }
+  .chapter.active{ border-color:var(--crimson); background:var(--crimson-soft); }
+  .chapter.disabled{ cursor:default; opacity:0.75; }
+  .chapter.disabled:hover{ box-shadow:0 1px 3px rgba(0,0,0,0.03); transform:none; }
+
+  .preview{
+    display:none; font-size:12.5px; color:var(--gray); line-height:1.55;
+    margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);
+  }
+  .chapter:hover .preview{ display:block; }
+
+  .subtopics{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    min-height:120px; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .subtopics .empty{
+    margin:auto; color:var(--gray-soft); font-size:13.5px; padding:48px 40px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .subtopics .empty svg{ color:var(--line); }
+  .subtopic{ border-bottom:1px solid var(--line); padding:18px 22px; cursor:pointer; transition:background 0.15s ease; }
+  .subtopic:last-child{ border-bottom:none; }
+  .subtopic:hover{ background:var(--crimson-soft); }
+  .subtopic-row{ display:flex; align-items:center; justify-content:space-between; }
+  .subtopic .name{ font-size:15px; font-weight:700; }
+  .subtopic .go{ font-size:12px; font-weight:800; color:var(--crimson); opacity:0; transition:opacity 0.15s; }
+  .subtopic:hover .go{ opacity:1; }
+  .subtopic .subprev{
+    display:none; font-size:12.5px; color:var(--gray); line-height:1.55;
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
+  }
+  .subtopic:hover .subprev{ display:block; }
+
+  /* ---------- Detail page ---------- */
+  #detail{ display:none; }
+  .detail-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 40px; border-bottom:1px solid var(--line); background:var(--card);
+  }
+  .back-link{ font-size:12.5px; font-weight:800; color:var(--crimson); cursor:pointer; margin-right:16px;}
+  .tabs{ display:flex; flex-wrap:wrap; gap:10px; padding:0 40px; margin:32px 0 24px; }
+  .tab{
+    flex:0 0 auto; text-align:center; padding:10px 20px; font-size:13.5px; font-weight:700;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    color:var(--gray-soft); cursor:pointer;
+  }
+  .tab.active{ color:#fff; background:var(--crimson); border-color:var(--crimson); }
+  .panels{
+    display:grid; grid-template-columns: 360px 1fr 340px; gap:24px; align-items:start;
+    width:100%; margin:0 0 48px; padding:0 40px; box-sizing:border-box;
+  }
+  .panel{
+    padding:26px; min-height:600px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel-ai{
+    position:sticky; top:24px; align-self:start; min-height:auto;
+    max-height:calc(100vh - 48px); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .panel-ai .chat-log{ overflow-y:auto; flex:1; }
+  .panel h3{ font-size:12.5px; font-weight:800; color:var(--crimson); margin-bottom:16px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; color:var(--gray); margin-bottom:5px; font-weight:700;}
+  .field input, .field select{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    color:var(--ink); padding:9px 11px; font-family:'Noto Sans KR',sans-serif; font-size:13px;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--crimson); }
+  .field input.invalid{ border-color:var(--crimson); background:var(--crimson-soft); }
+  .add-block{
+    width:100%; padding:9px; margin:4px 0 18px; background:var(--bg); color:var(--crimson);
+    border:1px dashed var(--crimson); border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .add-block.active{
+    background:var(--crimson); color:#fff; border-style:solid; border-color:var(--crimson);
+  }
+  .block-card{
+    border:1px solid var(--line); border-radius:12px; padding:12px 12px 4px; margin-bottom:12px; position:relative; background:var(--bg);
+    transition:background 0.15s ease;
+  }
+  .block-card.drag-over{ background:var(--crimson-soft); border-color:var(--crimson); }
+  .block-card .block-title{ font-size:11.5px; font-weight:800; color:var(--gray); margin-bottom:10px; padding-left:20px; }
+  .drag-handle{
+    position:absolute; top:10px; left:10px; cursor:grab; color:var(--gray-soft); font-size:15px;
+    line-height:1; user-select:none;
+  }
+  .drag-handle:active{ cursor:grabbing; }
+  .remove-block{
+    position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%;
+    background:var(--card); border:1px solid var(--line); color:var(--gray-soft);
+    font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .remove-block:hover{ color:var(--crimson); border-color:var(--crimson); }
+  .input-unit-group{ display:flex; }
+  .input-unit-group input{ flex:1 1 auto; min-width:0; border-radius:10px 0 0 10px; border-right:none; }
+  .unit-inline{
+    width:60px; flex:0 0 60px; background:var(--bg); border:1px solid var(--line);
+    border-radius:0 10px 10px 0; color:var(--gray); padding:9px 2px; font-family:'Noto Sans KR',sans-serif;
+    font-size:10.5px; text-align:center;
+  }
+  .unit-inline:focus{ outline:none; border-color:var(--crimson); }
+  .field-with-slider{ display:flex; align-items:center; gap:8px; }
+  .field-with-slider .input-unit-group{ flex:1; min-width:0; }
+  .mini-slider{ width:84px; flex:0 0 84px; accent-color:var(--crimson); }
+  .steps{ margin-top:4px; }
+  .step-card{ border:1px solid var(--line); border-radius:12px; margin-bottom:10px; }
+  .step-header{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 14px;
+    font-size:12.5px; font-weight:800; color:var(--ink); cursor:pointer; background:var(--bg);
+    border-radius:11px 11px 0 0;
+  }
+  .step-header:hover{ background:var(--crimson-soft); }
+  .chevron{ color:var(--crimson); font-size:11px; }
+  .step-body{ padding:14px; font-size:12px; color:var(--gray); line-height:1.7; background:var(--card); border-radius:0 0 11px 11px; overflow:visible; }
+  .step-formula{
+    font-family:'JetBrains Mono',monospace; font-size:13.5px; font-weight:700; color:var(--crimson);
+    background:var(--crimson-soft); border-radius:8px; padding:9px 13px; margin-bottom:10px; display:inline-block;
+    letter-spacing:0.01em;
+  }
+  .step-row{ padding:4px 0; font-size:12px; }
+  .step-final{
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
+    font-size:13px; font-weight:800; color:var(--ink); font-family:'JetBrains Mono',monospace;
+  }
+  .step-row .tens, .step-final .tens{ color:var(--teal); }
+  .step-row .comp, .step-final .comp{ color:var(--crimson); }
+  .step-header.static{ cursor:default; }
+  .step-header.static:hover{ background:var(--bg); }
+  .y-ref-toggle{
+    display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gray-soft); font-weight:700;
+    margin-bottom:12px;
+  }
+  .y-ref-toggle button{
+    font-family:'Noto Sans KR',sans-serif; font-size:11.5px; font-weight:700; color:var(--gray);
+    background:var(--bg); border:1px solid var(--line); border-radius:20px; padding:6px 14px; cursor:pointer;
+  }
+  .y-ref-toggle button.active{ background:var(--crimson); border-color:var(--crimson); color:#fff; }
+  .step-eq{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink); background:var(--bg);
+    border-radius:6px; padding:8px 11px; margin:5px 0; overflow-wrap:break-word; line-height:1.65;
+    letter-spacing:0.005em;
+  }
+  .tip{
+    position:relative; border-bottom:1.5px dotted currentColor; opacity:0.92; cursor:help;
+    padding-bottom:1px; transition:background 0.12s ease;
+  }
+  .tip:hover{ background:rgba(195,0,47,0.14); border-bottom-color:var(--crimson); opacity:1; border-radius:2px; }
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; font-family:'Noto Sans KR',sans-serif; font-weight:500;
+    font-size:11.5px; line-height:1.4; text-align:center; white-space:normal;
+    width:max-content; max-width:220px; padding:7px 11px; border-radius:8px;
+    opacity:0; visibility:hidden; pointer-events:none; transition:opacity 0.1s ease;
+    z-index:100; box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  }
+  .tip::before{
+    content:''; position:absolute; bottom:calc(100% + 3px); left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:var(--ink);
+    opacity:0; visibility:hidden; pointer-events:none; transition:opacity 0.1s ease; z-index:100;
+  }
+  .tip:hover::after, .tip:hover::before{ opacity:1; visibility:visible; }
+  .material-block{ margin-bottom:14px; }
+  .material-block:last-child{ margin-bottom:0; }
+  .material-title{ font-size:12px; font-weight:800; color:var(--ink); margin-bottom:4px; }
+  .ai-hint{
+    font-size:12px; color:var(--gray); background:var(--crimson-soft); border-radius:10px;
+    padding:10px 14px; margin-top:6px;
+  }
+  .color-dot{ width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }
+
+  .viz-placeholder{
+    height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px;
+    border:1.5px dashed var(--line); border-radius:14px; color:var(--gray-soft); font-size:13px; text-align:center; padding:20px;
+  }
+  .badge{
+    font-size:10.5px; font-weight:800; color:var(--crimson);
+    background:var(--crimson-soft); border-radius:20px; padding:4px 12px; display:inline-block;
+  }
+  .badge.live{ color:var(--teal); background:var(--teal-soft); }
+
+  .result-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+  .result-card{ background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .result-card .l{ font-size:11px; color:var(--gray-soft); font-weight:700; }
+  .result-card .v{ font-size:14px; font-weight:800; margin-top:2px; }
+  .result-card .v.tens{ color:var(--teal); }
+  .result-card .v.comp{ color:var(--crimson); }
+
+  .chat-log{ display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+  .msg{ font-size:13px; line-height:1.55; padding:11px 14px; border-radius:14px; }
+  .msg.ai{ background:var(--crimson-soft); color:var(--ink); border-bottom-left-radius:4px; }
+  .msg.user{ background:var(--bg); border-bottom-right-radius:4px; }
+  .chat-input{ display:flex; gap:8px; margin-top:auto; }
+  .chat-input input{
+    flex:1; background:var(--bg); border:1px solid var(--line); border-radius:20px; color:var(--ink);
+    padding:11px 16px; font-size:13px; font-family:'Noto Sans KR',sans-serif;
+  }
+  .chat-input button{
+    background:var(--crimson); color:#fff; border:none; border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;
+  }
+
+  .footer-bar{
+    position:fixed; bottom:0; left:0; right:0; background:var(--gray); color:#fff;
+    text-align:center; font-size:12.5px; font-weight:700; padding:14px 0; letter-spacing:0.02em; z-index:20;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== PAGE 1: 과목 홈 ===================== -->
+<div id="home">
+  <header>
+    <div class="subject-title">구조역학 2</div>
+    <div class="user-tag">22011011 김세종</div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-text">
+      <h1>안녕하세요, 세종님 👋</h1>
+      <p>구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="n">⟳</div><div class="l">실시간 계산</div></div>
+        <div class="hero-stat"><div class="n">▤</div><div class="l">단면 시각화</div></div>
+        <div class="hero-stat"><div class="n">◎</div><div class="l">AI 설명</div></div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <!-- 표지 이미지를 넣으려면 아래 div를 <img src="cover.jpg" alt="교재 표지" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">로 교체하세요 -->
+      <div class="cover-placeholder">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5Z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+        <span>표지 이미지<br>(cover.jpg)</span>
+      </div>
+      <div class="cover-info">
+        <div class="book-title">재료역학<br>(Mechanics of Materials)</div>
+        9th Edition<br>
+        James M. Gere · Barry J. Goodno<br>
+        Cengage Learning
+      </div>
+    </div>
+  </div>
+
+  <div class="board">
+    <div>
+      <div class="col-label">CHAPTERS</div>
+      <div class="chapter-list" id="chapterList"></div>
+    </div>
+    <div>
+      <div class="col-label">SUB-TOPICS</div>
+      <div class="subtopics" id="subtopicPanel">
+        <div class="empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          왼쪽에서 챕터를 클릭하면<br>소주제 목록이 나타납니다.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE 2: 소주제 상세 ===================== -->
+<div id="detail">
+  <div class="detail-header">
+    <div class="subject-title">
+      <span class="back-link" onclick="goHome()">← 목록으로</span>
+      <span id="detailTitle">구조역학 2</span>
+    </div>
+    <div class="user-tag">22011011 김세종</div>
+  </div>
+
+  <div class="tabs" id="tabRow"></div>
+  <div class="panels" id="panelsContainer"></div>
+</div>
+
+<div class="footer-bar">세종대학교 건축공학과 AI 튜터 사이트</div>
+
+<script>
+/* ============ 공통 데이터 ============ */
+const icons = {
+  6: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="3" width="10" height="18" rx="1"/><path d="M7 8h10M7 16h10" stroke-dasharray="1 2.4"/></svg>',
+  7: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4v16"/></svg>',
+  8: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="9" width="10" height="10"/><rect x="9" y="5" width="10" height="10"/></svg>',
+  9: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h18M8 8q4 9 8 0" stroke-linecap="round"/></svg>',
+  10:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h18" stroke-linecap="round"/><path d="M6 8l-2 4h4zM12 8l-2 4h4zM18 8l-2 4h4z"/></svg>',
+};
+
+const chapters = [
+  {
+    num: "CH.6", title: "Stress in beams",
+    desc: "굽힘응력과 전단응력의 분포에 대해서 배우는 챕터",
+    ready: true,
+    subtopics: [
+      { name: "Composite Beams", desc: "서로 다른 두 재료로 이루어진 단면의 중립축과 응력 분포를 계산합니다." },
+      { name: "Transformed Section Method", desc: "복합단면을 하나의 재료로 환산해 동일한 문제를 더 간단히 풉니다." },
+      { name: "Functionally Graded Beams", desc: "단면 내에서 재료 조성이 연속적으로 변하는 보의 개념을 다룹니다." },
+      { name: "Beams with Inclined Loads", desc: "경사하중을 두 축의 모멘트로 분해해 단면 각 지점의 응력 부호를 판정합니다." },
+      { name: "Elastoplastic Bending", desc: "하중이 커짐에 따라 탄성에서 완전소성으로 변하는 단면의 응력분포 변화를 봅니다." },
+    ]
+  },
+  {
+    num:"CH.7", title:"Analysis of stress and strain",
+    desc:"응력과 변형률의 변환, 모어의 원을 다루는 챕터",
+    ready:true,
+    subtopics: [
+      { name: "Plane Stress", desc: "평면응력 변환식으로 임의 각도의 응력을 구하고, 주응력과 최대전단응력까지 함께 다룹니다." },
+      { name: "Mohr's Circle", desc: "평면응력 변환을 원 하나로 그래픽하게 표현하는 방법입니다." },
+      { name: "Hooke's Law for Plane Stress", desc: "평면응력 상태에서 응력과 변형률 사이의 관계(후크의 법칙)를 다룹니다." },
+    ]
+  },
+  {
+    num:"CH.8", title:"Application of plane stress",
+    desc:"평면응력 상태의 응용을 다루는 챕터",
+    ready:true,
+    subtopics: [
+      { name: "Spherical Pressure Vessels", desc: "구형 압력용기 벽면의 응력, 최대전단응력, 변형률을 다룹니다." },
+      { name: "Cylindrical Pressure Vessels", desc: "원통형 압력용기의 원주응력·축방향응력과, 용접선 각도에 따른 응력 변환을 다룹니다." },
+      { name: "Maximum Stresses in Beams", desc: "보의 단면 내 위치(y)에 따라 굽힘응력과 전단응력이 어떻게 조합되는지 다룹니다." },
+      { name: "Combined Loadings", desc: "여러 하중이 겹칠 때, 각 성분을 합쳐 평면응력 해석으로 마무리하는 방법을 다룹니다." },
+    ]
+  },
+  { num:"CH.9", title:"Deflection of beams", desc:"보의 처짐을 계산하고 시각화하는 챕터 (준비중)", ready:false, subtopics:[] },
+  { num:"CH.10", title:"Statically indeterminate beams", desc:"부정정보의 해석을 다루는 챕터 (준비중)", ready:false, subtopics:[] },
+];
+
+const chapterListEl = document.getElementById('chapterList');
+const subtopicPanelEl = document.getElementById('subtopicPanel');
+let activeChapter = null;
+
+function renderChapters(){
+  chapterListEl.innerHTML = '';
+  chapters.forEach((ch, idx) => {
+    const chNumber = ch.num.replace('CH.', '');
+    const el = document.createElement('div');
+    el.className = 'chapter' + (ch.ready ? '' : ' disabled') + (activeChapter === idx ? ' active' : '');
+    el.innerHTML = `
+      <div class="icon">${icons[chNumber] || ''}</div>
+      <div class="body">
+        <span class="num">${ch.num}${ch.ready ? ` <span class="tag">${ch.subtopics.length}개 소주제</span>` : '<span class="tag">준비중</span>'}</span>
+        <div class="title">${ch.title}</div>
+        <div class="preview">${ch.desc}</div>
+      </div>
+    `;
+    if(ch.ready){ el.onclick = () => { activeChapter = idx; renderChapters(); renderSubtopics(ch); }; }
+    chapterListEl.appendChild(el);
+  });
+}
+
+function renderSubtopics(ch){
+  if(!ch.subtopics.length){
+    subtopicPanelEl.innerHTML = `<div class="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>`;
+    return;
+  }
+  subtopicPanelEl.innerHTML = '';
+  ch.subtopics.forEach(st => {
+    const el = document.createElement('div');
+    el.className = 'subtopic';
+    el.innerHTML = `
+      <div class="subtopic-row">
+        <span class="name">${st.name}</span>
+        <span class="go">열기 →</span>
+      </div>
+      <div class="subprev">${st.desc}</div>
+    `;
+    el.onclick = () => openDetail(ch, st);
+    subtopicPanelEl.appendChild(el);
+  });
+}
+
+/* ============ 상세 페이지 (탭 전환) ============ */
+function openDetail(ch, activeSt){
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('detail').style.display = 'block';
+  document.getElementById('detailTitle').textContent = `구조역학 2 — ${ch.title}`;
+  renderTabs(ch, activeSt.name);
+  renderPanels(activeSt);
+}
+
+function renderTabs(ch, activeName){
+  const tabRow = document.getElementById('tabRow');
+  tabRow.innerHTML = '';
+  ch.subtopics.forEach(st => {
+    const t = document.createElement('div');
+    t.className = 'tab' + (st.name === activeName ? ' active' : '');
+    t.textContent = st.name;
+    t.onclick = () => { renderTabs(ch, st.name); renderPanels(st); };
+    tabRow.appendChild(t);
+  });
+}
+
+function renderPanels(subtopic){
+  const container = document.getElementById('panelsContainer');
+  if(subtopic.name === 'Composite Beams'){
+    renderCompositeBeams(container);
+  } else if(subtopic.name === 'Transformed Section Method'){
+    renderTransformedSection(container);
+  } else if(subtopic.name === 'Functionally Graded Beams'){
+    renderFGM(container);
+  } else if(subtopic.name === 'Beams with Inclined Loads'){
+    renderInclinedLoads(container);
+  } else if(subtopic.name === 'Elastoplastic Bending'){
+    renderElastoplastic(container);
+  } else if(subtopic.name === 'Plane Stress'){
+    renderPlaneStress(container);
+  } else if(subtopic.name === "Mohr's Circle"){
+    renderMohrCircle(container);
+  } else if(subtopic.name === 'Hooke\'s Law for Plane Stress'){
+    renderHookesLaw(container);
+  } else if(subtopic.name === 'Spherical Pressure Vessels'){
+    renderSphericalVessel(container);
+  } else if(subtopic.name === 'Cylindrical Pressure Vessels'){
+    renderCylindricalVessel(container);
+  } else if(subtopic.name === 'Maximum Stresses in Beams'){
+    renderMaxBeamStress(container);
+  } else if(subtopic.name === 'Combined Loadings'){
+    renderCombinedLoadings(container);
+  } else {
+    container.innerHTML = `
+      <div class="panel"><h3>SETTING MENU</h3>
+        <div class="viz-placeholder"><span class="badge">준비중</span><div>${subtopic.name}의 설정 항목이<br>아직 구현되지 않았습니다.</div></div>
+      </div>
+      <div class="panel"><h3>VISUALIZER</h3>
+        <div class="viz-placeholder"><span class="badge">준비중</span><div>${subtopic.desc}</div></div>
+      </div>
+      <div class="panel panel-ai"><h3>AI TUTOR</h3>
+        <div class="viz-placeholder"><span class="badge">준비중</span><div>이 소주제의 AI 튜터는<br>아직 연결되지 않았습니다.</div></div>
+      </div>
+    `;
+  }
+}
+
+function goHome(){
+  document.getElementById('detail').style.display = 'none';
+  document.getElementById('home').style.display = 'block';
+}
+
+/* ============ Composite Beams 계산 엔진 ============ */
+// 각 물리량 종류별로 독립적인 단위 옵션 (일반적인 계산기 사이트처럼 필드마다 개별 단위 선택)
+const UNIT_OPTIONS = {
+  length: { 'in':0.0254, 'mm':0.001, 'm':1 },
+  E:      { 'ksi':6894757, 'psi':6894.757, 'MPa':1e6, 'GPa':1e9 },
+  stress: { 'psi':6894.757, 'ksi':6894757, 'MPa':1e6, 'kPa':1e3 },
+  moment: { 'kip·in':112.9848, 'lb·in':0.1129848, 'kN·m':1000, 'kN·mm':1, 'N·m':1 },
+  force:  { 'lb':4.448222, 'kip':4448.222, 'N':1, 'kN':1000 },
+};
+
+const cb = {
+  units: { length:'in', stress:'psi', moment:'kip·in' }, // E는 블록별로 개별 단위를 가짐
+  defaultEUnit: 'ksi', // 새 블록을 만들 때 기본으로 쓰일 E 단위
+  dragIndex: null,
+  nextColorId: 0, // 다음에 추가될 블록에 부여할 색상 id
+  yReference: 'bottom', // 'bottom' | 'top' — Neutral Axis/Normal Stresses에서 y를 어디부터 잴지
+  // base SI values: length(m), E(Pa), moment(N·m) — bottom-to-top block order
+  // colorId는 블록의 "정체성"으로, 순서를 드래그로 바꿔도 그대로 유지됨
+  blocks: [], // 기본값 없음 — 사용자가 직접 블록을 추가
+  moment: 0, // 기본값 0
+  calcState: { na:'idle', io:'idle', stress:'idle', approx:'idle' }, // 'idle' | 'done' | 'stale'
+  calcCache: { na:null, io:null, stress:null, approx:null },
+  momentRangeOverrideBase: null, // {min,max} in N·m — 사용자가 기본 범위 밖 값을 입력하면 여기에 저장됨
+  sandwichLinked: false, // "Doubly symmetric section" 버튼의 On/Off 상태 (위/아래 face가 연동 중인지)
+};
+
+function computeComposite(){
+  let cum = 0;
+  const withY = cb.blocks.map(b => {
+    const yBottom = cum, yTop = cum + b.height, yc = (yBottom+yTop)/2;
+    cum = yTop;
+    return {...b, yBottom, yTop, yc, area: b.width*b.height};
+  });
+  const totalHeight = cum;
+  const num = withY.reduce((s,b)=> s + b.E*b.area*b.yc, 0);
+  const den = withY.reduce((s,b)=> s + b.E*b.area, 0);
+  const ybar = den > 0 ? num/den : 0;
+  let EIsum = 0;
+  const withI = withY.map(b=>{
+    const d = b.yc - ybar;
+    const I0 = b.width*Math.pow(b.height,3)/12;
+    const I = I0 + b.area*d*d;
+    EIsum += b.E*I;
+    return {...b, I, d};
+  });
+  const stressAt = (y, E) => EIsum > 0 ? -cb.moment*(y-ybar)*E/EIsum : 0;
+  return { blocks: withI, ybar, EIsum, totalHeight, stressAt };
+}
+
+function fmt(v){
+  if(!isFinite(v)) return '—';
+  const a = Math.abs(v);
+  const decimals = a >= 1000 ? 0 : (a >= 10 ? 1 : 2);
+  return v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+const SUPERSCRIPTS = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function toSup(str){ return str.split('').map(ch => SUPERSCRIPTS[ch] || ch).join(''); }
+function fmtSci(v, sig){
+  if(!isFinite(v) || v === 0) return '0';
+  const sign = v < 0 ? '-' : '';
+  const absV = Math.abs(v);
+  let exp = Math.floor(Math.log10(absV));
+  exp = Math.floor(exp/3)*3; // 공학적 표기: 지수를 3의 배수로만 (10^0, 10^3, 10^6 ...)
+  const mantissa = absV / Math.pow(10, exp);
+  return `${sign}${mantissa.toFixed(sig===undefined?3:sig)} × 10${toSup(String(exp))}`;
+}
+
+const BLOCK_COLORS = [
+  { name:'Red',    fill:'#F7E3E6', stroke:'#C3002F' },
+  { name:'Green',  fill:'#E3F3E7', stroke:'#1F8A4C' },
+  { name:'Amber',  fill:'#FBEED9', stroke:'#B0790A' },
+  { name:'Blue',   fill:'#E7E9F7', stroke:'#4A5FBF' },
+  { name:'Purple', fill:'#F0E6F5', stroke:'#7A3E8C' },
+];
+function blockColor(block){ return BLOCK_COLORS[block.colorId % BLOCK_COLORS.length]; }
+
+function cbFormulaSection(title, bodyHtml){
+  return `
+    <div class="step-card">
+      <div class="step-header static">${title}</div>
+      <div class="step-body">${bodyHtml}</div>
+    </div>
+  `;
+}
+
+function aiHTMLPlaceholder(){
+  return `
+    <h3>AI TUTOR <span class="badge" style="margin-left:6px;">준비중</span></h3>
+    <div class="chat-log">
+      <div class="msg ai">이 단면은 두 재료로 구성되어 있어요. 계산 결과에 대해 궁금한 점이 있으면 물어보세요. (백엔드 연결 전 — 예시 문구)</div>
+      <div class="msg user">중립축이 왜 아래쪽에 가까운가요?</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" placeholder="질문을 입력하세요" disabled>
+      <button disabled aria-label="전송">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function unitSelect(type, onchangeFn, currentValue, extraArg){
+  const options = Object.keys(UNIT_OPTIONS[type]);
+  const current = currentValue !== undefined ? currentValue : cb.units[type];
+  const argsPrefix = extraArg !== undefined ? `${extraArg}, ` : '';
+  return `<select class="unit-inline" onchange="${onchangeFn}(${argsPrefix}this.value)">
+    ${options.map(o => `<option value="${o}" ${o===current?'selected':''}>${o}</option>`).join('')}
+  </select>`;
+}
+
+function isDoublySymmetric(blocks){
+  const n = blocks.length;
+  if (n < 3) return false;
+  for (let i = 0; i < Math.floor(n/2); i++){
+    const a = blocks[i], b = blocks[n-1-i];
+    if (Math.abs(a.height-b.height) > 1e-9*Math.max(1,a.height)) return false;
+    if (Math.abs(a.width-b.width) > 1e-9*Math.max(1,a.width)) return false;
+    if (Math.abs(a.E-b.E) > 1e-6*Math.max(1,Math.abs(a.E))) return false;
+  }
+  return true;
+}
+
+function cbMakeSandwich(){
+  if (cb.sandwichLinked) {
+    // OFF: 블록은 그대로 두고, 위/아래 face의 "연동"만 해제 (독립적인 재료로 분리)
+    if (cb.blocks.length === 3) cb.blocks[2].colorId = cb.nextColorId++;
+    cb.sandwichLinked = false;
+  } else if (cb.blocks.length === 3) {
+    // 이미 3블록 구조 -> 위 face를 아래 face와 다시 연동 (아래 face 값에 맞춤)
+    const bottom = cb.blocks[0];
+    cb.blocks[2] = { ...bottom };
+    cb.sandwichLinked = true;
+  } else {
+    // ON (처음부터): 좌우상하 대칭 샌드위치 보 생성 — 아래 face - core - 위 face (face 둘은 같은 재료라 색상도 동일)
+    const lenF = UNIT_OPTIONS.length[cb.units.length];
+    const EF = UNIT_OPTIONS.E[cb.defaultEUnit];
+    cb.blocks = [
+      { colorId: 0, width: 1*lenF, height: 1*lenF, E: 1*EF, EUnit: cb.defaultEUnit }, // 아래 face
+      { colorId: 1, width: 1*lenF, height: 1*lenF, E: 1*EF, EUnit: cb.defaultEUnit }, // core
+      { colorId: 0, width: 1*lenF, height: 1*lenF, E: 1*EF, EUnit: cb.defaultEUnit }, // 위 face (아래와 동일)
+    ];
+    cb.nextColorId = 2;
+    cb.sandwichLinked = true;
+  }
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+function EFor(b){ return UNIT_OPTIONS.E[b.EUnit]; }
+
+function tip(text, title){
+  return `<span class="tip" data-tip="${title}">${text}</span>`;
+}
+
+function buildBeamElevationSVG(momentLabel, bend){
+  const w = 420, h = 150;
+  const barY = 68, barH = 16, x1 = 55, x2 = 365, midX = (x1+x2)/2;
+  // bend: 호출부에서 이미 M/EI 기반으로 계산해 전달됨 (양수=새깅/가운데 아래로, 음수=호깅/가운데 위로)
+  const topY = barY, botY = barY + barH;
+  let s = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:520px; margin:10px auto 0; display:block;">`;
+  // 휘어진 보 본체 (모멘트가 없으면 직선, 있으면 곡선)
+  s += `<path d="M ${x1} ${topY} Q ${midX} ${topY+bend} ${x2} ${topY} L ${x2} ${botY} Q ${midX} ${botY+bend} ${x1} ${botY} Z" fill="#F2F0EA" stroke="#51626F" stroke-width="1.3"/>`;
+  // 변형 전 원래 직선(점선)도 같이 보여줘서 '휘었다'는 게 대비되도록
+  if (bend !== 0) {
+    s += `<line x1="${x1}" y1="${(topY+botY)/2}" x2="${x2}" y2="${(topY+botY)/2}" stroke="#C3C3C3" stroke-width="1" stroke-dasharray="3 3"/>`;
+  }
+  // 분석 단면 위치
+  const midLocalY = (topY+botY)/2 + bend;
+  s += `<line x1="${midX}" y1="${midLocalY-30}" x2="${midX}" y2="${midLocalY+30}" stroke="#C3002F" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+  s += `<text x="${midX}" y="${midLocalY-35}" font-size="10" fill="#C3002F" text-anchor="middle" font-weight="700">분석 단면 위치</text>`;
+  // 왼쪽 모멘트 화살표 (곡선)
+  s += `<path d="M ${x1-5} ${topY-16} A 17 17 0 1 1 ${x1-5} ${botY+16}" fill="none" stroke="#51626F" stroke-width="1.7"/>`;
+  s += `<polygon points="${x1-5},${botY+16} ${x1-12},${botY+7} ${x1+2},${botY+9}" fill="#51626F"/>`;
+  // 오른쪽 모멘트 화살표 (반대 방향 곡선)
+  s += `<path d="M ${x2+5} ${topY-16} A 17 17 0 1 0 ${x2+5} ${botY+16}" fill="none" stroke="#51626F" stroke-width="1.7"/>`;
+  s += `<polygon points="${x2+5},${topY-16} ${x2-2},${topY-9} ${x2+12},${topY-7}" fill="#51626F"/>`;
+  s += `<text x="${x1-16}" y="${topY-4}" font-size="12" fill="#51626F" font-weight="800" text-anchor="end">M</text>`;
+  s += `<text x="${x2+16}" y="${topY-4}" font-size="12" fill="#51626F" font-weight="800">M</text>`;
+  const bendLabel = bend === 0 ? '' : (bend > 0 ? ' · 새깅(sagging)' : ' · 호깅(hogging)');
+  s += `<text x="${midX}" y="${h-8}" font-size="10.5" fill="var(--gray-soft)" text-anchor="middle">순수굽힘(pure bending) 가정 — M = ${momentLabel}${bendLabel}</text>`;
+  // X-Y 축 표시
+  const ax = 20, ay = h-18;
+  s += `<line x1="${ax}" y1="${ay}" x2="${ax}" y2="${ay-24}" stroke="#8A97A2" stroke-width="1.3"/>`;
+  s += `<polygon points="${ax},${ay-24} ${ax-3},${ay-18} ${ax+3},${ay-18}" fill="#8A97A2"/>`;
+  s += `<text x="${ax+6}" y="${ay-20}" font-size="10" fill="#8A97A2" font-weight="800">Y</text>`;
+  s += `<line x1="${ax}" y1="${ay}" x2="${ax+24}" y2="${ay}" stroke="#8A97A2" stroke-width="1.3"/>`;
+  s += `<polygon points="${ax+24},${ay} ${ax+18},${ay-3} ${ax+18},${ay+3}" fill="#8A97A2"/>`;
+  s += `<text x="${ax+27}" y="${ay+4}" font-size="10" fill="#8A97A2" font-weight="800">X</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+const CB_SLIDER_RANGE = {
+  length: { in:[0.1,48,0.05], mm:[1,1200,1], m:[0.01,4,0.01] },
+  E:      { ksi:[10,30000,10], psi:[10,5000000,100], MPa:[10,300000,50], GPa:[0.1,400,0.5] },
+  moment: { 'kip·in':[0,200,1], 'lb·in':[0,200000,100], 'kN·m':[0,25,0.1], 'kN·mm':[0,25000,50], 'N·m':[0,25000,50] },
+};
+function cbSliderRangeFor(type, unit){ return (CB_SLIDER_RANGE[type] && CB_SLIDER_RANGE[type][unit]) || [0,100,1]; }
+
+function cbBuildVizSVGs(){
+  const lenF = UNIT_OPTIONS.length[cb.units.length];
+  const stressF = UNIT_OPTIONS.stress[cb.units.stress];
+  const momF = UNIT_OPTIONS.moment[cb.units.moment];
+  const disp = (base, factor) => base / factor;
+  const result = computeComposite();
+
+  const svgW = 920, svgH = 545;
+  const padTop = 55, padBottom = 55, padLeft = 80, padRight = 380;
+  const drawH = svgH - padTop - padBottom;
+  const drawW = svgW - padLeft - padRight;
+  const maxWidth = Math.max(...result.blocks.map(b=>b.width));
+  const scale = Math.min(drawW/maxWidth, drawH/result.totalHeight);
+  const centerX = padLeft + drawW/2;
+  const yToPx = (y) => padTop + (result.totalHeight - y) * scale;
+
+  let sectionSVG = '';
+  const leftDimX = centerX - maxWidth*scale/2 - 26;
+  const axisOx = centerX - maxWidth*scale/2 - 4, axisOy = 8;
+  sectionSVG += `<line x1="${axisOx}" y1="${axisOy+28}" x2="${axisOx}" y2="${axisOy}" stroke="#51626F" stroke-width="1.4"/>`;
+  sectionSVG += `<polygon points="${axisOx},${axisOy} ${axisOx-3.5},${axisOy+7} ${axisOx+3.5},${axisOy+7}" fill="#51626F"/>`;
+  sectionSVG += `<text x="${axisOx+7}" y="${axisOy+4}" font-size="11" fill="#51626F" font-weight="800">Y</text>`;
+  sectionSVG += `<line x1="${axisOx}" y1="${axisOy+28}" x2="${axisOx+28}" y2="${axisOy+28}" stroke="#51626F" stroke-width="1.4"/>`;
+  sectionSVG += `<polygon points="${axisOx+28},${axisOy+28} ${axisOx+21},${axisOy+24.5} ${axisOx+21},${axisOy+31.5}" fill="#51626F"/>`;
+  sectionSVG += `<text x="${axisOx+32}" y="${axisOy+32}" font-size="11" fill="#51626F" font-weight="800">Z</text>`;
+  sectionSVG += `<text x="${axisOx}" y="${axisOy+42}" font-size="9.5" fill="var(--gray-soft)">단면 (Y-Z 평면)</text>`;
+
+  result.blocks.forEach((b) => {
+    const c = blockColor(b);
+    const wPx = b.width * scale;
+    const x = centerX - wPx/2;
+    const yTopPx = yToPx(b.yTop);
+    const yBottomPx = yToPx(b.yBottom);
+    const hPx = b.height * scale;
+    sectionSVG += `<rect x="${x.toFixed(1)}" y="${yTopPx.toFixed(1)}" width="${wPx.toFixed(1)}" height="${hPx.toFixed(1)}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.4"/>`;
+    const labelY = yTopPx + hPx/2;
+    sectionSVG += `<text x="${(centerX + maxWidth*scale/2 + 10).toFixed(1)}" y="${(labelY+3.5).toFixed(1)}" font-size="10.5" font-weight="800" fill="${c.stroke}">${c.name}</text>`;
+    const hLabel = `${fmt(disp(b.height, lenF))} ${cb.units.length}.`;
+    sectionSVG += `<line x1="${leftDimX}" y1="${yTopPx.toFixed(1)}" x2="${leftDimX}" y2="${yBottomPx.toFixed(1)}" stroke="${c.stroke}" stroke-width="1"/>`;
+    sectionSVG += `<line x1="${(leftDimX-4).toFixed(1)}" y1="${yTopPx.toFixed(1)}" x2="${(leftDimX+4).toFixed(1)}" y2="${yTopPx.toFixed(1)}" stroke="${c.stroke}" stroke-width="1"/>`;
+    sectionSVG += `<line x1="${(leftDimX-4).toFixed(1)}" y1="${yBottomPx.toFixed(1)}" x2="${(leftDimX+4).toFixed(1)}" y2="${yBottomPx.toFixed(1)}" stroke="${c.stroke}" stroke-width="1"/>`;
+    sectionSVG += `<text x="${(leftDimX-7).toFixed(1)}" y="${(labelY+3.5).toFixed(1)}" font-size="10" fill="${c.stroke}" text-anchor="end" font-weight="700">${hLabel}</text>`;
+  });
+
+  const widestBlock = result.blocks.reduce((a,b)=> b.width>a.width?b:a, result.blocks[0]);
+  const wLabel = `${fmt(disp(widestBlock.width, lenF))} ${cb.units.length}.`;
+  const dimY = yToPx(0) + 20;
+  const xLeft = centerX - maxWidth*scale/2, xRight = centerX + maxWidth*scale/2;
+  sectionSVG += `<line x1="${xLeft.toFixed(1)}" y1="${dimY.toFixed(1)}" x2="${xRight.toFixed(1)}" y2="${dimY.toFixed(1)}" stroke="#51626F" stroke-width="1"/>`;
+  sectionSVG += `<line x1="${xLeft.toFixed(1)}" y1="${(dimY-4).toFixed(1)}" x2="${xLeft.toFixed(1)}" y2="${(dimY+4).toFixed(1)}" stroke="#51626F" stroke-width="1"/>`;
+  sectionSVG += `<line x1="${xRight.toFixed(1)}" y1="${(dimY-4).toFixed(1)}" x2="${xRight.toFixed(1)}" y2="${(dimY+4).toFixed(1)}" stroke="#51626F" stroke-width="1"/>`;
+  sectionSVG += `<text x="${((xLeft+xRight)/2).toFixed(1)}" y="${(dimY+16).toFixed(1)}" font-size="10" fill="#51626F" text-anchor="middle" font-weight="700">${wLabel}</text>`;
+
+  const stressPts = [];
+  result.blocks.forEach((b, i) => {
+    stressPts.push({ y: b.yBottom, s: result.stressAt(b.yBottom,b.E), blockIdx: i });
+    stressPts.push({ y: b.yTop, s: result.stressAt(b.yTop,b.E), blockIdx: i });
+  });
+  // 고정된 기준 스케일: '현재 모멘트에서의 최대응력'이 아니라 '슬라이더 최대 모멘트에서 나올 응력'을 기준으로 잡아서
+  // M=0 근처에서 살짝만 움직여도 다이어그램이 순간적으로 꽉 차버리는 현상을 없앰 (M이 커질수록 자연스럽게 커짐)
+  const momRForScale = cbSliderRangeFor('moment', cb.units.moment);
+  const momentRefBase = Math.max(Math.abs(momRForScale[0]), Math.abs(momRForScale[1])) * momF;
+  const refAbsStress = Math.max(1e-9, ...result.blocks.flatMap(b => [
+    Math.abs(momentRefBase*(b.yBottom-result.ybar)*b.E/result.EIsum),
+    Math.abs(momentRefBase*(b.yTop-result.ybar)*b.E/result.EIsum),
+  ]));
+  const maxAbsStress = refAbsStress;
+  const diagCenterX = centerX + maxWidth*scale/2 + 200;
+  const diagHalfW = 120;
+  const sToPx = (s) => diagCenterX + (s/maxAbsStress) * diagHalfW;
+
+  const naY = yToPx(result.ybar);
+  sectionSVG += `<line x1="${padLeft-10}" y1="${naY.toFixed(1)}" x2="${diagCenterX + diagHalfW + 18}" y2="${naY.toFixed(1)}" stroke="#51626F" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+  sectionSVG += `<text x="${padLeft-10}" y="${(naY-6).toFixed(1)}" font-size="11" fill="#51626F" font-weight="700">N.A. (중립축)</text>`;
+
+  let stressSVG = `<line x1="${diagCenterX}" y1="${padTop}" x2="${diagCenterX}" y2="${padTop+drawH}" stroke="#8A97A2" stroke-width="1.5"/>`;
+  stressSVG += `<text x="${(diagCenterX - diagHalfW - 4).toFixed(1)}" y="${(padTop-8).toFixed(1)}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">압축 (−)</text>`;
+  stressSVG += `<text x="${(diagCenterX + diagHalfW + 4).toFixed(1)}" y="${(padTop-8).toFixed(1)}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">인장 (+)</text>`;
+  for(let i=0;i<stressPts.length;i+=2){
+    const p1 = stressPts[i], p2 = stressPts[i+1];
+    const c = blockColor(result.blocks[p1.blockIdx]);
+    const x1 = sToPx(p1.s), y1 = yToPx(p1.y);
+    const x2 = sToPx(p2.s), y2 = yToPx(p2.y);
+    stressSVG += `<polygon points="${diagCenterX},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${diagCenterX},${y2.toFixed(1)}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.6" opacity="0.9"/>`;
+    stressSVG += `<circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2.5" fill="${c.stroke}"/>`;
+    stressSVG += `<circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="2.5" fill="${c.stroke}"/>`;
+    const label1 = `${fmt(disp(p1.s, stressF))} ${cb.units.stress}`;
+    const label2 = `${fmt(disp(p2.s, stressF))} ${cb.units.stress}`;
+    const anchor1 = p1.s >= 0 ? 'start' : 'end';
+    const anchor2 = p2.s >= 0 ? 'start' : 'end';
+    stressSVG += `<text x="${(x1 + (p1.s>=0?6:-6)).toFixed(1)}" y="${(y1+3).toFixed(1)}" font-size="10" fill="#3A3A3A" text-anchor="${anchor1}">${label1}</text>`;
+    if(Math.abs(y2-y1) > 12){
+      stressSVG += `<text x="${(x2 + (p2.s>=0?6:-6)).toFixed(1)}" y="${(y2+3).toFixed(1)}" font-size="10" fill="#3A3A3A" text-anchor="${anchor2}">${label2}</text>`;
+    }
+  }
+  stressSVG += `<text x="${diagCenterX}" y="${padTop+drawH+20}" font-size="10.5" fill="#8A97A2" text-anchor="middle" font-weight="700">STRESS DIAGRAM (중립축 = 0)</text>`;
+
+  const svg = `<svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; max-width:1300px; margin:0 auto; display:block; overflow:visible;">${sectionSVG}${stressSVG}</svg>`;
+  const momentLabelForElevation = cb.moment === null ? '미입력' : `${fmt(disp(cb.moment, momF))} ${cb.units.moment}`;
+  // 곡률은 M/EI가 맞지만, 절대 스케일을 고정하면 단면이 무를 때(EI 작음) 살짝만 움직여도 바로 최대로 튐.
+  // 그래서 '지금 이 단면 기준, 슬라이더가 낼 수 있는 최대 모멘트일 때'를 100%로 놓고 상대적으로 스케일함 (부드럽게 0→최대로 증가)
+  const momRForBend = cbSliderRangeFor('moment', cb.units.moment);
+  const momentMaxForBend = Math.max(Math.abs(momRForBend[0]), Math.abs(momRForBend[1])) * momF;
+  const maxBendPx = 24;
+  const bendPx = momentMaxForBend > 0 ? Math.max(-maxBendPx, Math.min(maxBendPx, (cb.moment / momentMaxForBend) * maxBendPx)) : 0;
+
+  return `
+    ${svg}
+    <div style="text-align:center; font-size:10.5px; color:var(--gray-soft); font-weight:700; margin-top:2px;">↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)</div>
+    ${buildBeamElevationSVG(momentLabelForElevation, bendPx)}
+  `;
+}
+
+function cbUpdateVisualizerOnly(){
+  const wrap = document.getElementById('cbVizWrap');
+  if (wrap) wrap.innerHTML = cbBuildVizSVGs();
+}
+
+function cbMarkStale(){
+  ['na','io','stress','approx'].forEach(k => { if (cb.calcState[k] === 'done') cb.calcState[k] = 'stale'; });
+}
+
+// 슬라이더 드래그 중에도 (슬라이더 자체는 건드리지 않고) 이미 계산된 카드에만 '값이 바뀜' 표시를 즉시 반영
+function cbRefreshStaleCards(){
+  ['na','io','stress','approx'].forEach(name => {
+    const cardEl = document.getElementById('cbCard_'+name);
+    if (cardEl && cb.calcState[name] === 'stale' && !cardEl.innerHTML.includes('입력값이 바뀌었어요')) {
+      cardEl.outerHTML = cbSectionCardHTML(name);
+    }
+  });
+}
+
+function cbSectionTitle(name){
+  if (name === 'stress') {
+    const result = computeComposite();
+    const symmetric3 = cb.blocks.length === 3 && isDoublySymmetric(result.blocks);
+    return symmetric3 ? 'Normal Stresses (General Theory)' : 'Normal Stresses';
+  }
+  return { na:'Neutral Axis', io:'Moments of Inertia', approx:'Approximate Theory (Sandwich Beam)' }[name];
+}
+
+function cbSectionCardHTML(name){
+  const title = cbSectionTitle(name);
+  const state = cb.calcState[name];
+  let inner;
+  if (state === 'idle') {
+    inner = `<button class="add-block" onclick="cbCalcSection('${name}')">계산하기</button>`;
+  } else {
+    const warn = state === 'stale'
+      ? `<div style="font-size:11px; color:var(--crimson); background:var(--crimson-soft); border-radius:8px; padding:8px 12px; margin-bottom:10px;">⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.</div>`
+      : '';
+    inner = warn + `<button class="add-block" onclick="cbCalcSection('${name}')" style="margin-bottom:10px;">다시 계산하기</button>` + cb.calcCache[name];
+  }
+  return `<div class="step-card" id="cbCard_${name}"><div class="step-header static">${title}</div><div class="step-body">${inner}</div></div>`;
+}
+
+function cbCalcSection(name){
+  if (cb.blocks.length === 0) return;
+  const lenF = UNIT_OPTIONS.length[cb.units.length];
+  const stressF = UNIT_OPTIONS.stress[cb.units.stress];
+  const momF = UNIT_OPTIONS.moment[cb.units.moment];
+  const disp = (base, factor) => base / factor;
+  const areaF = lenF*lenF, I4F = Math.pow(lenF,4);
+  const result = computeComposite();
+  const yDisp = (yBottomBased) => cb.yReference === 'top' ? (result.totalHeight - yBottomBased) : yBottomBased;
+  const refLabel = cb.yReference === 'top' ? '상단 기준' : '하단 기준';
+
+  let body = '';
+
+  if (name === 'na') {
+    let naRows = '', naEqTerms = [];
+    result.blocks.forEach(b => {
+      const c = blockColor(b);
+      const Ed = fmt(disp(b.E, EFor(b))), Ad = fmt(disp(b.area, areaF)), yd = fmt(disp(yDisp(b.yc), lenF));
+      naRows += `<div class="step-row"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block &nbsp; A=${tip(Ad,'이 블록의 단면적 (폭×높이)')} ${cb.units.length}² &nbsp; y=${tip(yd,'이 블록 중심의 y좌표')} ${cb.units.length} &nbsp; E=${tip(Ed,'이 블록의 탄성계수')} ${b.EUnit}</div>`;
+      naEqTerms.push(`${Ed}×${Ad}×(${yd}−ȳ)`);
+    });
+    const naFormulaHeader = `Σ&nbsp;${tip('Eᵢ','각 블록의 탄성계수 (Elastic Modulus)')}&nbsp;${tip('Aᵢ','각 블록의 단면적')}&nbsp;(${tip('yᵢ','각 블록 중심의 y좌표')}&nbsp;−&nbsp;${tip('ȳ','전체 단면의 중립축(Neutral Axis) 위치')})&nbsp;=&nbsp;0`;
+    body = `
+      <div class="step-formula">${naFormulaHeader}</div>
+      <div style="font-size:11.5px; color:var(--gray-soft); margin-bottom:8px;">각 재료가 중립축 위/아래로 미는 "1차모멘트"의 합이 0이 되는 지점이 중립축이에요.</div>
+      ${naRows}
+      <div class="step-eq">${naEqTerms.join(' + ')} = 0</div>
+      <div class="step-eq">→ ȳ = ΣEᵢAᵢyᵢ / ΣEᵢAᵢ</div>
+      <div class="step-final">ȳ = ${fmt(disp(yDisp(result.ybar), lenF))} ${cb.units.length} &nbsp;(${refLabel})</div>
+    `;
+  } else if (name === 'io') {
+    let ioRows = '';
+    result.blocks.forEach(b => {
+      const c = blockColor(b);
+      const wd = fmt(disp(b.width, lenF)), hd = fmt(disp(b.height, lenF));
+      const Ad = fmt(disp(b.area, areaF)), dd = fmt(disp(b.d, lenF));
+      const I0disp = fmt(disp(b.width*Math.pow(b.height,3)/12, I4F));
+      const Ad2disp = fmt(disp(b.area*b.d*b.d, I4F));
+      const Itotal = fmt(disp(b.I, I4F));
+      ioRows += `
+        <div class="material-block">
+          <div class="material-title"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block</div>
+          <div class="step-eq">I = (${tip(wd,'이 블록의 폭')}×${tip(hd,'이 블록의 높이')}³)/12 + (${tip(Ad,'이 블록의 단면적')})×(${tip(dd,'중립축까지의 거리 d = yᵢ − ȳ')})² = ${tip(I0disp,'블록 자체의 관성모멘트 (자체 중심 기준)')} + ${tip(Ad2disp,'평행축 보정항 (A·d²)')} = ${tip(Itotal,'이 블록의 최종 관성모멘트 I')} ${cb.units.length}⁴</div>
+        </div>
+      `;
+    });
+    const ioFormulaHeader = `${tip('Iᵢ','각 블록의 관성모멘트')}&nbsp;=&nbsp;${tip('bᵢhᵢ³/12','블록 자체 중심 기준 관성모멘트')}&nbsp;+&nbsp;${tip('Aᵢdᵢ²','평행축 정리 보정항')}&nbsp;&nbsp;(d&nbsp;=&nbsp;yᵢ&nbsp;−&nbsp;ȳ)`;
+    body = `
+      <div class="step-formula">${ioFormulaHeader}</div>
+      ${ioRows}
+      <div class="step-final">ΣEI = ${fmtSci(result.EIsum)} N·m² &nbsp;<span style="font-weight:400; color:var(--gray-soft); font-size:11px;">(블록마다 E 단위가 달라 SI 기본단위로 표시)</span></div>
+    `;
+  } else if (name === 'stress') {
+    let stressSections = '';
+    const Mdisp = fmt(disp(cb.moment, momF));
+    const ybarDisp = fmt(disp(yDisp(result.ybar), lenF));
+    const EIfull = fmtSci(result.EIsum) + ' N·m²';
+    const MdispTip = tip(Mdisp, '이 단면에 작용하는 굽힘모멘트 M');
+    const EIfullTip = tip(EIfull, '전체 단면의 굽힘강성 ΣEI (재료별 E×I의 합)');
+    const stressFormulaHeader = cb.yReference === 'top'
+      ? `${tip('σᵢ','이 지점의 굽힘응력')}&nbsp;=&nbsp;−${tip('M','굽힘모멘트')}(${tip('ȳ','중립축 위치')}−${tip('y','이 지점의 y좌표')})${tip('Eᵢ','이 재료의 탄성계수')}&nbsp;/&nbsp;${tip('ΣEI','전체 단면의 굽힘강성')}`
+      : `${tip('σᵢ','이 지점의 굽힘응력')}&nbsp;=&nbsp;−${tip('M','굽힘모멘트')}(${tip('y','이 지점의 y좌표')}−${tip('ȳ','중립축 위치')})${tip('Eᵢ','이 재료의 탄성계수')}&nbsp;/&nbsp;${tip('ΣEI','전체 단면의 굽힘강성')}`;
+    result.blocks.forEach((b, k) => {
+      const c = blockColor(b);
+      const sBottom = result.stressAt(b.yBottom, b.E);
+      const sTop = result.stressAt(b.yTop, b.E);
+      const bottomLabel = (k===0) ? '최하단' : '경계면';
+      const topLabel = (k===result.blocks.length-1) ? '최상단' : '경계면';
+      const Ed = fmt(disp(b.E, EFor(b)));
+      const EdTip = tip(Ed, `${c.name} Block의 탄성계수`);
+      const yB = fmt(disp(yDisp(b.yBottom), lenF)), yT = fmt(disp(yDisp(b.yTop), lenF));
+      const termB = cb.yReference === 'top' ? `(${ybarDisp}−${yB})` : `(${yB}−${ybarDisp})`;
+      const termT = cb.yReference === 'top' ? `(${ybarDisp}−${yT})` : `(${yT}−${ybarDisp})`;
+      stressSections += `
+        <div class="material-block">
+          <div class="material-title"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block</div>
+          <div class="step-eq">σ(${bottomLabel}) = −${MdispTip}×${termB}×${EdTip} / ${EIfullTip} = <b class="${sBottom>=0?'tens':'comp'}">${fmt(disp(sBottom, stressF))} ${cb.units.stress}</b></div>
+          <div class="step-eq">σ(${topLabel}) = −${MdispTip}×${termT}×${EdTip} / ${EIfullTip} = <b class="${sTop>=0?'tens':'comp'}">${fmt(disp(sTop, stressF))} ${cb.units.stress}</b></div>
+        </div>
+      `;
+    });
+    body = `
+      <div class="step-formula">${stressFormulaHeader}</div>
+      <div style="font-size:10.5px; color:var(--gray-soft); margin-bottom:8px;">※ 아래 식의 E는 블록마다 설정한 단위 그대로, ΣEI는 SI 기본단위로 표시돼요. 실제 계산은 내부적으로 항상 단위를 통일해서 정확히 수행됩니다.</div>
+      ${stressSections}
+    `;
+  } else if (name === 'approx') {
+    const symmetric3 = cb.blocks.length === 3 && isDoublySymmetric(result.blocks);
+    if (!symmetric3) {
+      body = `<div style="font-size:12.5px; color:var(--gray-soft); line-height:1.6;">현재 구조는 좌우상하 대칭 샌드위치(3블록, 위/아래 face가 같은 재료)가 아니라서 근사이론을 적용할 수 없어요. Setting Menu의 "Doubly symmetric section" 버튼으로 샌드위치 구조를 먼저 만들어보세요.</div>`;
+    } else {
+      const faceBottom = result.blocks[0], faceTop = result.blocks[2];
+      const faceI = faceBottom.I + faceTop.I;
+      const cFace = blockColor(faceBottom);
+      const sTopApprox = -(cb.moment || 0) * (faceTop.yTop - result.ybar) / faceI;
+      const sBottomApprox = -(cb.moment || 0) * (faceBottom.yBottom - result.ybar) / faceI;
+      body = `
+        <div class="step-formula">σ_face&nbsp;≈&nbsp;−M·(y−ȳ)&nbsp;/&nbsp;I_faces&nbsp;&nbsp;(core 기여 무시)</div>
+        <div style="font-size:11.5px; color:var(--gray-soft); margin-bottom:8px;">코어(core)는 굽힘강성 기여가 작다고 보고 무시한 근사식이에요. 두 face가 같은 재료라 식에서 E가 서로 상쇄돼요.</div>
+        <div class="step-eq">I_faces = I(하단 face) + I(상단 face) = ${fmt(disp(faceI, I4F))} ${cb.units.length}⁴</div>
+        <div class="material-block">
+          <div class="material-title"><span class="color-dot" style="background:${cFace.stroke}"></span>Face (상/하 동일 재료)</div>
+          <div class="step-eq">σ(최상단) ≈ ${fmt(disp(sTopApprox, stressF))} ${cb.units.stress}</div>
+          <div class="step-eq">σ(최하단) ≈ ${fmt(disp(sBottomApprox, stressF))} ${cb.units.stress}</div>
+        </div>
+        <div class="step-row" style="color:var(--gray-soft);">Core 응력 ≈ 0 (근사이론에서는 core가 굽힘에 기여하지 않는다고 가정)</div>
+      `;
+    }
+  }
+
+  cb.calcCache[name] = body;
+  cb.calcState[name] = 'done';
+  const cardEl = document.getElementById('cbCard_'+name);
+  if (cardEl) cardEl.outerHTML = cbSectionCardHTML(name);
+}
+
+function cbSliderInput(index, field, val){
+  const factor = field === 'E' ? UNIT_OPTIONS.E[cb.blocks[index].EUnit] : UNIT_OPTIONS.length[cb.units.length];
+  const newVal = parseFloat(val) * factor;
+  const cid = cb.blocks[index].colorId;
+  cb.blocks.forEach((b,j) => {
+    if (b.colorId === cid) {
+      b[field] = newVal;
+      const numEl = document.getElementById('cbNum_'+j+'_'+field);
+      if (numEl) numEl.value = fmt(parseFloat(val));
+      if (j !== index) {
+        const sliderEl = document.getElementById('cbSlider_'+j+'_'+field);
+        if (sliderEl) sliderEl.value = val;
+      }
+    }
+  });
+  cbMarkStale();
+  cbRefreshStaleCards();
+  cbUpdateVisualizerOnly();
+}
+
+function cbMomentSliderInput(val){
+  const momF = UNIT_OPTIONS.moment[cb.units.moment];
+  cb.moment = parseFloat(val) * momF;
+  const numEl = document.getElementById('cbNum_moment');
+  if (numEl) numEl.value = fmt(parseFloat(val));
+  cbMarkStale();
+  cbRefreshStaleCards();
+  cbUpdateVisualizerOnly();
+}
+
+function renderCompositeBeams(container){
+  const lenF = UNIT_OPTIONS.length[cb.units.length];
+  const momF = UNIT_OPTIONS.moment[cb.units.moment];
+  const disp = (base, factor) => base / factor;
+
+  // ---- Setting Menu ----
+  // 리스트를 위(top)→아래(bottom) 순서로 보여줘서, 카드를 위로 끌면 실제 단면에서도 위로 올라가도록 함
+  let blockRows = '';
+  for (let vi = 0; vi < cb.blocks.length; vi++) {
+    const i = cb.blocks.length - 1 - vi; // 실제 배열 인덱스 (0=bottom ... last=top)
+    const b = cb.blocks[i];
+    const lenR = cbSliderRangeFor('length', cb.units.length);
+    const ER = cbSliderRangeFor('E', b.EUnit);
+    blockRows += `
+      <div class="block-card" data-index="${i}" ondragover="cbDragOver(event)" ondrop="cbDrop(event, ${i})">
+        <span class="drag-handle" draggable="true" ondragstart="cbDragStart(event, ${i})" title="끌어서 순서 변경">⠿</span>
+        <div class="block-title"><span class="color-dot" style="background:${blockColor(b).stroke}"></span>${blockColor(b).name} Block${i===0 ? ' · bottom' : (i===cb.blocks.length-1 ? ' · top' : '')}</div>
+        <div class="remove-block" onclick="cbRemoveBlock(${i})">×</div>
+        <div class="field">
+          <label>Width</label>
+          <div class="input-unit-group">
+            <input id="cbNum_${i}_width" type="number" step="any" value="${fmt(disp(b.width, lenF))}" onchange="cbUpdateBlock(${i}, 'width', this)">
+            ${unitSelect('length','cbChangeUnitType_length')}
+          </div>
+          <input id="cbSlider_${i}_width" type="range" min="${lenR[0]}" max="${lenR[1]}" step="${lenR[2]}" value="${fmt(disp(b.width, lenF))}" oninput="cbSliderInput(${i}, 'width', this.value)" style="width:100%; margin-top:5px;">
+        </div>
+        <div class="field">
+          <label>Height</label>
+          <div class="input-unit-group">
+            <input id="cbNum_${i}_height" type="number" step="any" value="${fmt(disp(b.height, lenF))}" onchange="cbUpdateBlock(${i}, 'height', this)">
+            ${unitSelect('length','cbChangeUnitType_length')}
+          </div>
+          <input id="cbSlider_${i}_height" type="range" min="${lenR[0]}" max="${lenR[1]}" step="${lenR[2]}" value="${fmt(disp(b.height, lenF))}" oninput="cbSliderInput(${i}, 'height', this.value)" style="width:100%; margin-top:5px;">
+        </div>
+        <div class="field">
+          <label>E</label>
+          <div class="input-unit-group">
+            <input id="cbNum_${i}_E" type="number" step="any" value="${fmt(disp(b.E, EFor(b)))}" onchange="cbUpdateBlock(${i}, 'E', this)">
+            ${unitSelect('E','cbChangeBlockEUnit', b.EUnit, i)}
+          </div>
+          <input id="cbSlider_${i}_E" type="range" min="${ER[0]}" max="${ER[1]}" step="${ER[2]}" value="${fmt(disp(b.E, EFor(b)))}" oninput="cbSliderInput(${i}, 'E', this.value)" style="width:100%; margin-top:5px;">
+        </div>
+      </div>
+    `;
+  }
+
+  const isSandwichNow = cb.sandwichLinked && cb.blocks.length === 3;
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    ${cb.blocks.length > 1 ? `<div style="font-size:11px; color:var(--gray-soft); margin-bottom:12px;">⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요.</div>` : ''}
+    ${blockRows}
+    <button class="add-block" onclick="cbAddBlock()">+ 블록 추가</button>
+    <button class="add-block ${isSandwichNow ? 'active' : ''}" onclick="cbMakeSandwich()">${isSandwichNow ? '✓ 샌드위치 모드 (Doubly symmetric)' : 'Doubly symmetric section'}</button>
+  `;
+
+  // ---- 블록이 하나도 없으면 빈 상태로 표시 ----
+  if (cb.blocks.length === 0) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel">
+        <h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:400px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          왼쪽에서 블록을 추가하면<br>단면과 응력 분포가 여기에 나타납니다.
+        </div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const yRefToggle = `
+    <div class="y-ref-toggle">
+      <span>y 기준점</span>
+      <button class="${cb.yReference==='bottom'?'active':''}" onclick="cbSetYReference('bottom')">하단 기준</button>
+      <button class="${cb.yReference==='top'?'active':''}" onclick="cbSetYReference('top')">상단 기준</button>
+    </div>
+  `;
+
+  const formulasHTML = `
+    <div class="steps">
+      ${yRefToggle}
+      ${cbSectionCardHTML('na')}
+      ${cbSectionCardHTML('io')}
+      ${cbSectionCardHTML('stress')}
+      ${cbSectionCardHTML('approx')}
+    </div>
+  `;
+
+  const momR = cbMomentEffectiveRange();
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">슬라이더는 실시간</span></h3>
+    <div id="cbVizWrap">${cbBuildVizSVGs()}</div>
+    <div style="display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; margin:12px 0 16px;">
+      <div style="font-size:11.5px; color:var(--gray-soft);">응력 단위 ${unitSelect('stress','cbChangeUnitType_stress')}</div>
+      <div style="width:260px; flex:0 0 auto;">
+        <label style="font-size:11.5px; color:var(--gray-soft); font-weight:700; display:block; margin-bottom:4px;">Moment M</label>
+        <div class="field-with-slider">
+          <div class="input-unit-group">
+            <input id="cbNum_moment" type="number" step="any" placeholder="값 입력" value="${cb.moment===null ? '' : fmt(disp(cb.moment, momF))}" onchange="cbUpdateMoment(this)">
+            ${unitSelect('moment','cbChangeUnitType_moment')}
+          </div>
+          <input id="cbSlider_moment" class="mini-slider" type="range" min="${momR[0]}" max="${momR[1]}" step="${momR[2]}" value="${cb.moment===null?0:fmt(disp(cb.moment, momF))}" oninput="cbMomentSliderInput(this.value)">
+        </div>
+      </div>
+    </div>
+    ${formulasHTML}
+    <div class="ai-hint">💬 이 식이 왜 이런 형태인지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  const aiHTML = aiHTMLPlaceholder();
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTML}</div>
+  `;
+}
+
+// 물리량 base 값은 항상 SI로 저장하므로, 단위 드롭다운을 바꿔도 값 자체는 그대로 유지되고 표시만 바뀜
+function cbSetYReference(ref){
+  cb.yReference = ref;
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+function cbChangeUnitType_length(v){ cb.units.length = v; cbMarkStale(); renderCompositeBeams(document.getElementById('panelsContainer')); }
+function cbChangeBlockEUnit(index, v){
+  const cid = cb.blocks[index].colorId;
+  cb.blocks.forEach(b => { if (b.colorId === cid) b.EUnit = v; });
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+function cbChangeUnitType_stress(v){ cb.units.stress = v; cbMarkStale(); renderCompositeBeams(document.getElementById('panelsContainer')); }
+function cbChangeUnitType_moment(v){ cb.units.moment = v; cbMarkStale(); renderCompositeBeams(document.getElementById('panelsContainer')); }
+
+function cbUpdateBlock(index, field, inputEl){
+  const factor = field === 'E' ? UNIT_OPTIONS.E[cb.blocks[index].EUnit] : UNIT_OPTIONS.length[cb.units.length];
+  const val = parseFloat(inputEl.value);
+  if(isNaN(val) || val <= 0){
+    inputEl.classList.add('invalid');
+    return;
+  }
+  inputEl.classList.remove('invalid');
+  const newVal = val * factor;
+  cb.blocks[index][field] = newVal;
+  // 같은 재료(같은 colorId)를 가진 다른 블록에도 동일하게 반영 — 예: 샌드위치 보의 위/아래 face는 같은 재료라 항상 값이 같아야 함
+  const cid = cb.blocks[index].colorId;
+  cb.blocks.forEach((b, j) => { if (j !== index && b.colorId === cid) b[field] = newVal; });
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+function cbMomentEffectiveRange(){
+  const momR = cbSliderRangeFor('moment', cb.units.moment);
+  if (!cb.momentRangeOverrideBase) return momR;
+  const factor = UNIT_OPTIONS.moment[cb.units.moment];
+  return [cb.momentRangeOverrideBase.min/factor, cb.momentRangeOverrideBase.max/factor, momR[2]];
+}
+
+function cbUpdateMoment(inputEl){
+  const factor = UNIT_OPTIONS.moment[cb.units.moment];
+  const val = parseFloat(inputEl.value);
+  if(isNaN(val)){ inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  cb.moment = val * factor;
+  // 슬라이더 기본 범위를 벗어나는 값을 입력하면, 그 값을 새 최대(또는 최소)로 슬라이더 범위를 넓혀줌
+  const momR = cbSliderRangeFor('moment', cb.units.moment);
+  const baseMin = momR[0]*factor, baseMax = momR[1]*factor;
+  const curMin = cb.momentRangeOverrideBase ? cb.momentRangeOverrideBase.min : baseMin;
+  const curMax = cb.momentRangeOverrideBase ? cb.momentRangeOverrideBase.max : baseMax;
+  if (cb.moment > curMax || cb.moment < curMin) {
+    cb.momentRangeOverrideBase = {
+      min: Math.min(curMin, cb.moment, baseMin),
+      max: Math.max(curMax, cb.moment, baseMax),
+    };
+  }
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+function cbAddBlock(){
+  const lenF = UNIT_OPTIONS.length[cb.units.length];
+  const EF = UNIT_OPTIONS.E[cb.defaultEUnit];
+  cb.sandwichLinked = false;
+  if (cb.blocks.length === 0) {
+    // 첫 블록: 예시 값이 아닌 중립적인 시작값 (사용자가 바로 수정하도록)
+    cb.blocks.push({ colorId: cb.nextColorId++, width: 1*lenF, height: 1*lenF, E: 1*EF, EUnit: cb.defaultEUnit });
+  } else {
+    const last = cb.blocks[cb.blocks.length-1];
+    cb.blocks.push({ colorId: cb.nextColorId++, width: last.width, height: last.height, E: last.E, EUnit: last.EUnit });
+  }
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+function cbRemoveBlock(index){
+  cb.blocks.splice(index, 1);
+  cb.sandwichLinked = false;
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+// ---- 블록 드래그로 위/아래 순서 변경 ----
+function cbDragStart(e, index){
+  cb.dragIndex = index;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(index));
+}
+function cbDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function cbDrop(e, targetIndex){
+  e.preventDefault();
+  const srcIndex = cb.dragIndex;
+  if(srcIndex === null || srcIndex === targetIndex) return;
+  const [moved] = cb.blocks.splice(srcIndex, 1);
+  cb.blocks.splice(targetIndex, 0, moved);
+  cb.dragIndex = null;
+  cbMarkStale();
+  renderCompositeBeams(document.getElementById('panelsContainer'));
+}
+
+renderChapters();
+
+
+/* ==================================================================
+   Transformed Section Method
+   — Composite Beams와 계산 뼈대는 동일하지만, 블록이 사각형이 아니라
+     "상단폭 / 하단폭"을 따로 갖는 사다리꼴이라는 점이 다름.
+     사다리꼴로 일반화하면 상단폭=하단폭일 때 자동으로 사각형이 됨.
+   ================================================================== */
+const ts = {
+  units: { length:'in', stress:'psi', moment:'kip·in' },
+  defaultEUnit: 'ksi',
+  dragIndex: null,
+  nextColorId: 0,
+  refIndex: 0, // 환산단면의 기준 재료로 삼을 블록 인덱스
+  blocks: [], // {colorId, topWidth, bottomWidth, height, E, EUnit} — bottom→top 순서
+  moment: 0,
+};
+
+// 사다리꼴(상단폭 a, 하단폭 b, 높이 h)의 면적 / 밑변 기준 도심 / 자체중심 관성모멘트
+function tsTrapezoid(a, b, h){
+  const area = (a+b)/2*h;
+  if (area <= 0) return { area:0, ybarLocal:0, I0:0 };
+  const ybarLocal = h*(2*a+b)/(3*(a+b));           // 하단(폭 b)에서부터의 도심 위치
+  const I0 = Math.pow(h,3)*(a*a+4*a*b+b*b)/(36*(a+b)); // 자체 도심축 기준 관성모멘트
+  return { area, ybarLocal, I0 };
+}
+
+function computeTransformed(){
+  let cum = 0;
+  const withY = ts.blocks.map(b => {
+    const yBottom = cum, yTop = cum + b.height;
+    const tz = tsTrapezoid(b.topWidth, b.bottomWidth, b.height);
+    const yc = yBottom + tz.ybarLocal;
+    cum = yTop;
+    return {...b, yBottom, yTop, yc, area: tz.area, I0own: tz.I0};
+  });
+  const totalHeight = cum;
+  const num = withY.reduce((s,b)=> s + b.E*b.area*b.yc, 0);
+  const den = withY.reduce((s,b)=> s + b.E*b.area, 0);
+  const ybar = den > 0 ? num/den : 0;
+  let EIsum = 0;
+  const withI = withY.map(b=>{
+    const d = b.yc - ybar;
+    const I = b.I0own + b.area*d*d;
+    EIsum += b.E*I;
+    return {...b, I, d};
+  });
+  const stressAt = (y, E) => EIsum > 0 ? -ts.moment*(y-ybar)*E/EIsum : 0;
+  return { blocks: withI, ybar, EIsum, totalHeight, stressAt };
+}
+
+function renderTransformedSection(container){
+  const lenF = UNIT_OPTIONS.length[ts.units.length];
+  const stressF = UNIT_OPTIONS.stress[ts.units.stress];
+  const momF = UNIT_OPTIONS.moment[ts.units.moment];
+  const disp = (base, factor) => base / factor;
+
+  // ---- Setting Menu ----
+  let blockRows = '';
+  for (let vi = 0; vi < ts.blocks.length; vi++) {
+    const i = ts.blocks.length - 1 - vi;
+    const b = ts.blocks[i];
+    const isRef = i === ts.refIndex;
+    const lenR = cbSliderRangeFor('length', ts.units.length);
+    const ER = cbSliderRangeFor('E', b.EUnit);
+    blockRows += `
+      <div class="block-card" data-index="${i}" ondragover="tsDragOver(event)" ondrop="tsDrop(event, ${i})">
+        <span class="drag-handle" draggable="true" ondragstart="tsDragStart(event, ${i})" title="끌어서 순서 변경">⠿</span>
+        <div class="block-title"><span class="color-dot" style="background:${blockColor(b).stroke}"></span>${blockColor(b).name} Block${i===0 ? ' · bottom' : (i===ts.blocks.length-1 ? ' · top' : '')}${isRef ? ' <span class="badge live" style="margin-left:4px;">기준(n=1)</span>' : ''}</div>
+        ${ts.blocks.length > 1 ? `<div class="remove-block" onclick="tsRemoveBlock(${i})">×</div>` : ''}
+        <div class="field">
+          <label>Top Width (상단폭)</label>
+          <div class="field-with-slider">
+            <div class="input-unit-group">
+              <input id="tsNum_${i}_topWidth" type="number" step="any" value="${fmt(disp(b.topWidth, lenF))}" onchange="tsUpdateBlock(${i}, 'topWidth', this)">
+              ${unitSelect('length','tsChangeUnitType_length', ts.units.length)}
+            </div>
+            <input id="tsSlider_${i}_topWidth" class="mini-slider" type="range" min="${lenR[0]}" max="${lenR[1]}" step="${lenR[2]}" value="${fmt(disp(b.topWidth, lenF))}" oninput="tsSliderInput(${i}, 'topWidth', this.value)" onchange="tsFullRerender()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Bottom Width (하단폭)</label>
+          <div class="field-with-slider">
+            <div class="input-unit-group">
+              <input id="tsNum_${i}_bottomWidth" type="number" step="any" value="${fmt(disp(b.bottomWidth, lenF))}" onchange="tsUpdateBlock(${i}, 'bottomWidth', this)">
+              ${unitSelect('length','tsChangeUnitType_length', ts.units.length)}
+            </div>
+            <input id="tsSlider_${i}_bottomWidth" class="mini-slider" type="range" min="${lenR[0]}" max="${lenR[1]}" step="${lenR[2]}" value="${fmt(disp(b.bottomWidth, lenF))}" oninput="tsSliderInput(${i}, 'bottomWidth', this.value)" onchange="tsFullRerender()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Height</label>
+          <div class="field-with-slider">
+            <div class="input-unit-group">
+              <input id="tsNum_${i}_height" type="number" step="any" value="${fmt(disp(b.height, lenF))}" onchange="tsUpdateBlock(${i}, 'height', this)">
+              ${unitSelect('length','tsChangeUnitType_length', ts.units.length)}
+            </div>
+            <input id="tsSlider_${i}_height" class="mini-slider" type="range" min="${lenR[0]}" max="${lenR[1]}" step="${lenR[2]}" value="${fmt(disp(b.height, lenF))}" oninput="tsSliderInput(${i}, 'height', this.value)" onchange="tsFullRerender()">
+          </div>
+        </div>
+        <div class="field">
+          <label>E</label>
+          <div class="field-with-slider">
+            <div class="input-unit-group">
+              <input id="tsNum_${i}_E" type="number" step="any" value="${fmt(disp(b.E, EFor(b)))}" onchange="tsUpdateBlock(${i}, 'E', this)">
+              ${unitSelect('E','tsChangeBlockEUnit', b.EUnit, i)}
+            </div>
+            <input id="tsSlider_${i}_E" class="mini-slider" type="range" min="${ER[0]}" max="${ER[1]}" step="${ER[2]}" value="${fmt(disp(b.E, EFor(b)))}" oninput="tsSliderInput(${i}, 'E', this.value)" onchange="tsFullRerender()">
+          </div>
+        </div>
+        <button class="add-block" style="margin-top:0;" onclick="tsSetRef(${i})">${isRef ? '✓ 기준 재료' : '기준 재료로 지정'}</button>
+      </div>
+    `;
+  }
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    ${ts.blocks.length > 1 ? `<div style="font-size:11px; color:var(--gray-soft); margin-bottom:12px;">⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요. 상단폭=하단폭이면 그냥 사각형이 돼요.</div>` : ''}
+    ${blockRows}
+    <button class="add-block" onclick="tsAddBlock()">+ 블록 추가</button>
+  `;
+
+  if (ts.blocks.length === 0) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel">
+        <h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:400px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          왼쪽에서 블록을 추가하면<br>원래 단면과 환산 단면이 여기에 나타납니다.
+        </div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const momR = cbSliderRangeFor('moment', ts.units.moment);
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">슬라이더는 실시간</span></h3>
+    <div id="tsVizWrap">${tsBuildVizSVG()}</div>
+    <div style="display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; margin:12px 0 16px;">
+      <div style="font-size:11.5px; color:var(--gray-soft);">응력 단위 ${unitSelect('stress','tsChangeUnitType_stress', ts.units.stress)}</div>
+      <div style="width:260px; flex:0 0 auto;">
+        <label style="font-size:11.5px; color:var(--gray-soft); font-weight:700; display:block; margin-bottom:4px;">Moment M</label>
+        <div class="field-with-slider">
+          <div class="input-unit-group">
+            <input id="tsNum_moment" type="number" step="any" placeholder="값 입력" value="${ts.moment===null ? '' : fmt(disp(ts.moment, momF))}" onchange="tsUpdateMoment(this)">
+            ${unitSelect('moment','tsChangeUnitType_moment', ts.units.moment)}
+          </div>
+          <input id="tsSlider_moment" class="mini-slider" type="range" min="${momR[0]}" max="${momR[1]}" step="${momR[2]}" value="${ts.moment===null?0:fmt(disp(ts.moment, momF))}" oninput="tsMomentSliderInput(this.value)" onchange="tsFullRerender()">
+        </div>
+      </div>
+    </div>
+    ${tsCalcSections()}
+    <div class="ai-hint">💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+function tsBuildVizSVG(){
+  const lenF = UNIT_OPTIONS.length[ts.units.length];
+  const momF = UNIT_OPTIONS.moment[ts.units.moment];
+  const result = computeTransformed();
+  const refBlock = result.blocks[Math.min(ts.refIndex, result.blocks.length-1)];
+
+  // ---- SVG: 원래 단면 | 환산 단면 | 응력 다이어그램 ----
+  const svgW = 1180, svgH = 545;
+  const padTop = 55, padBottom = 55, padLeft = 60;
+  const drawH = svgH - padTop - padBottom;
+  const scale = drawH / result.totalHeight; // 높이는 원래단면·환산단면 모두 동일 스케일
+
+  const zoneW = 230, zoneGap = 90;
+  const zoneA_cx = padLeft + zoneW/2;
+  const zoneB_cx = padLeft + zoneW + zoneGap + zoneW/2;
+  const diagCenterX = padLeft + 2*zoneW + zoneGap + 150;
+  const diagHalfW = 130;
+
+  const yToPx = (y) => padTop + (result.totalHeight - y) * scale;
+
+  const maxWidthOrig = Math.max(...result.blocks.map(b => Math.max(b.topWidth, b.bottomWidth)));
+  const maxWidthTrans = Math.max(...result.blocks.map(b => {
+    const n = b.E / refBlock.E;
+    return Math.max(b.topWidth*n, b.bottomWidth*n);
+  }));
+  const scaleA = Math.min(zoneW/maxWidthOrig, 1e9);
+  const scaleB = Math.min(zoneW/maxWidthTrans, 1e9);
+
+  function trapezoidPath(cx, sc, topW, botW, yTopPx, yBottomPx){
+    const x1 = cx - topW*sc/2, x2 = cx + topW*sc/2;
+    const x3 = cx + botW*sc/2, x4 = cx - botW*sc/2;
+    return `${x1.toFixed(1)},${yTopPx.toFixed(1)} ${x2.toFixed(1)},${yTopPx.toFixed(1)} ${x3.toFixed(1)},${yBottomPx.toFixed(1)} ${x4.toFixed(1)},${yBottomPx.toFixed(1)}`;
+  }
+
+  let svgBody = '';
+  // Y-Z 축 표시
+  const axisOx = padLeft - 30, axisOy = 8;
+  svgBody += `<line x1="${axisOx}" y1="${axisOy+28}" x2="${axisOx}" y2="${axisOy}" stroke="#51626F" stroke-width="1.4"/>`;
+  svgBody += `<polygon points="${axisOx},${axisOy} ${axisOx-3.5},${axisOy+7} ${axisOx+3.5},${axisOy+7}" fill="#51626F"/>`;
+  svgBody += `<text x="${axisOx+7}" y="${axisOy+4}" font-size="11" fill="#51626F" font-weight="800">Y</text>`;
+  svgBody += `<line x1="${axisOx}" y1="${axisOy+28}" x2="${axisOx+28}" y2="${axisOy+28}" stroke="#51626F" stroke-width="1.4"/>`;
+  svgBody += `<polygon points="${axisOx+28},${axisOy+28} ${axisOx+21},${axisOy+24.5} ${axisOx+21},${axisOy+31.5}" fill="#51626F"/>`;
+  svgBody += `<text x="${axisOx+32}" y="${axisOy+32}" font-size="11" fill="#51626F" font-weight="800">Z</text>`;
+
+  // 원래 단면 (Zone A)
+  svgBody += `<text x="${zoneA_cx}" y="${padTop-15}" font-size="11" fill="var(--gray-soft)" text-anchor="middle" font-weight="800">원래 단면 (실제 재료)</text>`;
+  result.blocks.forEach(b => {
+    const c = blockColor(b);
+    const pts = trapezoidPath(zoneA_cx, scaleA, b.topWidth, b.bottomWidth, yToPx(b.yTop), yToPx(b.yBottom));
+    svgBody += `<polygon points="${pts}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.4"/>`;
+  });
+  const naYA = yToPx(result.ybar);
+  svgBody += `<line x1="${zoneA_cx-zoneW/2-8}" y1="${naYA}" x2="${zoneA_cx+zoneW/2+8}" y2="${naYA}" stroke="#51626F" stroke-width="1.1" stroke-dasharray="5 4"/>`;
+
+  // 화살표 + n 라벨
+  const arrowY = padTop + drawH/2;
+  const arrowX1 = zoneA_cx + zoneW/2 + 14, arrowX2 = zoneB_cx - zoneW/2 - 14;
+  svgBody += `<line x1="${arrowX1}" y1="${arrowY}" x2="${arrowX2-8}" y2="${arrowY}" stroke="#C3002F" stroke-width="1.6"/>`;
+  svgBody += `<polygon points="${arrowX2},${arrowY} ${arrowX2-8},${arrowY-5} ${arrowX2-8},${arrowY+5}" fill="#C3002F"/>`;
+  svgBody += `<text x="${(arrowX1+arrowX2)/2}" y="${arrowY-10}" font-size="10.5" fill="#C3002F" text-anchor="middle" font-weight="800">환산 (n = Eᵢ/E_ref)</text>`;
+
+  // 환산 단면 (Zone B)
+  svgBody += `<text x="${zoneB_cx}" y="${padTop-15}" font-size="11" fill="var(--gray-soft)" text-anchor="middle" font-weight="800">환산 단면 (${blockColor(refBlock).name} 재료로 통일)</text>`;
+  result.blocks.forEach(b => {
+    const c = blockColor(b);
+    const n = b.E/refBlock.E;
+    const pts = trapezoidPath(zoneB_cx, scaleB, b.topWidth*n, b.bottomWidth*n, yToPx(b.yTop), yToPx(b.yBottom));
+    svgBody += `<polygon points="${pts}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.4" ${Math.abs(n-1)>1e-6?'stroke-dasharray="3 2"':''}/>`;
+    if (Math.abs(n-1) > 1e-6) {
+      svgBody += `<text x="${zoneB_cx + Math.max(b.topWidth,b.bottomWidth)*n*scaleB/2 + 6}" y="${(yToPx(b.yTop)+yToPx(b.yBottom))/2+3}" font-size="9.5" fill="${c.stroke}">n=${fmt(n)}</text>`;
+    }
+  });
+  svgBody += `<line x1="${zoneB_cx-zoneW/2-8}" y1="${naYA}" x2="${zoneB_cx+zoneW/2+8}" y2="${naYA}" stroke="#51626F" stroke-width="1.1" stroke-dasharray="5 4"/>`;
+
+  // 응력 다이어그램 (Zone C) — Composite Beams와 동일한 방식
+  const stressPts = [];
+  result.blocks.forEach((b, i) => {
+    stressPts.push({ y:b.yBottom, s: result.stressAt(b.yBottom,b.E), blockIdx:i });
+    stressPts.push({ y:b.yTop, s: result.stressAt(b.yTop,b.E), blockIdx:i });
+  });
+  const momRForScale = cbSliderRangeFor('moment', ts.units.moment);
+  const momentRefBase = Math.max(Math.abs(momRForScale[0]), Math.abs(momRForScale[1])) * momF;
+  const maxAbsStress = Math.max(1e-9, ...result.blocks.flatMap(b => [
+    Math.abs(momentRefBase*(b.yBottom-result.ybar)*b.E/result.EIsum),
+    Math.abs(momentRefBase*(b.yTop-result.ybar)*b.E/result.EIsum),
+  ]));
+  const sToPx = (s) => diagCenterX + (s/maxAbsStress)*diagHalfW;
+  svgBody += `<line x1="${diagCenterX}" y1="${padTop}" x2="${diagCenterX}" y2="${padTop+drawH}" stroke="#8A97A2" stroke-width="1.5"/>`;
+  svgBody += `<text x="${diagCenterX-diagHalfW-4}" y="${padTop-8}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">압축 (−)</text>`;
+  svgBody += `<text x="${diagCenterX+diagHalfW+4}" y="${padTop-8}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">인장 (+)</text>`;
+  for (let i=0;i<stressPts.length;i+=2){
+    const p1=stressPts[i], p2=stressPts[i+1];
+    const c = blockColor(result.blocks[p1.blockIdx]);
+    const x1=sToPx(p1.s), y1=yToPx(p1.y), x2=sToPx(p2.s), y2=yToPx(p2.y);
+    svgBody += `<polygon points="${diagCenterX},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${diagCenterX},${y2.toFixed(1)}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.6" opacity="0.9"/>`;
+  }
+  svgBody += `<text x="${diagCenterX}" y="${padTop+drawH+20}" font-size="10.5" fill="#8A97A2" text-anchor="middle" font-weight="700">STRESS DIAGRAM</text>`;
+
+  return `<svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; max-width:1300px; margin:0 auto; display:block; overflow:visible;">${svgBody}</svg>`;
+}
+
+function tsUpdateVisualizerOnly(){
+  const wrap = document.getElementById('tsVizWrap');
+  if (wrap) wrap.innerHTML = tsBuildVizSVG();
+}
+
+function tsFullRerender(){
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+function tsCalcSections(){
+  const lenF = UNIT_OPTIONS.length[ts.units.length];
+  const stressF = UNIT_OPTIONS.stress[ts.units.stress];
+  const momF = UNIT_OPTIONS.moment[ts.units.moment];
+  const disp = (base, factor) => base / factor;
+  const result = computeTransformed();
+  const areaF = lenF*lenF, I4F = Math.pow(lenF,4);
+  const refBlock = result.blocks[Math.min(ts.refIndex, result.blocks.length-1)];
+
+  let naRows = '', naEqTerms = [];
+  result.blocks.forEach(b => {
+    const c = blockColor(b);
+    const Ed = fmt(disp(b.E, EFor(b))), Ad = fmt(disp(b.area, areaF)), yd = fmt(disp(b.yc, lenF));
+    naRows += `<div class="step-row"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block &nbsp; A=${tip(Ad,'사다리꼴 면적 (상단폭+하단폭)/2 × 높이')} ${ts.units.length}² &nbsp; y=${tip(yd,'이 블록 중심의 y좌표')} ${ts.units.length} &nbsp; E=${tip(Ed,'이 블록의 탄성계수')} ${b.EUnit}</div>`;
+    naEqTerms.push(`${Ed}×${Ad}×(${yd}−ȳ)`);
+  });
+  const naBody = `
+    <div class="step-formula">Σ&nbsp;${tip('Eᵢ','각 블록의 탄성계수')}&nbsp;${tip('Aᵢ','각 블록의 사다리꼴 면적')}&nbsp;(${tip('yᵢ','각 블록 중심의 y좌표')}&nbsp;−&nbsp;${tip('ȳ','중립축 위치')})&nbsp;=&nbsp;0</div>
+    <div style="font-size:11.5px; color:var(--gray-soft); margin-bottom:8px;">사다리꼴이라도 원리는 동일 — 도심 위치 공식만 사각형과 달라져요.</div>
+    ${naRows}
+    <div class="step-eq">${naEqTerms.join(' + ')} = 0</div>
+    <div class="step-final">ȳ = ${fmt(disp(result.ybar, lenF))} ${ts.units.length} &nbsp;(하단 기준)</div>
+  `;
+
+  let ioRows = '';
+  result.blocks.forEach(b => {
+    const c = blockColor(b);
+    const ad = fmt(disp(b.topWidth, lenF)), bd = fmt(disp(b.bottomWidth, lenF)), hd = fmt(disp(b.height, lenF));
+    const dd = fmt(disp(b.d, lenF));
+    const I0disp = fmt(disp(b.I0own, I4F)), Itotal = fmt(disp(b.I, I4F));
+    ioRows += `
+      <div class="material-block">
+        <div class="material-title"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block</div>
+        <div class="step-eq">${tip('I₀','이 블록 자체 도심축 기준 관성모멘트')} = h³(a²+4ab+b²)/(36(a+b)) &nbsp;[a=${tip(ad,'상단폭')}, b=${tip(bd,'하단폭')}, h=${tip(hd,'높이')}] = ${tip(I0disp,'계산된 자체 관성모멘트')} ${ts.units.length}⁴</div>
+        <div class="step-eq">${tip('I','평행축 정리로 보정된 최종 관성모멘트')} = I₀ + A·d² &nbsp;(d=${tip(dd,'중립축까지의 거리')}) = ${tip(Itotal,'이 블록의 최종 I')} ${ts.units.length}⁴</div>
+      </div>
+    `;
+  });
+  const ioFormulaHeader2 = `사다리꼴 자체중심 관성모멘트: ${tip('I₀','자체 도심축 기준 관성모멘트')} = h³(${tip('a²+4ab+b²','상단폭·하단폭으로 만든 항')})/(36(a+b))`;
+  const ioBody = `
+    <div class="step-formula">${ioFormulaHeader2}</div>
+    <div style="font-size:11.5px; color:var(--gray-soft); margin-bottom:8px;">a=상단폭, b=하단폭. a=b이면 사각형 공식(bh³/12)과 같아져요.</div>
+    ${ioRows}
+    <div class="step-final">${tip('ΣEI','전체 단면의 굽힘강성')} = ${fmtSci(result.EIsum)} N·m²</div>
+  `;
+
+  let transformRows = '';
+  result.blocks.forEach(b => {
+    const c = blockColor(b);
+    const n = b.E/refBlock.E;
+    transformRows += `<div class="step-row"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block &nbsp; ${tip('n','환산 배율 = 이 재료의 E ÷ 기준 재료의 E')} = E/E_ref = ${tip(fmt(n),'폭에 곱해질 배율')}${Math.abs(n-1)<1e-9?' (기준)':''} &nbsp;→ 폭 ×${fmt(n)}</div>`;
+  });
+  const transformBody = `
+    <div class="step-formula">${tip('nᵢ','블록 i의 환산 배율')}&nbsp;=&nbsp;${tip('Eᵢ','이 블록의 탄성계수')}&nbsp;/&nbsp;${tip('E_ref','기준 재료의 탄성계수')} &nbsp;&nbsp;(폭에만 곱함, 높이는 그대로)</div>
+    <div style="font-size:11.5px; color:var(--gray-soft); margin-bottom:8px;">기준 재료를 제외한 블록들의 폭(상단·하단 모두)에 n을 곱하면, 전체 단면이 기준 재료 하나로 이루어진 것처럼 취급할 수 있어요.</div>
+    ${transformRows}
+    <div class="step-row" style="color:var(--gray-soft); margin-top:8px;">환산 후에도 I_T = ΣnᵢIᵢ 로 계산하면 General Theory의 ΣEI/E_ref 와 정확히 같은 값이 나와요 (검증 가능).</div>
+  `;
+
+  let stressSections = '';
+  const Mdisp = fmt(disp(ts.moment, momF));
+  const ybarDisp = fmt(disp(result.ybar, lenF));
+  const EIfullStr = fmtSci(result.EIsum) + ' N·m²';
+  const MdispTip2 = tip(Mdisp, '이 단면에 작용하는 굽힘모멘트 M');
+  const EIfullTip2 = tip(EIfullStr, '전체 단면의 굽힘강성 ΣEI');
+  result.blocks.forEach((b,k) => {
+    const c = blockColor(b);
+    const sBottom = result.stressAt(b.yBottom, b.E), sTop = result.stressAt(b.yTop, b.E);
+    const bLabel = k===0 ? '최하단' : '경계면', tLabel = k===result.blocks.length-1 ? '최상단' : '경계면';
+    const Ed = fmt(disp(b.E, EFor(b)));
+    const EdTip2 = tip(Ed, `${c.name} Block의 탄성계수`);
+    const yB = fmt(disp(b.yBottom, lenF)), yT = fmt(disp(b.yTop, lenF));
+    stressSections += `
+      <div class="material-block">
+        <div class="material-title"><span class="color-dot" style="background:${c.stroke}"></span>${c.name} Block</div>
+        <div class="step-eq">σ(${bLabel}) = −${MdispTip2}×(${yB}−${ybarDisp})×${EdTip2} / ${EIfullTip2} = <b class="${sBottom>=0?'tens':'comp'}">${fmt(disp(sBottom,stressF))} ${ts.units.stress}</b></div>
+        <div class="step-eq">σ(${tLabel}) = −${MdispTip2}×(${yT}−${ybarDisp})×${EdTip2} / ${EIfullTip2} = <b class="${sTop>=0?'tens':'comp'}">${fmt(disp(sTop,stressF))} ${ts.units.stress}</b></div>
+      </div>
+    `;
+  });
+  const stressBody = `
+    <div class="step-formula">${tip('σᵢ','이 지점의 굽힘응력')}&nbsp;=&nbsp;−${tip('M','굽힘모멘트')}(${tip('y','이 지점의 y좌표')}−${tip('ȳ','중립축 위치')})${tip('Eᵢ','이 재료의 탄성계수')}&nbsp;/&nbsp;${tip('ΣEI','전체 단면의 굽힘강성')}</div>
+    <div style="font-size:10.5px; color:var(--gray-soft); margin-bottom:8px;">환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.</div>
+    ${stressSections}
+  `;
+
+  return `
+    <div class="steps">
+      ${cbFormulaSection('Neutral Axis', naBody)}
+      ${cbFormulaSection('Moments of Inertia (사다리꼴)', ioBody)}
+      ${cbFormulaSection('Transformed Section (환산)', transformBody)}
+      ${cbFormulaSection('Normal Stresses', stressBody)}
+    </div>
+  `;
+}
+
+function tsSetRef(index){ ts.refIndex = index; renderTransformedSection(document.getElementById('panelsContainer')); }
+function tsChangeUnitType_length(v){ ts.units.length = v; renderTransformedSection(document.getElementById('panelsContainer')); }
+function tsChangeUnitType_stress(v){ ts.units.stress = v; renderTransformedSection(document.getElementById('panelsContainer')); }
+function tsChangeUnitType_moment(v){ ts.units.moment = v; renderTransformedSection(document.getElementById('panelsContainer')); }
+function tsChangeBlockEUnit(index, v){
+  const cid = ts.blocks[index].colorId;
+  ts.blocks.forEach(b => { if (b.colorId === cid) b.EUnit = v; });
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+function tsUpdateBlock(index, field, inputEl){
+  const factor = field === 'E' ? UNIT_OPTIONS.E[ts.blocks[index].EUnit] : UNIT_OPTIONS.length[ts.units.length];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || val <= 0) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  const newVal = val*factor;
+  ts.blocks[index][field] = newVal;
+  const cid = ts.blocks[index].colorId;
+  ts.blocks.forEach((b,j) => { if (j!==index && b.colorId===cid) b[field] = newVal; });
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+// 슬라이더 드래그 중에는 그림만 갱신 (슬라이더 자체는 다시 안 그려서 부드럽게 움직임), 놓으면(change) 전체 재계산
+function tsSliderInput(index, field, val){
+  const factor = field === 'E' ? UNIT_OPTIONS.E[ts.blocks[index].EUnit] : UNIT_OPTIONS.length[ts.units.length];
+  const newVal = parseFloat(val) * factor;
+  const cid = ts.blocks[index].colorId;
+  ts.blocks.forEach((b,j) => {
+    if (b.colorId === cid) {
+      b[field] = newVal;
+      const numEl = document.getElementById('tsNum_'+j+'_'+field);
+      if (numEl) numEl.value = fmt(parseFloat(val));
+      if (j !== index) {
+        const sliderEl = document.getElementById('tsSlider_'+j+'_'+field);
+        if (sliderEl) sliderEl.value = val;
+      }
+    }
+  });
+  tsUpdateVisualizerOnly();
+}
+
+function tsMomentSliderInput(val){
+  const momF = UNIT_OPTIONS.moment[ts.units.moment];
+  ts.moment = parseFloat(val) * momF;
+  const numEl = document.getElementById('tsNum_moment');
+  if (numEl) numEl.value = fmt(parseFloat(val));
+  tsUpdateVisualizerOnly();
+}
+
+function tsUpdateMoment(inputEl){
+  const factor = UNIT_OPTIONS.moment[ts.units.moment];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  ts.moment = val*factor;
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+function tsAddBlock(){
+  const lenF = UNIT_OPTIONS.length[ts.units.length];
+  const EF = UNIT_OPTIONS.E[ts.defaultEUnit];
+  if (ts.blocks.length === 0) {
+    ts.blocks.push({ colorId: ts.nextColorId++, topWidth:1*lenF, bottomWidth:1*lenF, height:1*lenF, E:1*EF, EUnit: ts.defaultEUnit });
+  } else {
+    const last = ts.blocks[ts.blocks.length-1];
+    ts.blocks.push({ colorId: ts.nextColorId++, topWidth:last.topWidth, bottomWidth:last.bottomWidth, height:last.height, E:last.E, EUnit:last.EUnit });
+  }
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+function tsRemoveBlock(index){
+  ts.blocks.splice(index,1);
+  if (ts.refIndex >= ts.blocks.length) ts.refIndex = Math.max(0, ts.blocks.length-1);
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+function tsDragStart(e, index){ ts.dragIndex = index; e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', String(index)); }
+function tsDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; }
+function tsDrop(e, targetIndex){
+  e.preventDefault();
+  const srcIndex = ts.dragIndex;
+  if (srcIndex===null || srcIndex===targetIndex) return;
+  const [moved] = ts.blocks.splice(srcIndex,1);
+  ts.blocks.splice(targetIndex,0,moved);
+  ts.dragIndex = null;
+  renderTransformedSection(document.getElementById('panelsContainer'));
+}
+
+/* ==================================================================
+   Functionally Graded Beams — 계산이 아니라 "개념을 보여주는" 시각화
+   ================================================================== */
+const fgm = {
+  n: 1, // 구배 지수 (grading exponent) — 1이면 선형, <1이면 아래쪽 근처에서 급변, >1이면 위쪽 근처에서 급변
+  colorA: { name:'Material A', hex:'#C3002F' },
+  colorB: { name:'Material B', hex:'#1F8A4C' },
+  dots: null, // 고정된 점 위치 (재렌더링해도 위치는 안 바뀌고 색만 바뀌게)
+};
+
+function fgmVolFracA(zeta, n){ return Math.pow(Math.max(0,Math.min(1,zeta)), n); } // zeta: 0=하단(B-rich) ~ 1=상단(A-rich)
+
+function fgmMixColor(hexB, hexA, t){
+  const pa = parseInt(hexA.slice(1),16), pb = parseInt(hexB.slice(1),16);
+  const ar=(pa>>16)&255, ag=(pa>>8)&255, ab=pa&255;
+  const br=(pb>>16)&255, bg=(pb>>8)&255, bb=pb&255;
+  const r = Math.round(br+(ar-br)*t), g = Math.round(bg+(ag-bg)*t), b = Math.round(bb+(ab-bb)*t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function fgmEnsureDots(){
+  if (fgm.dots) return;
+  fgm.dots = [];
+  let seed = 42;
+  const rand = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
+  for (let i=0;i<180;i++) fgm.dots.push({ x: rand(), y: rand() });
+}
+
+// fgmSetN / fgmPreset은 아래쪽에서 (fgmUpdate 기반의) 가벼운 버전으로 정의됨
+
+function fgmBuildVisuals(){
+  const n = fgm.n;
+  const A = fgm.colorA, B = fgm.colorB;
+
+  // ---- 그라디언트 바 (押출 빔 일러스트) ----
+  const gradStops = [];
+  for (let i=0;i<=24;i++){
+    const zeta = i/24;
+    const aFrac = fgmVolFracA(zeta, n);
+    const color = fgmMixColor(B.hex, A.hex, aFrac);
+    const offset = (1-zeta)*100;
+    gradStops.push(`<stop offset="${offset.toFixed(1)}%" stop-color="${color}"/>`);
+  }
+  const barW = 380, barH = 260, barX = 40, barY = 40, skew = 60;
+  const beamSVG = `
+    <svg viewBox="0 0 620 340" style="width:100%; max-width:640px; margin:0 auto; display:block;">
+      <defs>
+        <linearGradient id="fgmGrad" x1="0" y1="0" x2="0" y2="1">${gradStops.join('')}</linearGradient>
+      </defs>
+      <polygon points="${barX+skew},${barY} ${barX+skew+barW},${barY} ${barX+skew+barW+70},${barY-50} ${barX+skew+70},${barY-50}" fill="url(#fgmGrad)" opacity="0.85" stroke="#51626F" stroke-width="1"/>
+      <rect x="${barX+skew}" y="${barY}" width="${barW}" height="${barH}" fill="url(#fgmGrad)" stroke="#51626F" stroke-width="1.3"/>
+      <polygon points="${barX+skew+barW},${barY} ${barX+skew+barW+70},${barY-50} ${barX+skew+barW+70},${barY-50+barH} ${barX+skew+barW},${barY+barH}" fill="url(#fgmGrad)" opacity="0.7" stroke="#51626F" stroke-width="1"/>
+      <text x="${barX+skew+barW/2}" y="${barY-58}" font-size="12" font-weight="800" fill="${A.hex}" text-anchor="middle">${A.name}-rich (상단)</text>
+      <text x="${barX+skew+barW/2}" y="${barY+barH+22}" font-size="12" font-weight="800" fill="${B.hex}" text-anchor="middle">${B.name}-rich (하단)</text>
+      <line x1="${barX+skew+barW+10}" y1="${barY+barH+5}" x2="${barX+skew+barW+65}" y2="${barY+barH-40}" stroke="#8A97A2" stroke-width="1.3"/>
+      <polygon points="${barX+skew+barW+65},${barY+barH-40} ${barX+skew+barW+56},${barY+barH-38} ${barX+skew+barW+61},${barY+barH-30}" fill="#8A97A2"/>
+      <text x="${barX+skew+barW+72}" y="${barY+barH-38}" font-size="10.5" fill="#8A97A2" font-weight="700">X (길이방향)</text>
+      <text x="${barX-10}" y="${barY+barH/2}" font-size="10.5" fill="#8A97A2" font-weight="700" text-anchor="end" transform="rotate(-90 ${barX-10} ${barY+barH/2})">Z (높이방향)</text>
+    </svg>
+  `;
+
+  // ---- 구간별 비율 표 ----
+  const bands = 10;
+  let bandHTML = '';
+  for (let i=bands; i>=1; i--){
+    const zetaTop = i/bands, zetaBottom = (i-1)/bands;
+    const zetaMid = (zetaTop+zetaBottom)/2;
+    const aPct = fgmVolFracA(zetaMid, n)*100;
+    const bPct = 100-aPct;
+    const bg = fgmMixColor(B.hex, A.hex, aPct/100);
+    bandHTML += `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+        <div style="flex:1; height:20px; border-radius:4px; background:${bg}; opacity:0.85;"></div>
+        <div style="font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--gray); width:90px; text-align:right;">${aPct.toFixed(0)}% - ${bPct.toFixed(0)}%</div>
+      </div>
+    `;
+  }
+
+  // ---- 점 밀도 시각화 ----
+  const dotW = 160, dotH = 260;
+  let dotsSVG = '';
+  fgm.dots.forEach(d => {
+    const zeta = 1 - d.y;
+    const aFrac = fgmVolFracA(zeta, n);
+    const isA = ((d.x*997 + d.y*613) % 1) < aFrac;
+    dotsSVG += `<circle cx="${(d.x*dotW).toFixed(1)}" cy="${(d.y*dotH).toFixed(1)}" r="2.3" fill="${isA ? A.hex : B.hex}"/>`;
+  });
+  const dotSVGFull = `<svg viewBox="0 0 ${dotW} ${dotH}" style="width:100%; max-width:200px; border:1px solid var(--line); border-radius:8px; background:var(--bg);">${dotsSVG}</svg>`;
+
+  return { beamSVG, bandHTML, dotSVGFull };
+}
+
+// 슬라이더를 움직일 때는 그림 부분만 갱신 (슬라이더 자체는 다시 그리지 않아 드래그가 끊기지 않음)
+function fgmUpdate(){
+  const v = fgmBuildVisuals();
+  const beamEl = document.getElementById('fgmBeamWrap');
+  const bandEl = document.getElementById('fgmBandWrap');
+  const dotEl = document.getElementById('fgmDotWrap');
+  if (beamEl) beamEl.innerHTML = v.beamSVG;
+  if (bandEl) bandEl.innerHTML = v.bandHTML;
+  if (dotEl) dotEl.innerHTML = v.dotSVGFull;
+}
+
+function fgmSetN(v){ fgm.n = parseFloat(v); fgmUpdate(); }
+function fgmPreset(v){
+  fgm.n = v;
+  const slider = document.getElementById('fgmSlider');
+  if (slider) slider.value = v;
+  fgmUpdate();
+}
+
+function renderFGM(container){
+  fgmEnsureDots();
+  const A = fgm.colorA, B = fgm.colorB;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.65; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      <b style="color:var(--ink);">Functionally Graded Beam이 뭔가요?</b><br>
+      세라믹-금속처럼 성질이 다른 두 재료가 <b>딱 붙어있는 층이 아니라, 단면 안에서 서서히 섞여있는</b> 보예요.
+      맨 위(상단)는 ${A.name} 100%, 맨 아래(하단)는 ${B.name} 100%이고, 그 사이는 비율이 점점 바뀌어요.
+    </div>
+    <div style="font-size:12px; color:var(--gray); line-height:1.65; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      <b style="color:var(--ink);">아래 슬라이더는 뭘 조절하나요?</b><br>
+      "비율이 바뀌는 <u>구간이 어디에 몰려있는지</u>"를 조절해요.<br>
+      · <b>하단에서 급변</b>: 대부분은 ${A.name}가 우세하다가, 맨 아래 근처에서만 비율이 확 바뀜<br>
+      · <b>균등하게</b>: 위부터 아래까지 일정한 속도로 서서히 바뀜 (가장 단순한 경우)<br>
+      · <b>상단에서 급변</b>: 대부분은 ${B.name}가 우세하다가, 맨 위 근처에서만 비율이 확 바뀜
+    </div>
+    <div class="field">
+      <label>재료 전환 방식</label>
+      <input id="fgmSlider" type="range" min="0.2" max="5" step="0.1" value="${fgm.n}" style="width:100%;" oninput="fgmSetN(this.value)">
+      <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--gray-soft); margin-top:2px;">
+        <span>하단에서 급변</span><span>균등하게</span><span>상단에서 급변</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:6px; margin-top:10px;">
+      <button class="add-block" style="flex:1;" onclick="fgmPreset(0.3)">하단에서 급변</button>
+      <button class="add-block" style="flex:1;" onclick="fgmPreset(1)">균등하게</button>
+      <button class="add-block" style="flex:1;" onclick="fgmPreset(3)">상단에서 급변</button>
+    </div>
+  `;
+
+  const v0 = fgmBuildVisuals();
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="fgmBeamWrap">${v0.beamSVG}</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-top:16px;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:var(--crimson); margin-bottom:8px;">${A.name}% – ${B.name}% (구간별)</div>
+        <div id="fgmBandWrap">${v0.bandHTML}</div>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:var(--crimson); margin-bottom:8px;">점 밀도로 본 재료 분포</div>
+        <div id="fgmDotWrap">${v0.dotSVGFull}</div>
+      </div>
+    </div>
+    <div class="ai-hint" style="margin-top:16px;">💬 재료가 왜 이렇게 섞여서 만들어지는지, 실제로 어디에 쓰이는지는 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Beams with Inclined Loads — 경사하중을 My/Mz로 분해, 각 모서리 응력 부호 판정
+   ================================================================== */
+const il = {
+  units: { length:'in', stress:'psi', moment:'kip·in' },
+  width: null, height: null, // null이면 빈 상태
+  moment: 0, alpha: 30, // alpha: 모멘트 벡터가 z축에서 y축 방향으로 얼마나 기울었는지 (도)
+};
+
+function ilCompute(){
+  const Iz = il.width*Math.pow(il.height,3)/12; // z축 굽힘 (y방향 두께 = height)
+  const Iy = il.height*Math.pow(il.width,3)/12; // y축 굽힘 (z방향 두께 = width)
+  const rad = il.alpha*Math.PI/180;
+  const Mz = il.moment*Math.cos(rad);
+  const My = il.moment*Math.sin(rad);
+  const stressAt = (y,z) => -(Mz*y)/Iz + (My*z)/Iy;
+  const betaRad = Math.atan2(My/Iy, Mz/Iz); // 중립축 방향각 (z축 기준)
+  return { Iz, Iy, Mz, My, stressAt, betaRad };
+}
+
+function ilBuildVisuals(){
+  const lenF = UNIT_OPTIONS.length[il.units.length];
+  const stressF = UNIT_OPTIONS.stress[il.units.stress];
+  const disp = (b,f) => b/f;
+  const r = ilCompute();
+
+  const w = 460, h = 360, cx = w/2, cy = h/2;
+  const scale = Math.min(160/il.width, 160/il.height);
+  const bPx = il.width*scale, hPx = il.height*scale;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:520px; margin:0 auto; display:block;">`;
+  // 단면 사각형
+  svg += `<rect x="${cx-bPx/2}" y="${cy-hPx/2}" width="${bPx}" height="${hPx}" fill="#F7E3E6" stroke="#51626F" stroke-width="1.4"/>`;
+  // y,z 축
+  svg += `<line x1="${cx}" y1="${cy+hPx/2+20}" x2="${cx}" y2="${cy-hPx/2-20}" stroke="#8A97A2" stroke-width="1.2"/>`;
+  svg += `<polygon points="${cx},${cy-hPx/2-20} ${cx-4},${cy-hPx/2-12} ${cx+4},${cy-hPx/2-12}" fill="#8A97A2"/>`;
+  svg += `<text x="${cx+8}" y="${cy-hPx/2-20}" font-size="12" fill="#8A97A2" font-weight="800">Y</text>`;
+  svg += `<line x1="${cx-bPx/2-20}" y1="${cy}" x2="${cx+bPx/2+20}" y2="${cy}" stroke="#8A97A2" stroke-width="1.2"/>`;
+  svg += `<polygon points="${cx+bPx/2+20},${cy} ${cx+bPx/2+12},${cy-4} ${cx+bPx/2+12},${cy+4}" fill="#8A97A2"/>`;
+  svg += `<text x="${cx+bPx/2+22}" y="${cy+4}" font-size="12" fill="#8A97A2" font-weight="800">Z</text>`;
+
+  // 모멘트 벡터 방향 (크림슨 화살표, alpha)
+  const radA = il.alpha*Math.PI/180;
+  const mLen = Math.max(bPx,hPx)/2 + 40;
+  const mx = cx + mLen*Math.cos(radA), my = cy - mLen*Math.sin(radA);
+  svg += `<line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#C3002F" stroke-width="2"/>`;
+  svg += `<polygon points="${mx},${my} ${mx-8*Math.cos(radA-0.4)},${my+8*Math.sin(radA-0.4)} ${mx-8*Math.cos(radA+0.4)},${my+8*Math.sin(radA+0.4)}" fill="#C3002F"/>`;
+  svg += `<text x="${mx+ (Math.cos(radA)>=0?8:-8)}" y="${my - (Math.sin(radA)>=0?6:-14)}" font-size="11" fill="#C3002F" font-weight="800" text-anchor="${Math.cos(radA)>=0?'start':'end'}">M (α=${il.alpha}°)</text>`;
+
+  // 중립축 (파란 점선, beta 방향으로 단면을 관통)
+  const naLen = Math.max(bPx,hPx)/2 + 45;
+  const nx1 = cx + naLen*Math.cos(r.betaRad), ny1 = cy - naLen*Math.sin(r.betaRad);
+  const nx2 = cx - naLen*Math.cos(r.betaRad), ny2 = cy + naLen*Math.sin(r.betaRad);
+  svg += `<line x1="${nx1}" y1="${ny1}" x2="${nx2}" y2="${ny2}" stroke="#1F8A4C" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  const betaDeg = r.betaRad*180/Math.PI;
+  svg += `<text x="${nx1+(Math.cos(r.betaRad)>=0?6:-6)}" y="${ny1-4}" font-size="11" fill="#1F8A4C" font-weight="800" text-anchor="${Math.cos(r.betaRad)>=0?'start':'end'}">중립축 (β=${betaDeg.toFixed(1)}°)</text>`;
+
+  // 네 모서리 응력
+  const corners = [
+    { label:'D', y: il.height/2,  z: il.width/2,  px: cx+bPx/2, py: cy-hPx/2, ax:'start', ay:-6 },
+    { label:'E', y: -il.height/2, z: il.width/2,  px: cx+bPx/2, py: cy+hPx/2, ax:'start', ay:16 },
+    { label:'F', y: -il.height/2, z: -il.width/2, px: cx-bPx/2, py: cy+hPx/2, ax:'end', ay:16 },
+    { label:'G', y: il.height/2,  z: -il.width/2, px: cx-bPx/2, py: cy-hPx/2, ax:'end', ay:-6 },
+  ];
+  corners.forEach(c => {
+    const s = r.stressAt(c.y, c.z);
+    const col = s >= 0 ? '#1E7F72' : '#C3002F';
+    svg += `<circle cx="${c.px}" cy="${c.py}" r="4" fill="${col}"/>`;
+    svg += `<text x="${c.px}" y="${c.py+c.ay}" font-size="11" font-weight="800" fill="${col}" text-anchor="${c.ax}">${c.label}: ${fmt(disp(s,stressF))} ${il.units.stress}</text>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function ilUpdate(){
+  const wrap = document.getElementById('ilVizWrap');
+  if (wrap) wrap.innerHTML = ilBuildVisuals();
+  const alphaLabel = document.getElementById('ilAlphaLabel');
+  if (alphaLabel) alphaLabel.textContent = il.alpha + '°';
+}
+
+function ilAlphaInput(v){ il.alpha = parseFloat(v); ilUpdate(); }
+function ilMomentSliderInput(v){
+  const momF = UNIT_OPTIONS.moment[il.units.moment];
+  il.moment = parseFloat(v)*momF;
+  const numEl = document.getElementById('ilNum_moment');
+  if (numEl) numEl.value = fmt(parseFloat(v));
+  ilUpdate();
+}
+function ilChangeUnitType_length(v){ il.units.length = v; renderInclinedLoads(document.getElementById('panelsContainer')); }
+function ilChangeUnitType_stress(v){ il.units.stress = v; renderInclinedLoads(document.getElementById('panelsContainer')); }
+function ilChangeUnitType_moment(v){ il.units.moment = v; renderInclinedLoads(document.getElementById('panelsContainer')); }
+function ilUpdateDim(field, inputEl){
+  const lenF = UNIT_OPTIONS.length[il.units.length];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || val <= 0) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  il[field] = val*lenF;
+  renderInclinedLoads(document.getElementById('panelsContainer'));
+}
+function ilUpdateMoment(inputEl){
+  const momF = UNIT_OPTIONS.moment[il.units.moment];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  il.moment = val*momF;
+  const slider = document.getElementById('ilSlider_moment');
+  if (slider) slider.value = val;
+  renderInclinedLoads(document.getElementById('panelsContainer'));
+}
+
+function renderInclinedLoads(container){
+  const lenF = UNIT_OPTIONS.length[il.units.length];
+  const momF = UNIT_OPTIONS.moment[il.units.moment];
+  const disp = (b,f) => b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      직사각형 단면에 <b>Z축에서 α만큼 기울어진 방향</b>으로 굽힘모멘트가 작용해요.
+      이 모멘트는 My, Mz 두 성분으로 분해되고, 단면 각 지점의 응력은 두 성분의 중첩으로 결정돼요.
+    </div>
+    <div class="field">
+      <label>Width (b)</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${il.width===null?'':fmt(disp(il.width,lenF))}" onchange="ilUpdateDim('width', this)">
+        ${unitSelect('length','ilChangeUnitType_length')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Height (h)</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${il.height===null?'':fmt(disp(il.height,lenF))}" onchange="ilUpdateDim('height', this)">
+        ${unitSelect('length','ilChangeUnitType_length')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Moment M</label>
+      <div class="input-unit-group">
+        <input id="ilNum_moment" type="number" step="any" value="${fmt(disp(il.moment,momF))}" onchange="ilUpdateMoment(this)">
+        ${unitSelect('moment','ilChangeUnitType_moment')}
+      </div>
+      <input id="ilSlider_moment" type="range" min="0" max="200" step="1" value="${fmt(disp(il.moment,momF))}" oninput="ilMomentSliderInput(this.value)" style="width:100%; margin-top:5px;">
+    </div>
+    <div class="field">
+      <label>기울기 α (Z축 기준) — <span id="ilAlphaLabel">${il.alpha}°</span></label>
+      <input type="range" min="0" max="90" step="1" value="${il.alpha}" oninput="ilAlphaInput(this.value)" style="width:100%;">
+    </div>
+  `;
+
+  if (il.width === null || il.height === null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel">
+        <h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:400px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          폭과 높이를 입력하면<br>단면과 응력 분포가 나타납니다.
+        </div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const r = ilCompute();
+  const stressF = UNIT_OPTIONS.stress[il.units.stress];
+  const betaDeg = r.betaRad*180/Math.PI;
+
+  const explainBody = `
+    <div class="step-formula">${tip('σ(y,z)','이 지점의 굽힘응력')} = −(${tip('Mz','z축에 대한 모멘트 성분')}·y)/${tip('Iz','z축 관성모멘트')} + (${tip('My','y축에 대한 모멘트 성분')}·z)/${tip('Iy','y축 관성모멘트')}</div>
+    <div class="step-row">Mz = M·cos(α) = ${fmt(disp(r.Mz, UNIT_OPTIONS.moment[il.units.moment]))} ${il.units.moment}</div>
+    <div class="step-row">My = M·sin(α) = ${fmt(disp(r.My, UNIT_OPTIONS.moment[il.units.moment]))} ${il.units.moment}</div>
+    <div class="step-row">Iz = b·h³/12 = ${fmtSci(r.Iz)} m⁴ &nbsp; Iy = h·b³/12 = ${fmtSci(r.Iy)} m⁴</div>
+    <div class="step-final">중립축 방향 β = ${betaDeg.toFixed(1)}° &nbsp; <span style="font-weight:400; color:var(--gray-soft); font-size:11px;">(tan β = tan α · Iz/Iy)</span></div>
+    <div style="font-size:11.5px; color:var(--gray-soft); margin-top:10px; line-height:1.6;">
+      💡 <b>Iz ≠ Iy</b>이면 중립축(β)이 모멘트 방향(α)과 <b>일치하지 않아요</b> — 이게 비대칭(2축) 굽힘의 핵심 포인트예요.
+      정사각형 단면(b=h)처럼 Iz=Iy일 때만 β=α가 됩니다.
+    </div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="ilVizWrap">${ilBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">
+      ${cbFormulaSection('My / Mz 분해와 응력', explainBody)}
+    </div>
+    <div class="ai-hint">💬 왜 중립축이 모멘트 방향과 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Elastoplastic Bending — 사각형 단면, 탄성→탄소성→완전소성
+   ================================================================== */
+const ep = {
+  units: { length:'in', stress:'psi', moment:'kip·in' },
+  width: null, height: null, sigmaY: null,
+  moment: 0,
+};
+
+function epCompute(){
+  const c = ep.height/2;
+  const I = ep.width*Math.pow(ep.height,3)/12;
+  const My = ep.sigmaY*I/c;
+  const Mp = ep.sigmaY*ep.width*ep.height*ep.height/4;
+  let e, stage;
+  if (ep.moment <= My) { e = c; stage = ep.moment <= 0 ? '하중 없음' : '탄성 (Elastic)'; }
+  else if (ep.moment < Mp) { e = c*Math.sqrt(Math.max(0, 3 - 2*ep.moment/My)); stage = '탄소성 (Elastoplastic)'; }
+  else { e = 0; stage = '완전소성 (Fully Plastic)'; }
+  return { c, I, My, Mp, e, stage, shapeFactor: Mp/My };
+}
+
+function epBuildVisuals(){
+  const lenF = UNIT_OPTIONS.length[ep.units.length];
+  const stressF = UNIT_OPTIONS.stress[ep.units.stress];
+  const disp = (b,f) => b/f;
+  const r = epCompute();
+
+  const w = 520, h = 360, padTop = 30;
+  const scale = 220/ep.height;
+  const bPx = ep.width*scale, hPx = ep.height*scale;
+  const cx1 = 130, cy = padTop + hPx/2;
+  const ePx = r.e*scale;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:560px; margin:0 auto; display:block;">`;
+  // 단면: 탄성 코어 + 소성 영역
+  svg += `<rect x="${cx1-bPx/2}" y="${cy-hPx/2}" width="${bPx}" height="${hPx}" fill="#F4F1E8" stroke="#51626F" stroke-width="1.3"/>`;
+  svg += `<rect x="${cx1-bPx/2}" y="${cy-ePx/2}" width="${bPx}" height="${ePx}" fill="#E1F2EF" stroke="#1E7F72" stroke-width="1.2"/>`;
+  if (ePx < hPx) {
+    svg += `<rect x="${cx1-bPx/2}" y="${cy-hPx/2}" width="${bPx}" height="${(hPx-ePx)/2}" fill="#F7E3E6" stroke="#C3002F" stroke-width="1.2"/>`;
+    svg += `<rect x="${cx1-bPx/2}" y="${cy+ePx/2}" width="${bPx}" height="${(hPx-ePx)/2}" fill="#F7E3E6" stroke="#C3002F" stroke-width="1.2"/>`;
+  }
+  svg += `<line x1="${cx1-bPx/2-10}" y1="${cy}" x2="${cx1+bPx/2+10}" y2="${cy}" stroke="#51626F" stroke-width="1" stroke-dasharray="4 3"/>`;
+  svg += `<text x="${cx1}" y="${cy-hPx/2-10}" font-size="11" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">단면 (탄성코어 vs 소성영역)</text>`;
+  if (ePx > 4 && ePx < hPx) {
+    svg += `<text x="${cx1+bPx/2+8}" y="${cy+3}" font-size="10" fill="#1E7F72" font-weight="700">e</text>`;
+  }
+
+  // 응력 다이어그램
+  const diagCx = 340, diagHalfW = 110;
+  svg += `<line x1="${diagCx}" y1="${padTop}" x2="${diagCx}" y2="${padTop+hPx}" stroke="#8A97A2" stroke-width="1.3"/>`;
+  svg += `<text x="${diagCx-diagHalfW-4}" y="${padTop-8}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">압축(−)</text>`;
+  svg += `<text x="${diagCx+diagHalfW+4}" y="${padTop-8}" font-size="10" fill="var(--gray-soft)" text-anchor="middle" font-weight="700">인장(+)</text>`;
+  const yTopPx = padTop, yBotPx = padTop+hPx, yMidTopPx = padTop+(hPx-ePx)/2, yMidBotPx = padTop+(hPx+ePx)/2;
+  // 상단 소성(압축, -sigmaY 가정 위=압축) - 부호는 예시로 위=압축(-), 아래=인장(+)
+  const sYpx = diagHalfW; // 최대값 = sigmaY 매핑
+  if (ePx < hPx) {
+    svg += `<rect x="${diagCx-sYpx}" y="${yTopPx}" width="${sYpx}" height="${yMidTopPx-yTopPx}" fill="#F7E3E6" stroke="#C3002F" stroke-width="1.2"/>`;
+    svg += `<rect x="${diagCx}" y="${yMidBotPx}" width="${sYpx}" height="${yBotPx-yMidBotPx}" fill="#E1F2EF" stroke="#1E7F72" stroke-width="1.2"/>`;
+  }
+  svg += `<polygon points="${diagCx},${yMidTopPx} ${diagCx-sYpx},${yMidTopPx} ${diagCx},${cy} ${diagCx+sYpx},${yMidBotPx} ${diagCx},${yMidBotPx}" fill="none"/>`;
+  // 탄성 코어 구간 사선
+  svg += `<line x1="${diagCx-sYpx}" y1="${yMidTopPx}" x2="${diagCx}" y2="${cy}" stroke="#C3002F" stroke-width="1.8"/>`;
+  svg += `<line x1="${diagCx}" y1="${cy}" x2="${diagCx+sYpx}" y2="${yMidBotPx}" stroke="#1E7F72" stroke-width="1.8"/>`;
+  svg += `<text x="${diagCx}" y="${padTop+hPx+20}" font-size="10.5" fill="#8A97A2" text-anchor="middle" font-weight="700">STRESS DIAGRAM</text>`;
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function epUpdate(){
+  const wrap = document.getElementById('epVizWrap');
+  if (wrap) wrap.innerHTML = epBuildVisuals();
+  const r = epCompute();
+  const lenF = UNIT_OPTIONS.length[ep.units.length];
+  const disp = (b,f)=>b/f;
+  const infoEl = document.getElementById('epInfoWrap');
+  if (infoEl) infoEl.innerHTML = epBuildInfo(r);
+}
+
+function epBuildInfo(r){
+  const momF = UNIT_OPTIONS.moment[ep.units.moment];
+  const disp = (b,f)=>b/f;
+  return `
+    <div class="result-grid">
+      <div class="result-card"><div class="l">현재 단계</div><div class="v">${r.stage}</div></div>
+      <div class="result-card"><div class="l">e / c (탄성코어 비율)</div><div class="v">${(r.e/r.c).toFixed(2)}</div></div>
+      <div class="result-card"><div class="l">My (항복모멘트)</div><div class="v">${fmt(disp(r.My, momF))} ${ep.units.moment}</div></div>
+      <div class="result-card"><div class="l">Mp (완전소성모멘트)</div><div class="v">${fmt(disp(r.Mp, momF))} ${ep.units.moment}</div></div>
+    </div>
+    <div style="font-size:11px; color:var(--gray-soft); margin-top:8px;">형상계수 f = Mp/My = ${r.shapeFactor.toFixed(2)} (직사각형은 항상 1.5)</div>
+  `;
+}
+
+function epMomentSliderInput(v){
+  const momF = UNIT_OPTIONS.moment[ep.units.moment];
+  ep.moment = parseFloat(v)*momF;
+  const numEl = document.getElementById('epNum_moment');
+  if (numEl) numEl.value = fmt(parseFloat(v));
+  epUpdate();
+}
+function epChangeUnitType_length(v){ ep.units.length = v; renderElastoplastic(document.getElementById('panelsContainer')); }
+function epChangeUnitType_stress(v){ ep.units.stress = v; renderElastoplastic(document.getElementById('panelsContainer')); }
+function epChangeUnitType_moment(v){ ep.units.moment = v; renderElastoplastic(document.getElementById('panelsContainer')); }
+function epUpdateField(field, inputEl, isStress){
+  const factor = isStress ? UNIT_OPTIONS.stress[ep.units.stress] : UNIT_OPTIONS.length[ep.units.length];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || val <= 0) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  ep[field] = val*factor;
+  renderElastoplastic(document.getElementById('panelsContainer'));
+}
+function epUpdateMoment(inputEl){
+  const momF = UNIT_OPTIONS.moment[ep.units.moment];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  ep.moment = val*momF;
+  renderElastoplastic(document.getElementById('panelsContainer'));
+}
+
+function renderElastoplastic(container){
+  const lenF = UNIT_OPTIONS.length[ep.units.length];
+  const stressF = UNIT_OPTIONS.stress[ep.units.stress];
+  const momF = UNIT_OPTIONS.moment[ep.units.moment];
+  const disp = (b,f) => b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      직사각형 단면에 모멘트를 점점 키우면, 처음엔 <b>탄성</b>이다가 표면부터 <b>항복</b>하기 시작하고,
+      계속 키우면 단면 전체가 <b>완전소성</b> 상태가 돼요. 아래 슬라이더로 모멘트를 올려보세요.
+    </div>
+    <div class="field">
+      <label>Width (b)</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${ep.width===null?'':fmt(disp(ep.width,lenF))}" onchange="epUpdateField('width', this, false)">
+        ${unitSelect('length','epChangeUnitType_length')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Height (h)</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${ep.height===null?'':fmt(disp(ep.height,lenF))}" onchange="epUpdateField('height', this, false)">
+        ${unitSelect('length','epChangeUnitType_length')}
+      </div>
+    </div>
+    <div class="field">
+      <label>항복응력 σY</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${ep.sigmaY===null?'':fmt(disp(ep.sigmaY,stressF))}" onchange="epUpdateField('sigmaY', this, true)">
+        ${unitSelect('stress','epChangeUnitType_stress')}
+      </div>
+    </div>
+  `;
+
+  if (ep.width === null || ep.height === null || ep.sigmaY === null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel">
+        <h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:400px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          폭·높이·항복응력을 입력하면<br>단면과 응력 분포가 나타납니다.
+        </div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const r0 = epCompute();
+  const mpDisp = fmt(disp(r0.Mp, momF));
+
+  const settingHTML2 = settingHTML + `
+    <div class="field">
+      <label>Moment M</label>
+      <div class="input-unit-group">
+        <input id="epNum_moment" type="number" step="any" value="${fmt(disp(ep.moment,momF))}" onchange="epUpdateMoment(this)">
+        ${unitSelect('moment','epChangeUnitType_moment')}
+      </div>
+      <input id="epSlider_moment" type="range" min="0" max="${mpDisp}" step="${(parseFloat(mpDisp)/100).toFixed(4)}" value="${fmt(disp(ep.moment,momF))}" oninput="epMomentSliderInput(this.value)" style="width:100%; margin-top:5px;">
+      <div style="font-size:10.5px; color:var(--gray-soft); margin-top:2px;">0 ~ Mp(${mpDisp} ${ep.units.moment}) 범위 (Mp 이상은 물리적으로 불가능)</div>
+    </div>
+  `;
+
+  const formulaBody = `
+    <div class="step-formula">${tip('e','탄성코어 절반 높이')} = c·√(3 − 2M/My) &nbsp; (My ≤ M ≤ Mp)</div>
+    <div class="step-row">My = σY·I/c &nbsp; Mp = σY·b·h²/4 &nbsp; f = Mp/My = 1.5</div>
+    <div style="font-size:11px; color:var(--gray-soft); margin-top:6px;">M ≤ My면 e=c(완전탄성), M ≥ Mp면 e=0(완전소성)</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="epVizWrap">${epBuildVisuals()}</div>
+    <div id="epInfoWrap">${epBuildInfo(r0)}</div>
+    <div class="steps" style="margin-top:16px;">
+      ${cbFormulaSection('탄성코어 계산', formulaBody)}
+    </div>
+    <div class="ai-hint">💬 왜 e가 이 공식으로 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML2}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Plane Stress — 변환식, 주응력, 최대전단응력
+   ================================================================== */
+const ps = {
+  units: { stress: 'psi' },
+  sigmaX: 0, sigmaY: 0, tauXY: 0, // base SI (Pa)
+  theta: 0, // degrees — 라이브 슬라이더
+};
+
+function psCompute(){
+  const rad = ps.theta*Math.PI/180;
+  const avg = (ps.sigmaX+ps.sigmaY)/2;
+  const diff = (ps.sigmaX-ps.sigmaY)/2;
+  const sx1 = avg + diff*Math.cos(2*rad) + ps.tauXY*Math.sin(2*rad);
+  const sy1 = avg - diff*Math.cos(2*rad) - ps.tauXY*Math.sin(2*rad);
+  const tx1y1 = -diff*Math.sin(2*rad) + ps.tauXY*Math.cos(2*rad);
+  const R = Math.sqrt(diff*diff + ps.tauXY*ps.tauXY);
+  const thetaPrad = 0.5*Math.atan2(ps.tauXY, diff);
+  const thetaSrad = thetaPrad - Math.PI/4;
+  return {
+    sx1, sy1, tx1y1, avg, diff, R,
+    sigma1: avg+R, sigma2: avg-R,
+    thetaPdeg: thetaPrad*180/Math.PI,
+    thetaSdeg: thetaSrad*180/Math.PI,
+  };
+}
+
+function psArrow(x1,y1,x2,y2,color){
+  const ang = Math.atan2(y2-y1, x2-x1);
+  const ah = 6;
+  const ax1 = x2-ah*Math.cos(ang-0.4), ay1 = y2-ah*Math.sin(ang-0.4);
+  const ax2 = x2-ah*Math.cos(ang+0.4), ay2 = y2-ah*Math.sin(ang+0.4);
+  return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="1.8"/>` +
+         `<polygon points="${x2.toFixed(1)},${y2.toFixed(1)} ${ax1.toFixed(1)},${ay1.toFixed(1)} ${ax2.toFixed(1)},${ay2.toFixed(1)}" fill="${color}"/>`;
+}
+
+function psDrawElement(cx, cy, size, sx, sy, txy, rotateDeg, color, label){
+  const s = size/2, L = 34;
+  let g = `<g transform="rotate(${(-rotateDeg).toFixed(2)} ${cx} ${cy})">`;
+  g += `<rect x="${cx-s}" y="${cy-s}" width="${size}" height="${size}" fill="${color}" fill-opacity="0.15" stroke="${color}" stroke-width="1.5"/>`;
+  // sigma x: 우/좌 면, 인장(+)이면 바깥쪽으로
+  const sxo = sx >= 0 ? 1 : -1;
+  g += psArrow(cx+s, cy, cx+s+sxo*L, cy, color);
+  g += psArrow(cx-s, cy, cx-s-sxo*L, cy, color);
+  // sigma y: 상/하 면
+  const syo = sy >= 0 ? -1 : 1; // svg y는 아래로 증가하므로 부호 반전
+  g += psArrow(cx, cy-s, cx, cy-s+syo*L, color);
+  g += psArrow(cx, cy+s, cx, cy+s-syo*L, color);
+  // tau xy: 네 면에 접선 방향 화살표 (양수면 우측면=위, 좌측면=아래, 상단면=우, 하단면=좌)
+  const to = txy >= 0 ? 1 : -1;
+  const tl = 22;
+  g += psArrow(cx+s, cy+tl*0.4*to, cx+s, cy-tl*0.6*to, color);
+  g += psArrow(cx-s, cy-tl*0.4*to, cx-s, cy+tl*0.6*to, color);
+  g += psArrow(cx-tl*0.4*to, cy-s, cx+tl*0.6*to, cy-s, color);
+  g += psArrow(cx+tl*0.4*to, cy+s, cx-tl*0.6*to, cy+s, color);
+  g += `</g>`;
+  g += `<text x="${cx}" y="${cy+s+50}" font-size="11" font-weight="800" fill="${color}" text-anchor="middle">${label}</text>`;
+  return g;
+}
+
+function psBuildVisuals(){
+  const stressF = UNIT_OPTIONS.stress[ps.units.stress];
+  const disp = (b,f)=>b/f;
+  const r = psCompute();
+  const w = 620, h = 340;
+  let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:660px; margin:0 auto; display:block;">`;
+  svg += psDrawElement(150, 150, 130, ps.sigmaX, ps.sigmaY, ps.tauXY, 0, '#51626F', 'θ = 0° (원래 상태)');
+  svg += psDrawElement(460, 150, 130, r.sx1, r.sy1, r.tx1y1, ps.theta, '#C3002F', `θ = ${ps.theta.toFixed(0)}° (회전된 상태)`);
+  // 값 표시
+  svg += `<text x="150" y="290" font-size="11" text-anchor="middle" fill="#51626F">σx=${fmt(disp(ps.sigmaX,stressF))} σy=${fmt(disp(ps.sigmaY,stressF))} τxy=${fmt(disp(ps.tauXY,stressF))} ${ps.units.stress}</text>`;
+  svg += `<text x="460" y="290" font-size="11" text-anchor="middle" fill="#C3002F">σx1=${fmt(disp(r.sx1,stressF))} σy1=${fmt(disp(r.sy1,stressF))} τx1y1=${fmt(disp(r.tx1y1,stressF))} ${ps.units.stress}</text>`;
+  svg += `<text x="${w/2}" y="320" font-size="10.5" text-anchor="middle" fill="var(--gray-soft)">시계반대 방향 = (+) 각도</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function psUpdate(){
+  const wrap = document.getElementById('psVizWrap');
+  if (wrap) wrap.innerHTML = psBuildVisuals();
+  const label = document.getElementById('psThetaLabel');
+  if (label) label.textContent = ps.theta.toFixed(0) + '°';
+}
+
+function psThetaInput(v){ ps.theta = parseFloat(v); psUpdate(); }
+function psGoToPrincipal(){
+  const r = psCompute();
+  ps.theta = r.thetaPdeg;
+  const slider = document.getElementById('psSlider_theta');
+  if (slider) slider.value = ps.theta;
+  psUpdate();
+}
+function psGoToMaxShear(){
+  const r = psCompute();
+  ps.theta = r.thetaSdeg;
+  const slider = document.getElementById('psSlider_theta');
+  if (slider) slider.value = ps.theta;
+  psUpdate();
+}
+function psChangeUnitType_stress(v){ ps.units.stress = v; renderPlaneStress(document.getElementById('panelsContainer')); }
+function psUpdateStress(field, inputEl){
+  const factor = UNIT_OPTIONS.stress[ps.units.stress];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  ps[field] = val*factor;
+  renderPlaneStress(document.getElementById('panelsContainer'));
+}
+
+function renderPlaneStress(container){
+  const stressF = UNIT_OPTIONS.stress[ps.units.stress];
+  const disp = (b,f)=>b/f;
+  const r = psCompute();
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      임의의 응력 상태(σx, σy, τxy)에서, 요소를 θ만큼 돌렸을 때 새로운 면에 나타나는 응력(σx1, σy1, τx1y1)을 구해요.
+    </div>
+    <div class="field">
+      <label>σx</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.sigmaX,stressF))}" onchange="psUpdateStress('sigmaX', this)">
+        ${unitSelect('stress','psChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>σy</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.sigmaY,stressF))}" onchange="psUpdateStress('sigmaY', this)">
+        ${unitSelect('stress','psChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>τxy</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.tauXY,stressF))}" onchange="psUpdateStress('tauXY', this)">
+        ${unitSelect('stress','psChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>회전각 θ — <span id="psThetaLabel">${ps.theta.toFixed(0)}°</span></label>
+      <input id="psSlider_theta" type="range" min="-90" max="90" step="1" value="${ps.theta}" oninput="psThetaInput(this.value)" style="width:100%;">
+    </div>
+    <button class="add-block" onclick="psGoToPrincipal()">주응력 각도로 이동 (θp)</button>
+    <button class="add-block" onclick="psGoToMaxShear()">최대전단 각도로 이동 (θs)</button>
+  `;
+
+  const transformBody = `
+    <div class="step-formula">${tip('σx1','θ만큼 돌린 x1면의 수직응력')} = (σx+σy)/2 + (σx−σy)/2·cos2θ + τxy·sin2θ</div>
+    <div class="step-row">σy1 = (σx+σy)/2 − (σx−σy)/2·cos2θ − τxy·sin2θ</div>
+    <div class="step-row">τx1y1 = −(σx−σy)/2·sin2θ + τxy·cos2θ</div>
+    <div class="step-final">현재 θ=${ps.theta.toFixed(0)}°: σx1=${fmt(disp(r.sx1,stressF))}, σy1=${fmt(disp(r.sy1,stressF))}, τx1y1=${fmt(disp(r.tx1y1,stressF))} ${ps.units.stress}</div>
+  `;
+
+  const principalBody = `
+    <div class="step-formula">${tip('tan 2θp','주응력 각도를 구하는 식')} = 2τxy / (σx−σy)</div>
+    <div class="step-row">σave = (σx+σy)/2 = ${fmt(disp(r.avg,stressF))} ${ps.units.stress}</div>
+    <div class="step-row">R = √[((σx−σy)/2)² + τxy²] = ${fmt(disp(r.R,stressF))} ${ps.units.stress}</div>
+    <div class="step-final">θp = ${r.thetaPdeg.toFixed(1)}° &nbsp; σ1,2 = σave ± R = ${fmt(disp(r.sigma1,stressF))}, ${fmt(disp(r.sigma2,stressF))} ${ps.units.stress}</div>
+  `;
+
+  const shearBody = `
+    <div class="step-formula">${tip('τmax','최대전단응력')} = R &nbsp; ${tip('θs','최대전단 각도')} = θp − 45°</div>
+    <div class="step-final">τmax = ${fmt(disp(r.R,stressF))} ${ps.units.stress} &nbsp; θs = ${r.thetaSdeg.toFixed(1)}° &nbsp; (이때 수직응력 = σave = ${fmt(disp(r.avg,stressF))} ${ps.units.stress})</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="psVizWrap">${psBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">
+      ${cbFormulaSection('응력 변환식', transformBody)}
+      ${cbFormulaSection('주응력 (Principal Stresses)', principalBody)}
+      ${cbFormulaSection('최대전단응력 (Maximum Shear)', shearBody)}
+    </div>
+    <div class="ai-hint">💬 왜 주응력 방향에서는 전단응력이 0이 되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Mohr's Circle — Plane Stress와 같은 입력(ps)을 원으로 표현
+   ================================================================== */
+function mcBuildVisuals(){
+  const stressF = UNIT_OPTIONS.stress[ps.units.stress];
+  const disp = (b,f)=>b/f;
+  const r = psCompute();
+  const w = 480, h = 420, cx = 240, cyBase = 210;
+  const scale = r.R > 0 ? 130/r.R : 1;
+  const cy = cyBase;
+
+  // 현재 θ의 x1면 점, y1면 점 (대각선 양 끝)
+  const px = cx + (r.sx1 - r.avg)*scale, py = cy + r.tx1y1*scale;
+  const qx = cx + (r.sy1 - r.avg)*scale, qy = cy - r.tx1y1*scale;
+  // θ=0 기준점 (참고용, 점선)
+  const ax = cx + (ps.sigmaX - r.avg)*scale, ay = cy + ps.tauXY*scale;
+  const bx = cx + (ps.sigmaY - r.avg)*scale, by = cy - ps.tauXY*scale;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:520px; margin:0 auto; display:block;">`;
+  // 축
+  svg += `<line x1="20" y1="${cy}" x2="${w-20}" y2="${cy}" stroke="#8A97A2" stroke-width="1.2"/>`;
+  svg += `<line x1="${cx}" y1="20" x2="${cx}" y2="${h-60}" stroke="#8A97A2" stroke-width="1.2"/>`;
+  svg += `<text x="${w-16}" y="${cy-6}" font-size="11" fill="#8A97A2" text-anchor="end" font-weight="700">σ</text>`;
+  svg += `<text x="${cx+8}" y="26" font-size="11" fill="#8A97A2" font-weight="700">τ (아래 = +)</text>`;
+  // 원
+  svg += `<circle cx="${cx}" cy="${cy}" r="${(r.R*scale).toFixed(1)}" fill="#F7E3E6" fill-opacity="0.35" stroke="#51626F" stroke-width="1.4"/>`;
+  // 중심
+  svg += `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#51626F"/>`;
+  svg += `<text x="${cx}" y="${cy-8}" font-size="10" fill="#51626F" text-anchor="middle">C</text>`;
+  // θ=0 참고선 (점선, 회색)
+  svg += `<line x1="${ax.toFixed(1)}" y1="${ay.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="#8A97A2" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+  svg += `<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3" fill="#8A97A2"/>`;
+  svg += `<text x="${ax+6}" y="${ay-6}" font-size="9.5" fill="#8A97A2">A(θ=0)</text>`;
+  // 현재 θ 지름 (빨강, 실선)
+  svg += `<line x1="${px.toFixed(1)}" y1="${py.toFixed(1)}" x2="${qx.toFixed(1)}" y2="${qy.toFixed(1)}" stroke="#C3002F" stroke-width="1.8"/>`;
+  svg += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="4" fill="#C3002F"/>`;
+  svg += `<text x="${px+7}" y="${py+4}" font-size="10.5" fill="#C3002F" font-weight="800">x1면</text>`;
+  svg += `<circle cx="${qx.toFixed(1)}" cy="${qy.toFixed(1)}" r="4" fill="#1E7F72"/>`;
+  svg += `<text x="${qx+7}" y="${qy+4}" font-size="10.5" fill="#1E7F72" font-weight="800">y1면</text>`;
+  // 주응력점 / 최대전단점
+  svg += `<circle cx="${(cx+r.R*scale).toFixed(1)}" cy="${cy}" r="3" fill="#B0790A"/>`;
+  svg += `<text x="${(cx+r.R*scale).toFixed(1)}" y="${cy+16}" font-size="9.5" fill="#B0790A" text-anchor="middle">σ1</text>`;
+  svg += `<circle cx="${(cx-r.R*scale).toFixed(1)}" cy="${cy}" r="3" fill="#B0790A"/>`;
+  svg += `<text x="${(cx-r.R*scale).toFixed(1)}" y="${cy+16}" font-size="9.5" fill="#B0790A" text-anchor="middle">σ2</text>`;
+  svg += `<circle cx="${cx}" cy="${(cy+r.R*scale).toFixed(1)}" r="3" fill="#4A5FBF"/>`;
+  svg += `<text x="${cx+8}" y="${(cy+r.R*scale+3).toFixed(1)}" font-size="9.5" fill="#4A5FBF">τmax</text>`;
+  svg += `<text x="${cx}" y="${h-30}" font-size="10.5" fill="var(--gray-soft)" text-anchor="middle">2θ = ${(2*ps.theta).toFixed(0)}° (θ=${ps.theta.toFixed(0)}°)</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function mcUpdate(){
+  const wrap = document.getElementById('mcVizWrap');
+  if (wrap) wrap.innerHTML = mcBuildVisuals();
+  const label = document.getElementById('mcThetaLabel');
+  if (label) label.textContent = ps.theta.toFixed(0) + '°';
+}
+function mcThetaInput(v){ ps.theta = parseFloat(v); mcUpdate(); }
+function mcChangeUnitType_stress(v){ ps.units.stress = v; renderMohrCircle(document.getElementById('panelsContainer')); }
+function mcUpdateStress(field, inputEl){
+  const factor = UNIT_OPTIONS.stress[ps.units.stress];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  ps[field] = val*factor;
+  renderMohrCircle(document.getElementById('panelsContainer'));
+}
+
+function renderMohrCircle(container){
+  const stressF = UNIT_OPTIONS.stress[ps.units.stress];
+  const disp = (b,f)=>b/f;
+  const r = psCompute();
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      Plane Stress와 <b>같은 입력</b>이에요 — 같은 계산을 숫자 대신 <b>원(circle)</b>으로 표현하는 방법입니다.
+    </div>
+    <div class="field">
+      <label>σx</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.sigmaX,stressF))}" onchange="mcUpdateStress('sigmaX', this)">
+        ${unitSelect('stress','mcChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>σy</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.sigmaY,stressF))}" onchange="mcUpdateStress('sigmaY', this)">
+        ${unitSelect('stress','mcChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>τxy</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(ps.tauXY,stressF))}" onchange="mcUpdateStress('tauXY', this)">
+        ${unitSelect('stress','mcChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>회전각 θ — <span id="mcThetaLabel">${ps.theta.toFixed(0)}°</span></label>
+      <input id="mcSlider_theta" type="range" min="-90" max="90" step="1" value="${ps.theta}" oninput="mcThetaInput(this.value)" style="width:100%;">
+    </div>
+    <button class="add-block" onclick="psGoToPrincipal(); document.getElementById('mcSlider_theta').value=ps.theta; mcUpdate();">주응력 각도로 이동</button>
+    <button class="add-block" onclick="psGoToMaxShear(); document.getElementById('mcSlider_theta').value=ps.theta; mcUpdate();">최대전단 각도로 이동</button>
+  `;
+
+  const stepsBody = `
+    <div class="step-formula">중심 C = (σave, 0) &nbsp; 반지름 R = √[((σx−σy)/2)² + τxy²]</div>
+    <div class="step-row">σave = ${fmt(disp(r.avg,stressF))} ${ps.units.stress} &nbsp; R = ${fmt(disp(r.R,stressF))} ${ps.units.stress}</div>
+    <div class="step-row">x1면 점 = (σx1, τx1y1) = (${fmt(disp(r.sx1,stressF))}, ${fmt(disp(r.tx1y1,stressF))}) ${ps.units.stress}</div>
+    <div style="font-size:11px; color:var(--gray-soft); margin-top:8px;">지름의 양 끝(x1면·y1면)을 중심 C를 기준으로 <b>2θ</b>만큼 돌리면, 실제 θ만큼 요소를 돌렸을 때의 응력이 나와요.</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="mcVizWrap">${mcBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">
+      ${cbFormulaSection('원 그리는 방법', stepsBody)}
+    </div>
+    <div class="ai-hint">💬 왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Hooke's Law for Plane Stress
+   ================================================================== */
+const hk = {
+  units: { stress:'psi', length:'in' },
+  mode: 'stressToStrain', // or 'strainToStress'
+  E: null, nu: null, thickness: null,
+  sigmaX: 0, sigmaY: 0, tauXY: 0,
+  epsX: 0, epsY: 0, gammaXY: 0,
+};
+
+function hkCompute(){
+  const G = hk.E / (2*(1+hk.nu));
+  let sx, sy, txy, ex, ey, gxy;
+  if (hk.mode === 'stressToStrain') {
+    sx = hk.sigmaX; sy = hk.sigmaY; txy = hk.tauXY;
+    ex = (sx - hk.nu*sy)/hk.E;
+    ey = (sy - hk.nu*sx)/hk.E;
+    gxy = txy/G;
+  } else {
+    ex = hk.epsX; ey = hk.epsY; gxy = hk.gammaXY;
+    sx = hk.E/(1-hk.nu*hk.nu)*(ex + hk.nu*ey);
+    sy = hk.E/(1-hk.nu*hk.nu)*(ey + hk.nu*ex);
+    txy = G*gxy;
+  }
+  const ez = -(hk.nu/hk.E)*(sx+sy);
+  const e = ex+ey+ez; // dilatation
+  const u = 0.5*(sx*ex + sy*ey + txy*gxy); // strain energy density
+  const deltaT = hk.thickness!==null ? ez*hk.thickness : null;
+  return { G, sx, sy, txy, ex, ey, gxy, ez, e, u, deltaT };
+}
+
+function hkSetMode(m){ hk.mode = m; renderHookesLaw(document.getElementById('panelsContainer')); }
+function hkChangeUnitType_stress(v){ hk.units.stress = v; renderHookesLaw(document.getElementById('panelsContainer')); }
+function hkChangeUnitType_length(v){ hk.units.length = v; renderHookesLaw(document.getElementById('panelsContainer')); }
+function hkUpdateField(field, inputEl, kind){
+  // kind: 'stress' | 'strain' | 'E' | 'nu' | 'length'
+  let factor = 1;
+  if (kind === 'stress') factor = UNIT_OPTIONS.stress[hk.units.stress];
+  else if (kind === 'E') factor = UNIT_OPTIONS.stress[hk.units.stress];
+  else if (kind === 'length') factor = UNIT_OPTIONS.length[hk.units.length];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  hk[field] = kind === 'strain' ? val : val*factor;
+  renderHookesLaw(document.getElementById('panelsContainer'));
+}
+
+function renderHookesLaw(container){
+  const stressF = UNIT_OPTIONS.stress[hk.units.stress];
+  const lenF = UNIT_OPTIONS.length[hk.units.length];
+  const disp = (b,f)=>b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      평면응력 상태에서 응력↔변형률을 서로 변환해요. 어느 쪽 값을 알고 있는지 선택하세요.
+    </div>
+    <div style="display:flex; gap:6px; margin-bottom:14px;">
+      <button class="add-block ${hk.mode==='stressToStrain'?'active':''}" style="margin:0;" onclick="hkSetMode('stressToStrain')">응력 → 변형률</button>
+      <button class="add-block ${hk.mode==='strainToStress'?'active':''}" style="margin:0;" onclick="hkSetMode('strainToStress')">변형률 → 응력</button>
+    </div>
+    <div class="field">
+      <label>탄성계수 E</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${hk.E===null?'':fmt(disp(hk.E,stressF))}" onchange="hkUpdateField('E', this, 'E')">
+        ${unitSelect('stress','hkChangeUnitType_stress')}
+      </div>
+    </div>
+    <div class="field">
+      <label>포아송비 ν</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력 (0~0.5)" value="${hk.nu===null?'':hk.nu}" onchange="hkUpdateField('nu', this, 'plain')">
+      </div>
+    </div>
+    ${hk.mode === 'stressToStrain' ? `
+      <div class="field"><label>σx</label><div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(hk.sigmaX,stressF))}" onchange="hkUpdateField('sigmaX', this, 'stress')">
+        ${unitSelect('stress','hkChangeUnitType_stress')}
+      </div></div>
+      <div class="field"><label>σy</label><div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(hk.sigmaY,stressF))}" onchange="hkUpdateField('sigmaY', this, 'stress')">
+        ${unitSelect('stress','hkChangeUnitType_stress')}
+      </div></div>
+      <div class="field"><label>τxy</label><div class="input-unit-group">
+        <input type="number" step="any" value="${fmt(disp(hk.tauXY,stressF))}" onchange="hkUpdateField('tauXY', this, 'stress')">
+        ${unitSelect('stress','hkChangeUnitType_stress')}
+      </div></div>
+    ` : `
+      <div class="field"><label>εx</label><div class="input-unit-group">
+        <input type="number" step="any" value="${hk.epsX}" onchange="hkUpdateField('epsX', this, 'strain')">
+      </div></div>
+      <div class="field"><label>εy</label><div class="input-unit-group">
+        <input type="number" step="any" value="${hk.epsY}" onchange="hkUpdateField('epsY', this, 'strain')">
+      </div></div>
+      <div class="field"><label>γxy</label><div class="input-unit-group">
+        <input type="number" step="any" value="${hk.gammaXY}" onchange="hkUpdateField('gammaXY', this, 'strain')">
+      </div></div>
+    `}
+    <div class="field">
+      <label>두께 t (선택, Δt 계산용)</label>
+      <div class="input-unit-group">
+        <input type="number" step="any" placeholder="값 입력" value="${hk.thickness===null?'':fmt(disp(hk.thickness,lenF))}" onchange="hkUpdateField('thickness', this, 'length')">
+        ${unitSelect('length','hkChangeUnitType_length')}
+      </div>
+    </div>
+  `;
+
+  if (hk.E === null || hk.nu === null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel">
+        <h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:300px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          E와 ν를 입력하면<br>계산 결과가 나타납니다.
+        </div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const r = hkCompute();
+
+  const elementSvg = (() => {
+    let svg = `<svg viewBox="0 0 300 220" style="width:100%; max-width:320px; margin:0 auto; display:block;">`;
+    svg += psDrawElement(150, 100, 120, r.sx, r.sy, r.txy, 0, '#51626F', '현재 상태');
+    svg += `</svg>`;
+    return svg;
+  })();
+
+  const hookeBody = `
+    <div class="step-formula">εx = (σx − ν·σy)/E &nbsp; εy = (σy − ν·σx)/E &nbsp; γxy = τxy/G</div>
+    <div class="step-row">G = E/(2(1+ν)) = ${fmtSci(r.G)} Pa</div>
+    <div class="step-final">εx=${r.ex.toExponential(3)} &nbsp; εy=${r.ey.toExponential(3)} &nbsp; γxy=${r.gxy.toExponential(3)}</div>
+  `;
+
+  const stressBody = `
+    <div class="step-formula">σx = E/(1−ν²)·(εx + ν·εy) &nbsp; σy = E/(1−ν²)·(εy + ν·εx) &nbsp; τxy = G·γxy</div>
+    <div class="step-final">σx=${fmt(disp(r.sx,stressF))} ${hk.units.stress} &nbsp; σy=${fmt(disp(r.sy,stressF))} ${hk.units.stress} &nbsp; τxy=${fmt(disp(r.txy,stressF))} ${hk.units.stress}</div>
+  `;
+
+  const extraBody = `
+    <div class="step-row">εz (두께방향) = −(ν/E)(σx+σy) = ${r.ez.toExponential(3)}</div>
+    <div class="step-row">체적변형(dilatation) e = εx+εy+εz = ${r.e.toExponential(3)}</div>
+    <div class="step-row">변형에너지밀도 u = ½(σx·εx + σy·εy + τxy·γxy) = ${fmtSci(r.u)} J/m³</div>
+    ${r.deltaT!==null ? `<div class="step-final">두께 변화 Δt = εz × t = ${fmtSci(r.deltaT)} m</div>` : `<div style="font-size:11px; color:var(--gray-soft);">두께(t)를 입력하면 Δt(두께 변화)도 계산돼요.</div>`}
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER</h3>
+    ${elementSvg}
+    <div class="steps" style="margin-top:12px;">
+      ${hk.mode==='stressToStrain' ? cbFormulaSection('응력 → 변형률', hookeBody) : cbFormulaSection('변형률 → 응력', stressBody)}
+      ${cbFormulaSection('두께변형 · 체적변형 · 변형에너지', extraBody)}
+    </div>
+    <div class="ai-hint">💬 왜 εz가 σx, σy로만 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+function principalFromState(sx, sy, txy){
+  const avg = (sx+sy)/2, diff = (sx-sy)/2;
+  const R = Math.sqrt(diff*diff + txy*txy);
+  const thetaP = 0.5*Math.atan2(txy, diff)*180/Math.PI;
+  return { avg, diff, R, sigma1: avg+R, sigma2: avg-R, tauMax: R, thetaP, thetaS: thetaP-45 };
+}
+
+/* ==================================================================
+   Spherical Pressure Vessels
+   ================================================================== */
+const sv = { units:{length:'in', stress:'psi'}, r:null, t:null, p:0, E:null, nu:null };
+
+function svCompute(){
+  const sigma = sv.p*sv.r/(2*sv.t);
+  const tauOuter = sigma/2;
+  const tauInner = (sigma + sv.p)/2;
+  const eps = (sv.E && sv.nu!==null) ? sigma*(1-sv.nu)/sv.E : null;
+  return { sigma, tauOuter, tauInner, eps };
+}
+
+function svUpdate(){
+  const wrap = document.getElementById('svVizWrap');
+  if (wrap) wrap.innerHTML = svBuildVisuals();
+}
+function svSliderInput(field, v){
+  const lenF = UNIT_OPTIONS.length[sv.units.length];
+  const stressF = UNIT_OPTIONS.stress[sv.units.stress];
+  const factor = (field==='p') ? stressF : lenF;
+  sv[field] = parseFloat(v)*factor;
+  const numEl = document.getElementById('svNum_'+field);
+  if (numEl) numEl.value = fmt(parseFloat(v));
+  svUpdate();
+}
+function svChangeUnitType_length(v){ sv.units.length=v; renderSphericalVessel(document.getElementById('panelsContainer')); }
+function svChangeUnitType_stress(v){ sv.units.stress=v; renderSphericalVessel(document.getElementById('panelsContainer')); }
+function svUpdateField(field, inputEl, kind){
+  const lenF = UNIT_OPTIONS.length[sv.units.length];
+  const stressF = UNIT_OPTIONS.stress[sv.units.stress];
+  const factor = kind==='length'?lenF:(kind==='stress'?stressF:1);
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || (kind!=='plain' && val<=0 && field!=='p')) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  sv[field] = val*factor;
+  renderSphericalVessel(document.getElementById('panelsContainer'));
+}
+
+function svBuildVisuals(){
+  const stressF = UNIT_OPTIONS.stress[sv.units.stress];
+  const disp = (b,f)=>b/f;
+  const r = svCompute();
+  let svg = `<svg viewBox="0 0 420 260" style="width:100%; max-width:440px; margin:0 auto; display:block;">`;
+  svg += `<circle cx="120" cy="120" r="85" fill="#F7E3E6" fill-opacity="0.4" stroke="#51626F" stroke-width="1.6"/>`;
+  for (let a=0;a<360;a+=30){
+    const rad=a*Math.PI/180;
+    const x1=120+95*Math.cos(rad), y1=120+95*Math.sin(rad);
+    const x2=120+70*Math.cos(rad), y2=120+70*Math.sin(rad);
+    svg += psArrow(x1,y1,x2,y2,'#C3002F');
+  }
+  svg += `<text x="120" y="225" font-size="11" fill="var(--gray-soft)" text-anchor="middle">내부압력 p</text>`;
+  svg += psDrawElement(320, 120, 90, r.sigma, r.sigma, 0, 0, '#1E7F72', '벽면 요소 (등이축 인장)');
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderSphericalVessel(container){
+  const lenF = UNIT_OPTIONS.length[sv.units.length];
+  const stressF = UNIT_OPTIONS.stress[sv.units.stress];
+  const disp = (b,f)=>b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(r/t≫1), 벽면에 <b>모든 방향으로 같은 크기의 인장응력</b>이 생겨요.
+    </div>
+    <div class="field"><label>내부 반지름 r</label><div class="input-unit-group">
+      <input id="svNum_r" type="number" step="any" placeholder="값 입력" value="${sv.r===null?'':fmt(disp(sv.r,lenF))}" onchange="svUpdateField('r', this, 'length')">
+      ${unitSelect('length','svChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>두께 t</label><div class="input-unit-group">
+      <input id="svNum_t" type="number" step="any" placeholder="값 입력" value="${sv.t===null?'':fmt(disp(sv.t,lenF))}" onchange="svUpdateField('t', this, 'length')">
+      ${unitSelect('length','svChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>내부압력 p</label><div class="input-unit-group">
+      <input id="svNum_p" type="number" step="any" value="${fmt(disp(sv.p,stressF))}" onchange="svUpdateField('p', this, 'stress')">
+      ${unitSelect('stress','svChangeUnitType_stress')}
+    </div></div>
+    <div class="field"><label>E (변형률 계산용, 선택)</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="값 입력" value="${sv.E===null?'':fmt(disp(sv.E,stressF))}" onchange="svUpdateField('E', this, 'stress')">
+      ${unitSelect('stress','svChangeUnitType_stress')}
+    </div></div>
+    <div class="field"><label>ν (선택)</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="0~0.5" value="${sv.nu===null?'':sv.nu}" onchange="svUpdateField('nu', this, 'plain')">
+    </div></div>
+  `;
+
+  if (sv.r===null || sv.t===null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel"><h3>VISUALIZER</h3>
+        <div class="viz-placeholder" style="min-height:300px;">r, t를 입력하면 결과가 나타납니다.</div>
+      </div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const r = svCompute();
+  const body = `
+    <div class="step-formula">${tip('σ','벽면 응력 (모든 방향 동일)')} = pr/2t</div>
+    <div class="step-final">σ1=σ2 = ${fmt(disp(r.sigma,stressF))} ${sv.units.stress}</div>
+    <div class="step-row" style="margin-top:8px;">외부 표면: τmax = σ/2 = ${fmt(disp(r.tauOuter,stressF))} ${sv.units.stress}</div>
+    <div class="step-row">내부 표면: τmax = (σ+p)/2 = ${fmt(disp(r.tauInner,stressF))} ${sv.units.stress} &nbsp; <span style="color:var(--gray-soft); font-size:11px;">(r/t≫1이면 외부와 거의 같음)</span></div>
+    ${r.eps!==null ? `<div class="step-final">변형률 ε = σ(1−ν)/E = ${r.eps.toExponential(3)}</div>` : ''}
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="svVizWrap">${svBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">${cbFormulaSection('구형 압력용기 응력', body)}</div>
+    <div class="ai-hint">💬 왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Cylindrical Pressure Vessels
+   ================================================================== */
+const cv = { units:{length:'in', stress:'psi'}, r:null, t:null, p:0, theta:0 };
+
+function cvCompute(){
+  const sigma1 = cv.p*cv.r/cv.t; // hoop
+  const sigma2 = cv.p*cv.r/(2*cv.t); // longitudinal
+  const tauOuter = sigma1/2;
+  const tauInner = sigma1/2 + cv.p/2;
+  const avg = (sigma1+sigma2)/2, diff = (sigma2-sigma1)/2; // x=longitudinal(sigma2), y=hoop(sigma1)
+  const rad = cv.theta*Math.PI/180;
+  const sx1 = avg + diff*Math.cos(2*rad);
+  const sy1 = 2*avg - sx1;
+  const tx1y1 = -diff*Math.sin(2*rad);
+  return { sigma1, sigma2, tauOuter, tauInner, sx1, sy1, tx1y1 };
+}
+
+function cvThetaResultHTML(){
+  const stressF = UNIT_OPTIONS.stress[cv.units.stress];
+  const disp=(b,f)=>b/f;
+  const r = cvCompute();
+  return `θ=${cv.theta.toFixed(0)}°에서: σx1=${fmt(disp(r.sx1,stressF))}, σy1=${fmt(disp(r.sy1,stressF))}, τx1y1=${fmt(disp(r.tx1y1,stressF))} ${cv.units.stress}`;
+}
+
+function cvUpdate(){
+  const wrap = document.getElementById('cvVizWrap');
+  if (wrap) wrap.innerHTML = cvBuildVisuals();
+  const label = document.getElementById('cvThetaLabel');
+  if (label) label.textContent = cv.theta.toFixed(0)+'°';
+  const resultEl = document.getElementById('cvThetaResult');
+  if (resultEl) resultEl.innerHTML = cvThetaResultHTML();
+}
+function cvThetaInput(v){ cv.theta = parseFloat(v); cvUpdate(); }
+function cvChangeUnitType_length(v){ cv.units.length=v; renderCylindricalVessel(document.getElementById('panelsContainer')); }
+function cvChangeUnitType_stress(v){ cv.units.stress=v; renderCylindricalVessel(document.getElementById('panelsContainer')); }
+function cvUpdateField(field, inputEl, kind){
+  const lenF = UNIT_OPTIONS.length[cv.units.length];
+  const stressF = UNIT_OPTIONS.stress[cv.units.stress];
+  const factor = kind==='length'?lenF:stressF;
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || (field!=='p' && val<=0)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  cv[field] = val*factor;
+  renderCylindricalVessel(document.getElementById('panelsContainer'));
+}
+
+function cvBuildVisuals(){
+  const stressF = UNIT_OPTIONS.stress[cv.units.stress];
+  const disp=(b,f)=>b/f;
+  const r = cvCompute();
+  let svg = `<svg viewBox="0 0 620 260" style="width:100%; max-width:640px; margin:0 auto; display:block;">`;
+  svg += `<rect x="40" y="80" width="180" height="90" rx="45" fill="#F7E3E6" fill-opacity="0.4" stroke="#51626F" stroke-width="1.6"/>`;
+  svg += `<text x="130" y="65" font-size="11" fill="var(--gray-soft)" text-anchor="middle">원통 (길이방향 = x)</text>`;
+  svg += psDrawElement(150, 200, 80, r.sigma2, r.sigma1, 0, 0, '#51626F', 'θ=0° (원래 상태)');
+  svg += psDrawElement(460, 200, 80, r.sx1, r.sy1, r.tx1y1, cv.theta, '#C3002F', `θ=${cv.theta.toFixed(0)}° (용접선 방향)`);
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderCylindricalVessel(container){
+  const lenF = UNIT_OPTIONS.length[cv.units.length];
+  const stressF = UNIT_OPTIONS.stress[cv.units.stress];
+  const disp=(b,f)=>b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      원통형 압력용기는 <b>원주방향(hoop) 응력이 길이방향의 2배</b>예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요.
+    </div>
+    <div class="field"><label>내부 반지름 r</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="값 입력" value="${cv.r===null?'':fmt(disp(cv.r,lenF))}" onchange="cvUpdateField('r', this, 'length')">
+      ${unitSelect('length','cvChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>두께 t</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="값 입력" value="${cv.t===null?'':fmt(disp(cv.t,lenF))}" onchange="cvUpdateField('t', this, 'length')">
+      ${unitSelect('length','cvChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>내부압력 p</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(cv.p,stressF))}" onchange="cvUpdateField('p', this, 'stress')">
+      ${unitSelect('stress','cvChangeUnitType_stress')}
+    </div></div>
+    <div class="field">
+      <label>용접선 각도 θ (축 기준) — <span id="cvThetaLabel">${cv.theta.toFixed(0)}°</span></label>
+      <input type="range" min="0" max="90" step="1" value="${cv.theta}" oninput="cvThetaInput(this.value)" style="width:100%;">
+    </div>
+  `;
+
+  if (cv.r===null || cv.t===null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel"><h3>VISUALIZER</h3><div class="viz-placeholder" style="min-height:300px;">r, t를 입력하면 결과가 나타납니다.</div></div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const r = cvCompute();
+  const body = `
+    <div class="step-formula">${tip('σ1','원주(hoop)응력')} = pr/t &nbsp; ${tip('σ2','길이방향응력')} = pr/2t</div>
+    <div class="step-final">σ1 = ${fmt(disp(r.sigma1,stressF))} ${cv.units.stress} &nbsp; σ2 = ${fmt(disp(r.sigma2,stressF))} ${cv.units.stress} &nbsp; (σ1 = 2σ2)</div>
+    <div class="step-row" style="margin-top:8px;">외부 표면: τmax = σ1/2 = ${fmt(disp(r.tauOuter,stressF))} ${cv.units.stress}</div>
+    <div class="step-row">내부 표면: τmax = σ1/2 + p/2 = ${fmt(disp(r.tauInner,stressF))} ${cv.units.stress}</div>
+    <div class="step-final" id="cvThetaResult" style="margin-top:8px;">${cvThetaResultHTML()}</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="cvVizWrap">${cvBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">${cbFormulaSection('원통형 압력용기 응력', body)}</div>
+    <div class="ai-hint">💬 왜 용접선이 이 각도로 설계되는 경우가 많은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Maximum Stresses in Beams (rectangular cross-section)
+   ================================================================== */
+const mb = { units:{length:'in', stress:'psi', moment:'kip·in', force:'lb'}, width:null, height:null, M:0, V:0, y:0 };
+
+function mbCompute(){
+  const I = mb.width*Math.pow(mb.height,3)/12;
+  const sigmaX = -mb.M*mb.y/I;
+  const Q = (mb.width/2)*(Math.pow(mb.height,2)/4 - mb.y*mb.y);
+  const tau = mb.V*Q/(I*mb.width);
+  const pr = principalFromState(sigmaX, 0, tau);
+  return { I, sigmaX, tau, ...pr };
+}
+
+function mbResultHTML(){
+  const stressF = UNIT_OPTIONS.stress[mb.units.stress];
+  const disp=(b,f)=>b/f;
+  const r = mbCompute();
+  return `
+    <div class="step-final">σx = ${fmt(disp(r.sigmaX,stressF))} ${mb.units.stress} &nbsp; τ = ${fmt(disp(r.tau,stressF))} ${mb.units.stress}</div>
+    <div class="step-row" style="margin-top:8px;">σ1,2 = σx/2 ± √[(σx/2)²+τ²] = ${fmt(disp(r.sigma1,stressF))}, ${fmt(disp(r.sigma2,stressF))} ${mb.units.stress}</div>
+    <div class="step-row">τmax = ${fmt(disp(r.tauMax,stressF))} ${mb.units.stress} &nbsp; 주응력 각도 θp = ${r.thetaP.toFixed(1)}°</div>
+  `;
+}
+
+function mbUpdate(){
+  const wrap = document.getElementById('mbVizWrap');
+  if (wrap) wrap.innerHTML = mbBuildVisuals();
+  const label = document.getElementById('mbYLabel');
+  const lenF = UNIT_OPTIONS.length[mb.units.length];
+  if (label) label.textContent = fmt(mb.y/lenF) + ' ' + mb.units.length;
+  const resultEl = document.getElementById('mbResult');
+  if (resultEl) resultEl.innerHTML = mbResultHTML();
+}
+function mbYInput(v){ mb.y = parseFloat(v); mbUpdate(); }
+function mbChangeUnitType_length(v){ mb.units.length=v; renderMaxBeamStress(document.getElementById('panelsContainer')); }
+function mbChangeUnitType_stress(v){ mb.units.stress=v; renderMaxBeamStress(document.getElementById('panelsContainer')); }
+function mbChangeUnitType_moment(v){ mb.units.moment=v; renderMaxBeamStress(document.getElementById('panelsContainer')); }
+function mbChangeUnitType_force(v){ mb.units.force=v; renderMaxBeamStress(document.getElementById('panelsContainer')); }
+function mbUpdateField(field, inputEl, kind){
+  const lenF = UNIT_OPTIONS.length[mb.units.length];
+  const stressF = UNIT_OPTIONS.stress[mb.units.stress];
+  const momF = UNIT_OPTIONS.moment[mb.units.moment];
+  const forceF = UNIT_OPTIONS.force[mb.units.force];
+  const factor = kind==='length'?lenF:(kind==='moment'?momF:(kind==='force'?forceF:stressF));
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || (kind==='length' && val<=0)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  mb[field] = val*factor;
+  renderMaxBeamStress(document.getElementById('panelsContainer'));
+}
+
+function mbBuildVisuals(){
+  const lenF = UNIT_OPTIONS.length[mb.units.length];
+  const stressF = UNIT_OPTIONS.stress[mb.units.stress];
+  const disp=(b,f)=>b/f;
+  const r = mbCompute();
+  const scale = 180/mb.height;
+  const hPx = mb.height*scale, wPx = Math.min(80, mb.width*scale);
+  const cx=110, cy=140;
+  let svg = `<svg viewBox="0 0 460 300" style="width:100%; max-width:500px; margin:0 auto; display:block;">`;
+  svg += `<rect x="${cx-wPx/2}" y="${cy-hPx/2}" width="${wPx}" height="${hPx}" fill="#F4F1E8" stroke="#51626F" stroke-width="1.3"/>`;
+  svg += `<line x1="${cx-wPx/2-10}" y1="${cy}" x2="${cx+wPx/2+10}" y2="${cy}" stroke="#51626F" stroke-width="1" stroke-dasharray="4 3"/>`;
+  const yPx = cy - (mb.y/mb.height)*hPx;
+  svg += `<circle cx="${cx}" cy="${yPx.toFixed(1)}" r="5" fill="#C3002F"/>`;
+  svg += `<text x="${cx+wPx/2+16}" y="${yPx+4}" font-size="10.5" fill="#C3002F" font-weight="800">현재 y</text>`;
+  svg += `<text x="${cx}" y="${cy-hPx/2-12}" font-size="10.5" fill="var(--gray-soft)" text-anchor="middle">단면 (y 위치 표시)</text>`;
+  svg += psDrawElement(330, 140, 100, r.sigmaX, 0, r.tau, 0, '#1E7F72', '현재 y에서의 응력 요소');
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderMaxBeamStress(container){
+  const lenF = UNIT_OPTIONS.length[mb.units.length];
+  const stressF = UNIT_OPTIONS.stress[mb.units.stress];
+  const momF = UNIT_OPTIONS.moment[mb.units.moment];
+  const forceF = UNIT_OPTIONS.force[mb.units.force];
+  const disp=(b,f)=>b/f;
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.6; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±h/2)에선 전단이 0, 중립축(y=0)에선 굽힘응력이 0이에요.
+    </div>
+    <div class="field"><label>Width (b)</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="값 입력" value="${mb.width===null?'':fmt(disp(mb.width,lenF))}" onchange="mbUpdateField('width', this, 'length')">
+      ${unitSelect('length','mbChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>Height (h)</label><div class="input-unit-group">
+      <input type="number" step="any" placeholder="값 입력" value="${mb.height===null?'':fmt(disp(mb.height,lenF))}" onchange="mbUpdateField('height', this, 'length')">
+      ${unitSelect('length','mbChangeUnitType_length')}
+    </div></div>
+    <div class="field"><label>Moment M</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(mb.M,momF))}" onchange="mbUpdateField('M', this, 'moment')">
+      ${unitSelect('moment','mbChangeUnitType_moment')}
+    </div></div>
+    <div class="field"><label>Shear V</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(mb.V,forceF))}" onchange="mbUpdateField('V', this, 'force')">
+      ${unitSelect('force','mbChangeUnitType_force')}
+    </div></div>
+    ${mb.width!==null && mb.height!==null ? `
+    <div class="field">
+      <label>단면 내 위치 y — <span id="mbYLabel">${fmt(disp(mb.y,lenF))} ${mb.units.length}</span></label>
+      <input type="range" min="${(-disp(mb.height,lenF)/2).toFixed(3)}" max="${(disp(mb.height,lenF)/2).toFixed(3)}" step="0.01" value="${disp(mb.y,lenF)}" oninput="mbYInput(this.value*${lenF})" style="width:100%;">
+    </div>` : ''}
+  `;
+
+  if (mb.width===null || mb.height===null) {
+    container.innerHTML = `
+      <div class="panel">${settingHTML}</div>
+      <div class="panel"><h3>VISUALIZER</h3><div class="viz-placeholder" style="min-height:300px;">폭과 높이를 입력하면 결과가 나타납니다.</div></div>
+      <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+    `;
+    return;
+  }
+
+  const body = `
+    <div class="step-formula">${tip('σx','굽힘응력')} = −My/I &nbsp; ${tip('τ','전단응력')} = VQ/(Ib) &nbsp; Q=(b/2)(h²/4−y²)</div>
+    <div id="mbResult">${mbResultHTML()}</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER <span class="badge live" style="margin-left:6px;">실시간</span></h3>
+    <div id="mbVizWrap">${mbBuildVisuals()}</div>
+    <div class="steps" style="margin-top:16px;">${cbFormulaSection('위치별 응력·주응력', body)}</div>
+    <div class="ai-hint">💬 왜 표면과 중립축에서 응력 요소 모양이 저렇게 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+
+/* ==================================================================
+   Combined Loadings
+   ================================================================== */
+const cl = { units:{stress:'psi'}, sigmaX:0, sigmaY:0, tauXY:0 };
+
+function clChangeUnitType_stress(v){ cl.units.stress=v; renderCombinedLoadings(document.getElementById('panelsContainer')); }
+function clUpdateField(field, inputEl){
+  const stressF = UNIT_OPTIONS.stress[cl.units.stress];
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val)) { inputEl.classList.add('invalid'); return; }
+  inputEl.classList.remove('invalid');
+  cl[field] = val*stressF;
+  renderCombinedLoadings(document.getElementById('panelsContainer'));
+}
+
+function renderCombinedLoadings(container){
+  const stressF = UNIT_OPTIONS.stress[cl.units.stress];
+  const disp=(b,f)=>b/f;
+  const r = principalFromState(cl.sigmaX, cl.sigmaY, cl.tauXY);
+
+  const settingHTML = `
+    <h3>SETTING MENU</h3>
+    <div style="font-size:12px; color:var(--gray); line-height:1.7; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:12px 14px;">
+      <b style="color:var(--ink);">방법</b>: 축하중·굽힘·비틀림·압력 등 여러 하중이 겹치면, 각각의 응력식으로 따로 구한 다음 <b>한 점에서 σx, σy, τxy로 합쳐서</b> Plane Stress 방식으로 최종 정리해요.<br><br>
+      <b>자주 쓰는 개별 공식</b><br>
+      · 축하중: σ = P/A<br>
+      · 굽힘: σ = My/I<br>
+      · 비틀림: τ = Tr/Ip<br>
+      · 전단력: τ = VQ/(Ib)<br>
+      · 압력용기: σ1=pr/t (원통 hoop), σ=pr/2t (구/원통 길이방향)
+    </div>
+    <div style="font-size:12px; color:var(--gray); margin-bottom:10px;">아래에 그 점에서 <b>합쳐진 최종값</b>을 입력하세요.</div>
+    <div class="field"><label>σx (합산값)</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(cl.sigmaX,stressF))}" onchange="clUpdateField('sigmaX', this)">
+      ${unitSelect('stress','clChangeUnitType_stress')}
+    </div></div>
+    <div class="field"><label>σy (합산값)</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(cl.sigmaY,stressF))}" onchange="clUpdateField('sigmaY', this)">
+      ${unitSelect('stress','clChangeUnitType_stress')}
+    </div></div>
+    <div class="field"><label>τxy (합산값)</label><div class="input-unit-group">
+      <input type="number" step="any" value="${fmt(disp(cl.tauXY,stressF))}" onchange="clUpdateField('tauXY', this)">
+      ${unitSelect('stress','clChangeUnitType_stress')}
+    </div></div>
+  `;
+
+  const elementSvg = (() => {
+    let svg = `<svg viewBox="0 0 300 220" style="width:100%; max-width:320px; margin:0 auto; display:block;">`;
+    svg += psDrawElement(150, 100, 120, cl.sigmaX, cl.sigmaY, cl.tauXY, 0, '#51626F', '합쳐진 응력 상태');
+    svg += `</svg>`;
+    return svg;
+  })();
+
+  const body = `
+    <div class="step-formula">σ1,2 = σave ± R &nbsp; τmax = R</div>
+    <div class="step-final">σ1 = ${fmt(disp(r.sigma1,stressF))} ${cl.units.stress} &nbsp; σ2 = ${fmt(disp(r.sigma2,stressF))} ${cl.units.stress} &nbsp; τmax = ${fmt(disp(r.tauMax,stressF))} ${cl.units.stress}</div>
+    <div class="step-row">주응력 방향 θp = ${r.thetaP.toFixed(1)}°</div>
+    <div style="font-size:11px; color:var(--gray-soft); margin-top:8px;">💡 σ1, σ2 부호가 같으면(둘 다 인장 또는 둘 다 압축) 평면 밖 전단(σ/2)이 더 클 수 있어요 — 3축 응력 상태까지 고려해야 정확해요.</div>
+  `;
+
+  const vizHTML = `
+    <h3>VISUALIZER</h3>
+    ${elementSvg}
+    <div class="steps" style="margin-top:12px;">${cbFormulaSection('최종 주응력 · 최대전단', body)}</div>
+    <div class="ai-hint">💬 왜 평면 밖(out-of-plane) 전단까지 확인해야 하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+  `;
+
+  container.innerHTML = `
+    <div class="panel">${settingHTML}</div>
+    <div class="panel">${vizHTML}</div>
+    <div class="panel panel-ai">${aiHTMLPlaceholder()}</div>
+  `;
+}
+</script>
+
+</body>
+</html>

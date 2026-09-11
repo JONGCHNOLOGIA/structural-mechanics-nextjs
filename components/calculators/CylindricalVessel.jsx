@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeCylindricalVessel } from '@/lib/calc/pressureVessels';
+import FormulaSection, { Tip } from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -20,71 +22,63 @@ export default function CylindricalVessel() {
   const result = useMemo(() => (r && t ? computeCylindricalVessel(r, t, p, theta) : null), [r, t, p, theta]);
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
-        <p className="text-xs text-gray bg-bg rounded-xl p-3 mb-4 leading-relaxed">
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
           원통형 압력용기는 <b>원주방향(hoop) 응력이 길이방향의 2배</b>예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요.
         </p>
-        <Field label="내부 반지름 r">
-          <input type="number" className="field-input" defaultValue={fmt(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="두께 t">
-          <input type="number" className="field-input" defaultValue={fmt(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="내부압력 p">
-          <input type="number" className="field-input" defaultValue={fmt(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label={`용접선 각도 θ (축 기준) — ${theta.toFixed(0)}°`}>
-          <input type="range" min="0" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} className="w-full" />
-        </Field>
+        <div className="field">
+          <label>내부 반지름 r</label>
+          <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>두께 t</label>
+          <input type="number" defaultValue={fmtInput(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>내부압력 p</label>
+          <input type="number" defaultValue={fmtInput(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>용접선 각도 θ (축 기준) — {theta.toFixed(0)}°</label>
+          <input type="range" min="0" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} style={{ width: '100%' }} />
+        </div>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          VISUALIZER <span className="ml-2 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">실시간</span>
+      <div className="panel">
+        <h3>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
         </h3>
         {result ? (
           <>
             <CylindricalVesselSVG r={result} theta={theta} />
-            <div className="mt-5 border border-line rounded-xl p-3 bg-bg text-xs text-gray leading-relaxed space-y-0.5">
-              <div className="text-xs font-extrabold text-crimson mb-1.5">원통형 압력용기 응력</div>
-              <p>σ1 = pr/t (원주응력) &nbsp; σ2 = pr/2t (길이방향응력)</p>
-              <p className="font-extrabold">
-                σ1 = {fmt(disp(result.sigma1, stressF))} {units.stress} &nbsp; σ2 = {fmt(disp(result.sigma2, stressF))} {units.stress} &nbsp; (σ1 = 2σ2)
-              </p>
-              <p className="mt-2">외부 표면: τmax = σ1/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</p>
-              <p>내부 표면: τmax = σ1/2 + p/2 = {fmt(disp(result.tauInner, stressF))} {units.stress}</p>
-              <p className="font-extrabold mt-2">
-                θ={theta.toFixed(0)}°에서: σx1={fmt(disp(result.sx1, stressF))}, σy1={fmt(disp(result.sy1, stressF))}, τx1y1={fmt(disp(result.tx1y1, stressF))} {units.stress}
-              </p>
+            <div className="steps">
+              <FormulaSection title="원통형 압력용기 응력">
+                <div className="step-formula">
+                  <Tip title="원주(hoop)응력">σ1</Tip> = pr/t &nbsp; <Tip title="길이방향응력">σ2</Tip> = pr/2t
+                </div>
+                <div className="step-final">
+                  σ1 = {fmt(disp(result.sigma1, stressF))} {units.stress} &nbsp; σ2 = {fmt(disp(result.sigma2, stressF))} {units.stress} &nbsp; (σ1 = 2σ2)
+                </div>
+                <div className="step-row" style={{ marginTop: 8 }}>외부 표면: τmax = σ1/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</div>
+                <div className="step-row">내부 표면: τmax = σ1/2 + p/2 = {fmt(disp(result.tauInner, stressF))} {units.stress}</div>
+                <div className="step-final" style={{ marginTop: 8 }}>
+                  θ={theta.toFixed(0)}°에서: σx1={fmt(disp(result.sx1, stressF))}, σy1={fmt(disp(result.sy1, stressF))}, τx1y1={fmt(disp(result.tx1y1, stressF))} {units.stress}
+                </div>
+              </FormulaSection>
             </div>
+            <div className="ai-hint">💬 왜 용접선이 이 각도로 설계되는 경우가 많은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
           </>
         ) : (
-          <div className="text-graySoft text-sm border-2 border-dashed border-line rounded-xl p-16 text-center">r, t를 입력하면 결과가 나타납니다.</div>
+          <div className="viz-placeholder" style={{ minHeight: 300 }}>r, t를 입력하면 결과가 나타납니다.</div>
         )}
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">왜 용접선이 이 각도로 설계되는 경우가 많은지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.</div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
@@ -129,7 +123,7 @@ function StressElement({ cx, cy, size, sx, sy, txy, rotateDeg, color, label }) {
 
 function CylindricalVesselSVG({ r, theta }) {
   return (
-    <svg viewBox="0 0 620 260" className="w-full max-w-[640px] mx-auto block">
+    <svg viewBox="0 0 620 260" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block' }}>
       <rect x="40" y="80" width="180" height="90" rx="45" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       <text x="130" y="65" fontSize="11" fill="#8A97A2" textAnchor="middle">원통 (길이방향 = x)</text>
       <StressElement cx={150} cy={200} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />

@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeSphericalVessel } from '@/lib/calc/pressureVessels';
+import FormulaSection, { Tip } from './FormulaSection';
+import AiTutorPanel from './AiTutorPanel';
 
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
@@ -21,73 +23,65 @@ export default function SphericalVessel() {
   const result = useMemo(() => (r && t ? computeSphericalVessel(r, t, p, E, nu) : null), [r, t, p, E, nu]);
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] gap-6 max-w-[1700px] mx-auto p-6">
+    <>
       {/* ---------------- Setting Menu ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">SETTING MENU</h3>
-        <p className="text-xs text-gray bg-bg rounded-xl p-3 mb-4 leading-relaxed">
+      <div className="panel">
+        <h3>SETTING MENU</h3>
+        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
           구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(r/t≫1), 벽면에 <b>모든 방향으로 같은 크기의 인장응력</b>이 생겨요.
         </p>
-        <Field label="내부 반지름 r">
-          <input type="number" className="field-input" defaultValue={fmt(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="두께 t">
-          <input type="number" className="field-input" defaultValue={fmt(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
-        </Field>
-        <Field label="내부압력 p">
-          <input type="number" className="field-input" defaultValue={fmt(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label="E (변형률 계산용, 선택)">
-          <input type="number" className="field-input" placeholder="값 입력" defaultValue={E === null ? '' : fmt(disp(E, stressF))} onBlur={(e) => setE(e.target.value === '' ? null : parseFloat(e.target.value) * stressF)} />
-        </Field>
-        <Field label="ν (선택)">
-          <input type="number" className="field-input" placeholder="0~0.5" defaultValue={nu === null ? '' : nu} onBlur={(e) => setNu(e.target.value === '' ? null : parseFloat(e.target.value))} />
-        </Field>
+        <div className="field">
+          <label>내부 반지름 r</label>
+          <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>두께 t</label>
+          <input type="number" defaultValue={fmtInput(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>내부압력 p</label>
+          <input type="number" defaultValue={fmtInput(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>E (변형률 계산용, 선택)</label>
+          <input type="number" placeholder="값 입력" defaultValue={E === null ? '' : fmt(disp(E, stressF))} onBlur={(e) => setE(e.target.value === '' ? null : parseFloat(e.target.value) * stressF)} />
+        </div>
+        <div className="field">
+          <label>ν (선택)</label>
+          <input type="number" placeholder="0~0.5" defaultValue={nu === null ? '' : nu} onBlur={(e) => setNu(e.target.value === '' ? null : parseFloat(e.target.value))} />
+        </div>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-6">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          VISUALIZER <span className="ml-2 text-[10px] bg-tealSoft text-teal rounded-full px-2 py-0.5">실시간</span>
+      <div className="panel">
+        <h3>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
         </h3>
         {result ? (
           <>
             <SphericalVesselSVG sigma={result.sigma} />
-            <div className="mt-5 border border-line rounded-xl p-3 bg-bg text-xs text-gray leading-relaxed space-y-0.5">
-              <div className="text-xs font-extrabold text-crimson mb-1.5">구형 압력용기 응력</div>
-              <p>σ = pr/2t (벽면 응력, 모든 방향 동일)</p>
-              <p className="font-extrabold">σ1=σ2 = {fmt(disp(result.sigma, stressF))} {units.stress}</p>
-              <p className="mt-2">외부 표면: τmax = σ/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</p>
-              <p>
-                내부 표면: τmax = (σ+p)/2 = {fmt(disp(result.tauInner, stressF))} {units.stress}{' '}
-                <span className="text-graySoft">(r/t≫1이면 외부와 거의 같음)</span>
-              </p>
-              {result.eps !== null && <p className="font-extrabold mt-2">변형률 ε = σ(1−ν)/E = {result.eps.toExponential(3)}</p>}
+            <div className="steps">
+              <FormulaSection title="구형 압력용기 응력">
+                <div className="step-formula">
+                  <Tip title="벽면 응력 (모든 방향 동일)">σ</Tip> = pr/2t
+                </div>
+                <div className="step-final">σ1=σ2 = {fmt(disp(result.sigma, stressF))} {units.stress}</div>
+                <div className="step-row" style={{ marginTop: 8 }}>외부 표면: τmax = σ/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</div>
+                <div className="step-row">
+                  내부 표면: τmax = (σ+p)/2 = {fmt(disp(result.tauInner, stressF))} {units.stress} <span style={{ color: 'var(--gray-soft)', fontSize: 11 }}>(r/t≫1이면 외부와 거의 같음)</span>
+                </div>
+                {result.eps !== null && <div className="step-final">변형률 ε = σ(1−ν)/E = {result.eps.toExponential(3)}</div>}
+              </FormulaSection>
             </div>
+            <div className="ai-hint">💬 왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
           </>
         ) : (
-          <div className="text-graySoft text-sm border-2 border-dashed border-line rounded-xl p-16 text-center">r, t를 입력하면 결과가 나타납니다.</div>
+          <div className="viz-placeholder" style={{ minHeight: 300 }}>r, t를 입력하면 결과가 나타납니다.</div>
         )}
       </div>
 
-      {/* ---------------- AI Tutor ---------------- */}
-      <div className="bg-white border border-line rounded-2xl p-5 sticky top-6 self-start">
-        <h3 className="text-crimson text-xs font-extrabold mb-4">
-          AI TUTOR <span className="ml-2 text-[10px] bg-crimsonSoft text-crimson rounded-full px-2 py-0.5">준비중</span>
-        </h3>
-        <div className="text-sm text-gray bg-crimsonSoft rounded-xl p-3 mb-3">왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 다음 단계에서 연결될 AI 튜터에게 물어보세요.</div>
-        <input className="field-input mb-2" placeholder="질문을 입력하세요" disabled />
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs text-gray font-bold mb-1">{label}</label>
-      {children}
-    </div>
+      <AiTutorPanel />
+    </>
   );
 }
 
@@ -115,7 +109,7 @@ function SphericalVesselSVG({ sigma }) {
   const s = 45, L = 30, cx = 320, cy = 120, color = '#1E7F72';
   const sxo = sigma >= 0 ? 1 : -1;
   return (
-    <svg viewBox="0 0 420 260" className="w-full max-w-[440px] mx-auto block">
+    <svg viewBox="0 0 420 260" style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
       <circle cx="120" cy="120" r="85" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       {arrows}
       <text x="120" y="225" fontSize="11" fill="#8A97A2" textAnchor="middle">내부압력 p</text>
