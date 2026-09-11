@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { signUpOrLogin } from '@/lib/auth';
+import { signUpOrLogin, demoLogin } from '@/lib/auth';
 
 export default function LoginPage() {
   const [studentId, setStudentId] = useState('');
@@ -44,6 +44,20 @@ export default function LoginPage() {
     router.replace('/subjects');
   }
 
+  async function handleDemoLogin(kind) {
+    setLoading(true);
+    setError('');
+
+    const { error: err } = await demoLogin(kind);
+
+    setLoading(false);
+    if (err) {
+      setError(err);
+      return;
+    }
+    router.replace('/subjects');
+  }
+
   if (checking) return null;
 
   return (
@@ -75,6 +89,20 @@ export default function LoginPage() {
             </button>
             {error && <p style={{ color: 'var(--crimson)', fontSize: 12, marginTop: 8 }}>{error}</p>}
           </form>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 16px' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+            <span style={{ fontSize: 11, color: 'var(--gray-soft)' }}>시연용 바로가기</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" disabled={loading} className="add-block" style={{ margin: 0, flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('student')}>
+              학생으로 시연
+            </button>
+            <button type="button" disabled={loading} className="add-block" style={{ margin: 0, flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('admin')}>
+              관리자로 시연
+            </button>
+          </div>
         </div>
       </div>
     </div>
