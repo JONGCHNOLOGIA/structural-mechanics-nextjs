@@ -44,17 +44,11 @@ export default function HomePage() {
           </div>
         </div>
         <div className="hero-art">
-          <div className="cover-placeholder">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5Z" />
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            </svg>
-            <span>
-              표지 이미지
-              <br />
-              (cover.jpg)
-            </span>
-          </div>
+          <img
+            src="/cover.jpg"
+            alt="재료역학 (Mechanics of Materials) 9th Edition 표지"
+            style={{ width: 104, height: 140, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
+          />
           <div className="cover-info">
             <div className="book-title">
               재료역학
