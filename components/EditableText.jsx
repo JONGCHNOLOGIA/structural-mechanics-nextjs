@@ -6,11 +6,12 @@ import { useUser } from './UserProvider';
 import { useSiteContent } from './SiteContentProvider';
 
 // 사이트 여기저기 흩어진 고정 문구(AI 응답이나 계산 결과처럼 코드로 계산되는 값은 제외)를
-// 코드 수정 없이 관리자(instructor) 계정에서 직접 고칠 수 있게 해주는 컴포넌트.
+// 코드 수정 없이 직접 고칠 수 있게 해주는 컴포넌트. 편집 권한은 role='instructor' 전체가 아니라
+// UserProvider의 canEditContent(특정 학번 1명)로 한정됨 — "관리자로 시연" 데모 계정은 못 고침.
 // contentKey로 SiteContentProvider가 미리 불러온 site_content 맵에서 커스텀 값을 찾고,
 // 없으면 defaultText를 그대로 보여준다.
 export default function EditableText({ contentKey, defaultText, as: Tag = 'p', style, className }) {
-  const { isAdmin } = useUser();
+  const { canEditContent } = useUser();
   const { content, setLocal } = useSiteContent();
   const text = content[contentKey] ?? defaultText;
 
@@ -77,14 +78,14 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
   return (
     <Tag className={className} style={style}>
       {text}
-      {isAdmin && (
+      {canEditContent && (
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             startEditing();
           }}
-          title="이 문구 수정하기 (관리자 전용)"
+          title="이 문구 수정하기"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

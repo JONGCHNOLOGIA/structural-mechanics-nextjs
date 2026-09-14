@@ -86,13 +86,15 @@ create policy "본인 대화만 조회, 본인 이름으로만 작성" on chat_l
 create policy "본인 이름으로 대화 작성" on chat_logs
   for insert with check (auth.uid() = user_id);
 
--- site_content: 문구는 누구나 읽을 수 있지만, 수정은 role='instructor'인 계정만 가능
+-- site_content: 문구는 누구나 읽을 수 있지만, 수정은 특정 학번(22011031) 계정만 가능.
+-- role='instructor' 전체로 허용하면 "관리자로 시연" 데모 계정도 실제 문구를 고칠 수 있게 되므로
+-- role이 아니라 student_id로 딱 한 명만 지정함.
 create policy "누구나 문구 조회 가능" on site_content
   for select using (true);
-create policy "관리자만 문구 등록/수정" on site_content
-  for insert with check (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
-create policy "관리자만 문구 수정" on site_content
-  for update using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'))
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+create policy "지정된 학번만 문구 등록" on site_content
+  for insert with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
+create policy "지정된 학번만 문구 수정" on site_content
+  for update using (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'))
+  with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
 
 -- 교수자는 role 컬럼을 보고 별도 정책/뷰로 익명 열람 처리 (필요시 추가)
