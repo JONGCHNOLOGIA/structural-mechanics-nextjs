@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
@@ -13,15 +13,23 @@ import Frac from '@/components/Frac';
 
 export default function MomentAreaMethod() {
   const [loadType, setLoadType] = useState('point'); // 'point' | 'udl'
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', distLoad: 'kN/m', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
-  const [P, setP] = useState(20);
-  const [q, setQ] = useState(10);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [P, setP] = useState(20 * 1000);
+  const [q, setQ] = useState(10 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const PSI = P * 1000;
-  const qSI = q * 1000;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const distF = UNIT_OPTIONS.distLoad[units.distLoad];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const PSI = P;
+  const qSI = q;
 
   const result = useMemo(() => {
     const N = 60;
@@ -49,11 +57,11 @@ export default function MomentAreaMethod() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          <b>1st 정리</b>: 두 점 사이 접선의 각도 차이 = 그 구간 <Frac num="M" den="EI" /> 다이어그램의 <b>면적</b>.
-          <br />
-          <b>2nd 정리</b>: 한 점의 접선으로부터 다른 점까지의 편차 = <Frac num="M" den="EI" /> 면적의 <b>1차모멘트</b>(면적×도심거리).
-        </p>
+        <EditableText
+          contentKey="calc.MomentAreaMethod.intro"
+          defaultText="**1st 정리**: 두 점 사이 접선의 각도 차이 = 그 구간 M/EI 다이어그램의 면적. **2nd 정리**: 한 점의 접선으로부터 다른 점까지의 편차 = M/EI 면적의 1차모멘트(면적×도심거리)."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (loadType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setLoadType('point')}>
             자유단 집중하중 P
@@ -63,27 +71,57 @@ export default function MomentAreaMethod() {
           </button>
         </div>
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={loadType === 'point' ? units.force : units.distLoad} onChange={(e) => setUnits((p) => (loadType === 'point' ? { ...p, force: e.target.value } : { ...p, distLoad: e.target.value }))}>
+              {Object.keys(loadType === 'point' ? UNIT_OPTIONS.force : UNIT_OPTIONS.distLoad).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
         </div>
         {loadType === 'point' ? (
           <div className="field">
-            <label>집중하중 P (kN)</label>
-            <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+            <label>집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
           </div>
         ) : (
           <div className="field">
-            <label>등분포하중 q (kN/m)</label>
-            <input type="number" defaultValue={fmtInput(q)} onBlur={(e) => setQ(parseFloat(e.target.value))} />
+            <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
+            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
           </div>
         )}
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 
@@ -115,7 +153,7 @@ export default function MomentAreaMethod() {
             <div className="step-formula">
               <Tip title="1st 모멘트-면적 정리">θB</Tip> = <Frac num="M" den="EI" /> 다이어그램의 면적 = {result.theta.toExponential(3)} rad
             </div>
-            <div className="step-row">도심(centroid)까지 B로부터의 거리 = {fmt(result.centroidFromB)} m</div>
+            <div className="step-row">도심(centroid)까지 B로부터의 거리 = {fmt(disp(result.centroidFromB, lenF))} {units.length}</div>
             <div className="step-final">
               <Tip title="2nd 모멘트-면적 정리">δB</Tip> = 면적 × 도심거리 = {fmt(result.delta * 1000)} mm
             </div>
@@ -151,10 +189,10 @@ function MomentAreaSVG({ pts, L, centroidFromB }) {
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.6" />
       <line x1={xToPx(centroidX)} y1={padTop} x2={xToPx(centroidX)} y2={padTop + drawH} stroke="#4A5FBF" strokeWidth="1.4" strokeDasharray="5 4" />
-      <text x={xToPx(centroidX)} y={padTop - 8} fontSize="10.5" fill="#4A5FBF" textAnchor="middle" fontWeight="800">도심</text>
-      <text x={padL} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2">A (고정단)</text>
-      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="end">B (자유단)</text>
-      <text x={padL + drawW / 2} y={h - 6} fontSize="10.5" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (빨간 음영 = 면적 = θB)</text>
+      <text x={xToPx(centroidX)} y={padTop - 8} fontSize="13" fill="#4A5FBF" textAnchor="middle" fontWeight="800">도심</text>
+      <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">A (고정단)</text>
+      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">B (자유단)</text>
+      <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (빨간 음영 = 면적 = θB)</text>
     </svg>
   );
 }

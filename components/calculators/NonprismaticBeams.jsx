@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
@@ -12,18 +12,25 @@ import Frac from '@/components/Frac';
 // 모멘트-면적 2번째 정리로 처짐을 구함.
 
 export default function NonprismaticBeams() {
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
   const [c, setC] = useState(2);
-  const [P, setP] = useState(20);
-  const [E, setE] = useState(200);
-  const [I1, setI1] = useState(30);
-  const [I2, setI2] = useState(90);
+  const [P, setP] = useState(20 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I1, setI1] = useState(30e6 * 1e-12);
+  const [I2, setI2] = useState(90e6 * 1e-12);
+
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
 
   const cClamped = Math.min(Math.max(c, 0.001), L - 0.001);
-  const PSI = P * 1000;
-  const EPa = E * 1e9;
-  const EI1 = EPa * (I1 * 1e-6);
-  const EI2 = EPa * (I2 * 1e-6);
+  const PSI = P;
+  const EPa = E;
+  const EI1 = EPa * I1;
+  const EI2 = EPa * I2;
 
   const result = useMemo(() => {
     const N = 400;
@@ -53,34 +60,64 @@ export default function NonprismaticBeams() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          단면 2차모멘트가 한 값이 아니라(<b>Nonprismatic</b>) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. <Frac num="M" den="EI" /> 다이어그램이{' '}
-          <b>c에서 불연속으로 꺾이고</b>, 구간을 나눠 적분해야 해요.
-        </p>
+        <EditableText
+          contentKey="calc.NonprismaticBeams.intro"
+          defaultText="단면 2차모멘트가 한 값이 아니라(**Nonprismatic**) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. M/EI 다이어그램이 **c에서 불연속으로 꺾이고**, 구간을 나눠 적분해야 해요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="field">
-          <label>단면 전환 위치 c (m, 고정단으로부터)</label>
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>단면 전환 위치 c (고정단으로부터) — {fmt(disp(cClamped, lenF))} {units.length}</label>
           <input type="range" min="0.1" max={Math.max(0.2, L - 0.1)} step="0.05" value={cClamped} onChange={(e) => setC(parseFloat(e.target.value))} style={{ width: '100%' }} />
-          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4 }}>c = {fmt(cClamped)} m</div>
         </div>
         <div className="field">
-          <label>I₁ — [0, c] 구간 (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I1)} onBlur={(e) => setI1(parseFloat(e.target.value))} />
+          <label>I₁ — [0, c] 구간 — {fmt(disp(I1, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I1, inertiaF))} onBlur={(e) => setI1(parseFloat(e.target.value) * inertiaF)} />
         </div>
         <div className="field">
-          <label>I₂ — [c, L] 구간 (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I2)} onBlur={(e) => setI2(parseFloat(e.target.value))} />
+          <label>I₂ — [c, L] 구간 — {fmt(disp(I2, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I2, inertiaF))} onBlur={(e) => setI2(parseFloat(e.target.value) * inertiaF)} />
         </div>
         <div className="field">
-          <label>자유단 집중하중 P (kN)</label>
-          <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+          <label>자유단 집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+          <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
         </div>
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
       </div>
 
@@ -143,10 +180,10 @@ function NonprismaticSVG({ pts, L, c, maxM }) {
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.6" />
       <line x1={xToPx(c)} y1={padTop} x2={xToPx(c)} y2={padTop + drawH} stroke="#1E7F72" strokeWidth="1.4" strokeDasharray="5 4" />
-      <text x={xToPx(c)} y={padTop - 8} fontSize="10.5" fill="#1E7F72" textAnchor="middle" fontWeight="800">c (단면 전환점)</text>
-      <text x={padL} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2">A (고정단)</text>
-      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="end">B (자유단)</text>
-      <text x={padL + drawW / 2} y={h - 6} fontSize="10.5" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (c에서 꺾임)</text>
+      <text x={xToPx(c)} y={padTop - 8} fontSize="13" fill="#1E7F72" textAnchor="middle" fontWeight="800">c (단면 전환점)</text>
+      <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">A (고정단)</text>
+      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">B (자유단)</text>
+      <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (c에서 꺾임)</text>
     </svg>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { ssUDL, ssUDLmax, ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflection';
 import FormulaSection from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
@@ -13,17 +13,25 @@ import Frac from '@/components/Frac';
 // 표준 케이스 두 개의 처짐을 그냥 더하면(중첩) 실제 결합하중의 처짐이 된다는 걸 보여줌.
 
 export default function MethodOfSuperposition() {
+  const [units, setUnits] = useState({ length: 'm', distLoad: 'kN/m', force: 'kN', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
   const [useUDL, setUseUDL] = useState(true);
-  const [q, setQ] = useState(10);
+  const [q, setQ] = useState(10 * 1000);
   const [usePoint, setUsePoint] = useState(true);
-  const [P, setP] = useState(20);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [P, setP] = useState(20 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const qSI = useUDL ? q * 1000 : 0;
-  const PSI = usePoint ? P * 1000 : 0;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const distF = UNIT_OPTIONS.distLoad[units.distLoad];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const qSI = useUDL ? q : 0;
+  const PSI = usePoint ? P : 0;
   const a = L / 2;
 
   const result = useMemo(() => {
@@ -52,16 +60,51 @@ export default function MethodOfSuperposition() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 분포하중 / 집중하중)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.distLoad} onChange={(e) => setUnits((p) => ({ ...p, distLoad: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.distLoad).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
         </div>
         <button className={'add-block' + (useUDL ? ' active' : '')} onClick={() => setUseUDL((v) => !v)}>
           {useUDL ? '✓ ' : ''}등분포하중 q 포함
         </button>
         {useUDL && (
           <div className="field">
-            <label>q (kN/m)</label>
-            <input type="number" defaultValue={fmtInput(q)} onBlur={(e) => setQ(parseFloat(e.target.value))} />
+            <label>q — {fmt(disp(q, distF))} {units.distLoad}</label>
+            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
           </div>
         )}
         <button className={'add-block' + (usePoint ? ' active' : '')} onClick={() => setUsePoint((v) => !v)}>
@@ -69,17 +112,17 @@ export default function MethodOfSuperposition() {
         </button>
         {usePoint && (
           <div className="field">
-            <label>P (kN, 중앙 작용)</label>
-            <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+            <label>P (중앙 작용) — {fmt(disp(P, forceF))} {units.force}</label>
+            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
           </div>
         )}
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 

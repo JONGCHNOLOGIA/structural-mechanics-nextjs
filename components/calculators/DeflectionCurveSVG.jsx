@@ -66,14 +66,14 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
         <g>
           <line x1={xToPx(pointLoadAt)} y1={beamY - 34} x2={xToPx(pointLoadAt)} y2={beamY - 4} stroke="#C3002F" strokeWidth="1.8" />
           <polygon points={`${xToPx(pointLoadAt)},${beamY} ${xToPx(pointLoadAt) - 5},${beamY - 9} ${xToPx(pointLoadAt) + 5},${beamY - 9}`} fill="#C3002F" />
-          <text x={xToPx(pointLoadAt)} y={beamY - 38} fontSize="11" fontWeight="800" fill="#C3002F" textAnchor="middle">P</text>
+          <text x={xToPx(pointLoadAt)} y={beamY - 38} fontSize="13" fontWeight="800" fill="#C3002F" textAnchor="middle">P</text>
         </g>
       )}
       {momentAt !== undefined && (
         <g>
           <path d={`M ${xToPx(momentAt) - 12} ${beamY - 14} A 14 14 0 1 1 ${xToPx(momentAt) + 6} ${beamY - 22}`} fill="none" stroke="#4A5FBF" strokeWidth="1.8" />
           <polygon points={`${xToPx(momentAt) + 6},${beamY - 22} ${xToPx(momentAt) - 1},${beamY - 26} ${xToPx(momentAt) + 2},${beamY - 15}`} fill="#4A5FBF" />
-          <text x={xToPx(momentAt)} y={beamY - 30} fontSize="11" fontWeight="800" fill="#4A5FBF" textAnchor="middle">M₀</text>
+          <text x={xToPx(momentAt)} y={beamY - 30} fontSize="13" fontWeight="800" fill="#4A5FBF" textAnchor="middle">M₀</text>
         </g>
       )}
       {pointLoadAt === undefined && momentAt === undefined && (
@@ -82,13 +82,13 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
             const px = padL + i * 22;
             return <line key={i} x1={px} y1={beamY - 18} x2={px} y2={beamY - 2} stroke="#C3002F" strokeWidth="1.3" markerEnd="url(#arrow)" />;
           })}
-          <text x={padL + drawW / 2} y={beamY - 24} fontSize="11" fontWeight="800" fill="#C3002F" textAnchor="middle">q</text>
+          <text x={padL + drawW / 2} y={beamY - 24} fontSize="13" fontWeight="800" fill="#C3002F" textAnchor="middle">q</text>
         </g>
       )}
 
       {/* 처짐곡선 (과장) */}
       <path d={pathD} fill="none" stroke="#1E7F72" strokeWidth="2.2" />
-      <text x={padL + drawW / 2} y={h - 16} fontSize="10.5" fill="#8A97A2" textAnchor="middle">
+      <text x={padL + drawW / 2} y={h - 16} fontSize="13" fill="#8A97A2" textAnchor="middle">
         처짐곡선 (화면 표시를 위해 세로 방향으로 과장됨)
       </text>
     </svg>

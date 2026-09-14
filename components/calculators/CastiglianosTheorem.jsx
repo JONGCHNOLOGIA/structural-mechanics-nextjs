@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { ssUDLmax } from '@/lib/calc/deflection';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
@@ -17,17 +17,26 @@ import Frac from '@/components/Frac';
 export default function CastiglianosTheorem() {
   const [beamType, setBeamType] = useState('cantilever'); // 'cantilever' | 'simply-supported'
   const [view, setView] = useState('castigliano'); // 'castigliano' | 'unit-load'
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', moment: 'kN·m', distLoad: 'kN/m', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
-  const [P, setP] = useState(20);
-  const [M0, setM0] = useState(15);
-  const [q, setQ] = useState(10);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [P, setP] = useState(20 * 1000);
+  const [M0, setM0] = useState(15 * 1000);
+  const [q, setQ] = useState(10 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const PSI = P * 1000;
-  const M0SI = M0 * 1000;
-  const qSI = q * 1000;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const momF = UNIT_OPTIONS.moment[units.moment];
+  const distF = UNIT_OPTIONS.distLoad[units.distLoad];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const PSI = P;
+  const M0SI = M0;
+  const qSI = q;
 
   const cantileverResult = useMemo(
     () => ({
@@ -88,33 +97,70 @@ export default function CastiglianosTheorem() {
           </button>
         </div>
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={isCantilever ? units.force : units.distLoad} onChange={(e) => setUnits((p) => (isCantilever ? { ...p, force: e.target.value } : { ...p, distLoad: e.target.value }))}>
+              {Object.keys(isCantilever ? UNIT_OPTIONS.force : UNIT_OPTIONS.distLoad).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            {isCantilever && (
+              <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+                {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
         </div>
         {isCantilever ? (
           <>
             <div className="field">
-              <label>자유단 집중하중 P (kN)</label>
-              <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+              <label>자유단 집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+              <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
             </div>
             <div className="field">
-              <label>자유단 모멘트 M0 (kN·m)</label>
-              <input type="number" defaultValue={fmtInput(M0)} onBlur={(e) => setM0(parseFloat(e.target.value))} />
+              <label>자유단 모멘트 M0 — {fmt(disp(M0, momF))} {units.moment}</label>
+              <input type="number" defaultValue={fmtInput(disp(M0, momF))} onBlur={(e) => setM0(parseFloat(e.target.value) * momF)} />
             </div>
           </>
         ) : (
           <div className="field">
-            <label>등분포하중 q (kN/m)</label>
-            <input type="number" defaultValue={fmtInput(q)} onBlur={(e) => setQ(parseFloat(e.target.value))} />
+            <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
+            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
           </div>
         )}
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 

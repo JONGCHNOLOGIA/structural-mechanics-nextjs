@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflection';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
@@ -13,14 +13,21 @@ import Frac from '@/components/Frac';
 // 단순보의 처짐을, 전단력식을 적분해서 구함. 괄호는 x<a일 땐 0, x≥a일 때만 값을 가짐.
 
 export default function ShearForceEquation() {
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
   const [a, setA] = useState(2);
-  const [P, setP] = useState(20);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [P, setP] = useState(20 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const PSI = P * 1000;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const PSI = P;
   const aClamped = Math.min(Math.max(a, 0.001), L - 0.001);
 
   const result = useMemo(() => {
@@ -46,25 +53,55 @@ export default function ShearForceEquation() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="field">
-          <label>하중 위치 a (m, A로부터)</label>
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
+        </div>
+        <div className="field">
+          <label>하중 위치 a (A로부터) — {fmt(disp(aClamped, lenF))} {units.length}</label>
           <input type="range" min="0.1" max={Math.max(0.2, L - 0.1)} step="0.05" value={aClamped} onChange={(e) => setA(parseFloat(e.target.value))} style={{ width: '100%' }} />
-          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4 }}>a = {fmt(aClamped)} m, b = {fmt(b)} m</div>
+          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4 }}>a = {fmt(disp(aClamped, lenF))} {units.length}, b = {fmt(disp(b, lenF))} {units.length}</div>
         </div>
         <div className="field">
-          <label>집중하중 P (kN)</label>
-          <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+          <label>집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+          <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
         </div>
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 

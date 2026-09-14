@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { bendingStrainEnergy } from '@/lib/calc/strainEnergy';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
@@ -13,15 +13,23 @@ import Frac from '@/components/Frac';
 
 export default function StrainEnergyOfBending() {
   const [caseType, setCaseType] = useState('both'); // 'point' | 'moment' | 'both'
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', moment: 'kN·m', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
-  const [P, setP] = useState(20);
-  const [M0, setM0] = useState(15);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [P, setP] = useState(20 * 1000);
+  const [M0, setM0] = useState(15 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const PSI = caseType === 'moment' ? 0 : P * 1000;
-  const M0SI = caseType === 'point' ? 0 : M0 * 1000;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const momF = UNIT_OPTIONS.moment[units.moment];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const PSI = caseType === 'moment' ? 0 : P;
+  const M0SI = caseType === 'point' ? 0 : M0;
 
   const result = useMemo(() => {
     const U = bendingStrainEnergy(L, PSI, M0SI, EI);
@@ -44,10 +52,11 @@ export default function StrainEnergyOfBending() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          굽힘모멘트가 있으면 보 안에 <b>변형에너지</b> U = ∫ <Frac num="M²" den="2EI" /> dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서
-          비교해보세요.
-        </p>
+        <EditableText
+          contentKey="calc.StrainEnergyOfBending.intro"
+          defaultText="굽힘모멘트가 있으면 보 안에 **변형에너지** U = ∫ M²/2EI dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서 비교해보세요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
           <button className={'add-block' + (caseType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('point')}>
             P만
@@ -60,28 +69,63 @@ export default function StrainEnergyOfBending() {
           </button>
         </div>
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중 / 모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
         </div>
         {caseType !== 'moment' && (
           <div className="field">
-            <label>자유단 집중하중 P (kN)</label>
-            <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+            <label>자유단 집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
           </div>
         )}
         {caseType !== 'point' && (
           <div className="field">
-            <label>자유단 모멘트 M0 (kN·m)</label>
-            <input type="number" defaultValue={fmtInput(M0)} onBlur={(e) => setM0(parseFloat(e.target.value))} />
+            <label>자유단 모멘트 M0 — {fmt(disp(M0, momF))} {units.moment}</label>
+            <input type="number" defaultValue={fmtInput(disp(M0, momF))} onBlur={(e) => setM0(parseFloat(e.target.value) * momF)} />
           </div>
         )}
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 
@@ -143,9 +187,9 @@ function MomentDiagramSVG({ pts, L, maxAbsM }) {
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#E7E9F7" stroke="#4A5FBF" strokeWidth="1.6" />
-      <text x={padL} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2">B (자유단, s=0)</text>
-      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="end">A (고정단, s=L)</text>
-      <text x={padL + drawW / 2} y={h - 6} fontSize="10.5" fill="#8A97A2" textAnchor="middle">굽힘모멘트 M(s) 다이어그램</text>
+      <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">B (자유단, s=0)</text>
+      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">A (고정단, s=L)</text>
+      <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">굽힘모멘트 M(s) 다이어그램</text>
     </svg>
   );
 }
