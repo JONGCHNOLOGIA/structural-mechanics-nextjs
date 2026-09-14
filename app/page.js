@@ -51,6 +51,10 @@ export default function HomePage() {
               <div className="n">✎</div>
               <div className="l">문제 생성</div>
             </Link>
+            <Link href="/subjects/structural-mechanics-2/section-properties" className="hero-stat hero-stat-link">
+              <div className="n">📐</div>
+              <div className="l">단면 특성 계산기</div>
+            </Link>
           </div>
         </div>
         <div className="hero-art">
