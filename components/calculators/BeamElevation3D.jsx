@@ -83,13 +83,33 @@ export default function BeamElevation3D({ momentLabel, bend }) {
     scene.add(momentArrow(-L / 2 - 0.15, true));
     scene.add(momentArrow(L / 2 + 0.15, false));
 
-    // ---- 분석 단면 위치 (점선) ----
-    const dashMat = new THREE.LineDashedMaterial({ color: CRIMSON, dashSize: 0.08, gapSize: 0.06, linewidth: 1 });
-    const dashPts = [new THREE.Vector3(0, -0.9, 0), new THREE.Vector3(0, 0.9, 0)];
-    const dashGeo = new THREE.BufferGeometry().setFromPoints(dashPts);
-    const dashLine = new THREE.Line(dashGeo, dashMat);
-    dashLine.computeLineDistances();
-    scene.add(dashLine);
+    // ---- 분석 단면 위치 ("여기를 잘랐다" 느낌을 주는 반투명 절단면 + 테두리) ----
+    // 예전엔 보 내부를 관통하는 점선 하나였는데, 그 부분이 불투명한 보 표면에 가려서 거의 안 보였음.
+    // 대신 보 단면보다 살짝 큰 반투명 평면 + 밝은 테두리를 x=0에 끼워서, 어느 각도에서 봐도
+    // 보 표면 위/아래/앞/뒤로 살짝 튀어나온 "절단면 카드"가 또렷하게 보이도록 함.
+    const cutW = H * 1.7, cutD = D * 1.7;
+    const cutPlaneGeo = new THREE.PlaneGeometry(cutD, cutW);
+    const cutPlaneMat = new THREE.MeshBasicMaterial({
+      color: CRIMSON,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const cutPlane = new THREE.Mesh(cutPlaneGeo, cutPlaneMat);
+    cutPlane.rotation.y = Math.PI / 2;
+    scene.add(cutPlane);
+
+    const half = { w: cutW / 2, d: cutD / 2 };
+    const outlinePts = [
+      new THREE.Vector3(0, -half.w, -half.d),
+      new THREE.Vector3(0, half.w, -half.d),
+      new THREE.Vector3(0, half.w, half.d),
+      new THREE.Vector3(0, -half.w, half.d),
+    ];
+    const outlineGeo = new THREE.BufferGeometry().setFromPoints(outlinePts);
+    const outline = new THREE.LineLoop(outlineGeo, new THREE.LineBasicMaterial({ color: CRIMSON, linewidth: 2 }));
+    scene.add(outline);
 
     // ---- 카메라: 드래그로 회전, 안 건드리면 천천히 자동 회전 ----
     let theta = -0.55, phi = 1.15, radius = 8.5;
@@ -162,7 +182,9 @@ export default function BeamElevation3D({ momentLabel, bend }) {
       mount.removeChild(renderer.domElement);
       beamGeo.dispose();
       beamMat.dispose();
-      dashGeo.dispose();
+      cutPlaneGeo.dispose();
+      cutPlaneMat.dispose();
+      outlineGeo.dispose();
       renderer.dispose();
     };
   }, []);

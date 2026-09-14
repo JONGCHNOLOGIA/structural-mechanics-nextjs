@@ -738,7 +738,7 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const [editingTarget, setEditingTarget] = useState(null); // { colorId, field } | null
 
   const svgW = 920;
-  const svgH = 545;
+  const svgH = 700;
   const padTop = 55;
   const padBottom = 55;
   const padLeft = 80;
@@ -813,12 +813,32 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
           const hPx = b.height * scale;
           const labelY = yTopPx + hPx / 2;
           const hLabel = `${fmt(disp(b.height, lenF))} ${units.length}.`;
+          const wLabelForBlock = `${fmt(disp(b.width, lenF))} ${units.length}. wide`;
           return (
             <g key={i}>
               <rect x={x} y={yTopPx} width={wPx} height={hPx} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />
               <text x={centerX + (maxWidth * scale) / 2 + 10} y={labelY + 3.5} fontSize="10.5" fontWeight="800" fill={c.stroke}>
                 {c.name}
               </text>
+              <EditableDimText
+                editing={editingTarget && editingTarget.colorId === b.colorId && editingTarget.field === 'width'}
+                x={centerX + (maxWidth * scale) / 2 + 10}
+                y={labelY + 16}
+                textAnchor="start"
+                fill={c.stroke}
+                fontSize="9.5"
+                fontWeight="700"
+                displayText={wLabelForBlock}
+                currentValue={disp(b.width, lenF)}
+                boxW={56}
+                boxH={17}
+                onStartEdit={() => setEditingTarget({ colorId: b.colorId, field: 'width' })}
+                onCommit={(v) => {
+                  onEditDim(b.colorId, 'width', v);
+                  setEditingTarget(null);
+                }}
+                onCancel={() => setEditingTarget(null)}
+              />
               <line x1={leftDimX} y1={yTopPx} x2={leftDimX} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
               <line x1={leftDimX - 4} y1={yTopPx} x2={leftDimX + 4} y2={yTopPx} stroke={c.stroke} strokeWidth="1" />
               <line x1={leftDimX - 4} y1={yBottomPx} x2={leftDimX + 4} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
