@@ -2,19 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { blockColor } from '@/lib/calc/unitOptions';
 
 // BeamElevationSVG(2D 측면도)를 3D로 다시 그린 버전. 사용자가 드래그해서 돌려볼 수 있고,
 // 가만히 두면 천천히 자동 회전한다. 실제 단면 치수를 그대로 쓰는 스케일 모델이 아니라
 // (2D 버전도 마찬가지) "순수굽힘 하에서 보가 어떻게 휘는지·모멘트가 어느 방향인지"를
 // 보여주는 개념도라서, 길이·높이 비율은 보기 좋게 고정값을 씀.
+// blocks prop(선택)을 주면, 단일 균질 보 대신 Composite Beams의 실제 블록별
+// 색상·두께 비율을 반영한 적층 보로 그림 (단면 SVG와 같은 색/비율 규칙: 아래→위로 쌓고
+// 폭이 다른 블록은 중앙정렬).
 const GRAY = 0x51626f;
 const CRIMSON = 0xc3002f;
 const BEAM_FILL = 0xf2f0ea;
 
-export default function BeamElevation3D({ momentLabel, bend }) {
+export default function BeamElevation3D({ momentLabel, bend, blocks }) {
   const mountRef = useRef(null);
   const bendRef = useRef(bend);
   bendRef.current = bend;
+  const blocksRef = useRef(blocks);
+  blocksRef.current = blocks;
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -33,31 +39,74 @@ export default function BeamElevation3D({ momentLabel, bend }) {
     dirLight.position.set(4, 6, 5);
     scene.add(dirLight);
 
-    // ---- 휘어진 보 (BoxGeometry를 세로선을 따라 위/아래로 밀어서 곡률 표현) ----
+    // ---- 휘어진 보 ----
+    // blocks가 있으면: 블록마다 높이 비율(H 안에서) · 폭 비율(D 안에서, 중앙정렬)을 반영한
+    // 색깔 있는 슬라브를 아래에서부터 쌓아올림. 없으면: 예전처럼 균질한 단일 박스.
     const segs = 32;
-    const beamGeo = new THREE.BoxGeometry(L, H, D, segs, 1, 1);
-    const beamMat = new THREE.MeshStandardMaterial({ color: BEAM_FILL, roughness: 0.85, metalness: 0.05 });
-    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
-    scene.add(beamMesh);
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo, 20), new THREE.LineBasicMaterial({ color: GRAY }));
-    beamMesh.add(edges);
+    const layerMeshes = []; // { mesh, geo, edges, baseY }
+
+    function buildLayers() {
+      layerMeshes.forEach(({ mesh, geo, edges: e, mat: m }) => {
+        scene.remove(mesh);
+        geo.dispose();
+        m.dispose();
+        e.geometry.dispose();
+        e.material.dispose();
+      });
+      layerMeshes.length = 0;
+
+      const hasBlocks = Array.isArray(blocksRef.current) && blocksRef.current.length > 0;
+      if (hasBlocks) {
+        const bs = blocksRef.current;
+        const totalH = bs.reduce((s, b) => s + b.height, 0) || 1;
+        const maxW = Math.max(...bs.map((b) => b.width)) || 1;
+        let cum = 0;
+        bs.forEach((b) => {
+          const hFrac = (b.height / totalH) * H;
+          const dFrac = Math.max(0.06, (b.width / maxW) * D);
+          const centerY = -H / 2 + cum + hFrac / 2;
+          cum += hFrac;
+          const c = blockColor(b);
+          const geo = new THREE.BoxGeometry(L, hFrac, dFrac, segs, 1, 1);
+          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(c.stroke), roughness: 0.75, metalness: 0.05 });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.y = centerY;
+          scene.add(mesh);
+          const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), new THREE.LineBasicMaterial({ color: GRAY }));
+          mesh.add(edges);
+          layerMeshes.push({ mesh, geo, mat, edges, baseY: centerY });
+        });
+      } else {
+        const geo = new THREE.BoxGeometry(L, H, D, segs, 1, 1);
+        const mat = new THREE.MeshStandardMaterial({ color: BEAM_FILL, roughness: 0.85, metalness: 0.05 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.y = 0;
+        scene.add(mesh);
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), new THREE.LineBasicMaterial({ color: GRAY }));
+        mesh.add(edges);
+        layerMeshes.push({ mesh, geo, mat, edges, baseY: 0 });
+      }
+    }
+    buildLayers();
 
     function applyBend() {
       // bend prop(-24~24px)은 2D 버전(SVG, y축이 아래로 증가)과 같은 스케일 — 양수(M>0, 새깅)는
       // 2D에서 가운데가 아래로 처지는 방향. Three.js는 y축이 위로 증가하므로 부호를 반대로 적용.
       const curveAmount = (bendRef.current / 24) * -0.55;
-      const pos = beamGeo.attributes.position;
-      const basePos = beamGeo.userData.basePosition || (beamGeo.userData.basePosition = pos.array.slice());
-      for (let i = 0; i < pos.count; i++) {
-        const x = basePos[i * 3];
-        const t = x / (L / 2); // -1..1
-        const offset = curveAmount * (1 - t * t); // 중앙에서 최대, 양끝은 0인 포물선
-        pos.array[i * 3 + 1] = basePos[i * 3 + 1] + offset;
-      }
-      pos.needsUpdate = true;
-      beamGeo.computeVertexNormals();
-      edges.geometry.dispose();
-      edges.geometry = new THREE.EdgesGeometry(beamGeo, 20);
+      layerMeshes.forEach(({ mesh, geo, edges, baseY }) => {
+        const pos = geo.attributes.position;
+        const basePos = geo.userData.basePosition || (geo.userData.basePosition = pos.array.slice());
+        for (let i = 0; i < pos.count; i++) {
+          const x = basePos[i * 3];
+          const t = x / (L / 2); // -1..1
+          const offset = curveAmount * (1 - t * t); // 중앙에서 최대, 양끝은 0인 포물선
+          pos.array[i * 3 + 1] = basePos[i * 3 + 1] + offset;
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+        edges.geometry.dispose();
+        edges.geometry = new THREE.EdgesGeometry(geo, 20);
+      });
     }
     applyBend();
 
@@ -162,9 +211,15 @@ export default function BeamElevation3D({ momentLabel, bend }) {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
+    let lastBlocksSig = JSON.stringify(blocksRef.current || null);
     let raf;
     function animate() {
       raf = requestAnimationFrame(animate);
+      const sig = JSON.stringify(blocksRef.current || null);
+      if (sig !== lastBlocksSig) {
+        lastBlocksSig = sig;
+        buildLayers();
+      }
       applyBend();
       if (!dragging) {
         idleTimer += 1;
@@ -182,8 +237,12 @@ export default function BeamElevation3D({ momentLabel, bend }) {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       mount.removeChild(renderer.domElement);
-      beamGeo.dispose();
-      beamMat.dispose();
+      layerMeshes.forEach(({ geo, mat, edges }) => {
+        geo.dispose();
+        mat.dispose();
+        edges.geometry.dispose();
+        edges.material.dispose();
+      });
       cutPlaneGeo.dispose();
       cutPlaneMat.dispose();
       outlineGeo.dispose();

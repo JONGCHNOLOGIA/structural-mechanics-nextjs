@@ -981,7 +981,7 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
         </button>
       </div>
       {elevation3D ? (
-        <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} />
+        <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} blocks={result.blocks} />
       ) : (
         <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
       )}
