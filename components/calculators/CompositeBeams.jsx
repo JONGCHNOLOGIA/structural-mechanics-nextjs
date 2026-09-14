@@ -1,42 +1,60 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
+import { useRef, useState } from 'react';
+import { UNIT_OPTIONS, cbSliderRangeFor, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
 import { computeComposite, isDoublySymmetric } from '@/lib/calc/compositeBeams';
-import FormulaSection, { Tip } from './FormulaSection';
+import { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 
 /*
-  프로토타입의 renderCompositeBeams()를 React로 옮긴 버전. 클래스명은 프로토타입과 동일
-  (.panel/.field/.block-card/.add-block/.step-card 등)하게 맞춰서 디자인이 원본과 같아 보이게 함.
-
-  ▸ 아직 이 파일에 옮기지 않은 것 (프로토타입 HTML에는 있음, 다음 포팅 대상)
-    - 블록 드래그로 순서 바꾸기 (cbDragStart/cbDrop) — ⠿ 손잡이는 표시만 하고 동작은 비활성
-    - "Doubly symmetric section" On/Off 토글 (cbMakeSandwich)
-    - y 기준점(하단/상단) 토글
+  프로토타입의 renderCompositeBeams()/cbBuildVizSVGs()/cbCalcSection() 등을 React로 그대로 옮긴 버전.
+  블록 드래그 순서 변경, Doubly symmetric 토글, y 기준점 토글, 슬라이더-입력창 동기화, 섹션별
+  계산하기/다시계산하기(stale 표시), Moments of Inertia · Approximate Theory 섹션, 보 측면도까지
+  프로토타입과 동일하게 동작하도록 구현.
 */
 
-let nextColorId = 2;
-
-function makeInitialBlocks() {
-  return [
-    { colorId: 0, width: 4 * 0.0254, height: 0.5 * 0.0254, E: 30000 * 6894757, EUnit: 'ksi' },
-    { colorId: 1, width: 4 * 0.0254, height: 6 * 0.0254, E: 1500 * 6894757, EUnit: 'ksi' },
-  ];
+function UnitSelect({ type, value, onChange }) {
+  const options = Object.keys(UNIT_OPTIONS[type]);
+  return (
+    <select className="unit-inline" value={value} onChange={(e) => onChange(e.target.value)}>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
 }
+
+const SECTION_NAMES = ['na', 'io', 'stress', 'approx'];
 
 export default function CompositeBeams() {
   const [units, setUnits] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
-  const [blocks, setBlocks] = useState(makeInitialBlocks);
-  const [moment, setMoment] = useState(60 * 112.9848);
+  const [defaultEUnit] = useState('ksi');
+  const [blocks, setBlocks] = useState([]); // 프로토타입과 동일하게 기본값 없음
+  const [moment, setMoment] = useState(null);
+  const [yReference, setYReference] = useState('bottom');
+  const [sandwichLinked, setSandwichLinked] = useState(false);
+  const [momentRangeOverrideBase, setMomentRangeOverrideBase] = useState(null);
+  const [calcState, setCalcState] = useState({ na: 'idle', io: 'idle', stress: 'idle', approx: 'idle' });
+  const [calcSnapshot, setCalcSnapshot] = useState({ na: null, io: null, stress: null, approx: null });
+
+  const nextColorIdRef = useRef(0);
+  const dragIndexRef = useRef(null);
 
   const lenF = UNIT_OPTIONS.length[units.length];
-  const stressF = UNIT_OPTIONS.stress[units.stress];
   const momF = UNIT_OPTIONS.moment[units.moment];
   const disp = (base, factor) => base / factor;
 
-  const result = useMemo(() => (blocks.length ? computeComposite(blocks, moment) : null), [blocks, moment]);
-  const symmetric3 = blocks.length === 3 && result && isDoublySymmetric(blocks);
+  const result = blocks.length ? computeComposite(blocks, moment || 0) : null;
+
+  function markStale() {
+    setCalcState((prev) => {
+      const next = { ...prev };
+      for (const k of Object.keys(next)) if (next[k] === 'done') next[k] = 'stale';
+      return next;
+    });
+  }
 
   function updateBlockField(index, field, value) {
     const factor = field === 'E' ? UNIT_OPTIONS.E[blocks[index].EUnit] : lenF;
@@ -45,129 +63,273 @@ export default function CompositeBeams() {
     const newVal = val * factor;
     const cid = blocks[index].colorId;
     setBlocks((prev) => prev.map((b) => (b.colorId === cid ? { ...b, [field]: newVal } : b)));
+    markStale();
+  }
+
+  function changeBlockEUnit(index, v) {
+    const cid = blocks[index].colorId;
+    setBlocks((prev) => prev.map((b) => (b.colorId === cid ? { ...b, EUnit: v } : b)));
+    markStale();
+  }
+
+  function changeLengthUnit(v) {
+    setUnits((p) => ({ ...p, length: v }));
+    markStale();
+  }
+  function changeStressUnit(v) {
+    setUnits((p) => ({ ...p, stress: v }));
+    markStale();
+  }
+  function changeMomentUnit(v) {
+    setUnits((p) => ({ ...p, moment: v }));
+    markStale();
+  }
+
+  function setYRef(ref) {
+    setYReference(ref);
+    markStale();
   }
 
   function addBlock() {
+    setSandwichLinked(false);
     setBlocks((prev) => {
+      if (prev.length === 0) {
+        const id = nextColorIdRef.current++;
+        return [{ colorId: id, width: lenF, height: lenF, E: UNIT_OPTIONS.E[defaultEUnit], EUnit: defaultEUnit }];
+      }
       const last = prev[prev.length - 1];
-      const next = last
-        ? { colorId: nextColorId++, width: last.width, height: last.height, E: last.E, EUnit: last.EUnit }
-        : { colorId: nextColorId++, width: 1 * lenF, height: 1 * lenF, E: 1 * UNIT_OPTIONS.E.ksi, EUnit: 'ksi' };
-      return [...prev, next];
+      const id = nextColorIdRef.current++;
+      return [...prev, { colorId: id, width: last.width, height: last.height, E: last.E, EUnit: last.EUnit }];
     });
+    markStale();
   }
 
   function removeBlock(index) {
     setBlocks((prev) => prev.filter((_, i) => i !== index));
+    setSandwichLinked(false);
+    markStale();
   }
+
+  function makeSandwich() {
+    if (sandwichLinked) {
+      if (blocks.length === 3) {
+        const id = nextColorIdRef.current++;
+        setBlocks((prev) => {
+          const next = [...prev];
+          next[2] = { ...next[2], colorId: id };
+          return next;
+        });
+      }
+      setSandwichLinked(false);
+    } else if (blocks.length === 3) {
+      setBlocks((prev) => {
+        const bottom = prev[0];
+        const next = [...prev];
+        next[2] = { ...bottom };
+        return next;
+      });
+      setSandwichLinked(true);
+    } else {
+      const EF = UNIT_OPTIONS.E[defaultEUnit];
+      nextColorIdRef.current = 2;
+      setBlocks([
+        { colorId: 0, width: 1 * lenF, height: 1 * lenF, E: 1 * EF, EUnit: defaultEUnit },
+        { colorId: 1, width: 1 * lenF, height: 1 * lenF, E: 1 * EF, EUnit: defaultEUnit },
+        { colorId: 0, width: 1 * lenF, height: 1 * lenF, E: 1 * EF, EUnit: defaultEUnit },
+      ]);
+      setSandwichLinked(true);
+    }
+    markStale();
+  }
+
+  function handleDragStart(index) {
+    dragIndexRef.current = index;
+  }
+  function handleDrop(targetIndex) {
+    const src = dragIndexRef.current;
+    if (src === null || src === targetIndex) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(src, 1);
+      next.splice(targetIndex, 0, moved);
+      return next;
+    });
+    dragIndexRef.current = null;
+    setSandwichLinked(false);
+    markStale();
+  }
+
+  function momentEffectiveRange() {
+    const momR = cbSliderRangeFor('moment', units.moment);
+    if (!momentRangeOverrideBase) return momR;
+    return [momentRangeOverrideBase.min / momF, momentRangeOverrideBase.max / momF, momR[2]];
+  }
+
+  function updateMoment(value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    const newMoment = val * momF;
+    const momR = cbSliderRangeFor('moment', units.moment);
+    const baseMin = momR[0] * momF;
+    const baseMax = momR[1] * momF;
+    const curMin = momentRangeOverrideBase ? momentRangeOverrideBase.min : baseMin;
+    const curMax = momentRangeOverrideBase ? momentRangeOverrideBase.max : baseMax;
+    if (newMoment > curMax || newMoment < curMin) {
+      setMomentRangeOverrideBase({
+        min: Math.min(curMin, newMoment, baseMin),
+        max: Math.max(curMax, newMoment, baseMax),
+      });
+    }
+    setMoment(newMoment);
+    markStale();
+  }
+
+  function sectionTitle(name) {
+    if (name === 'stress') {
+      const symmetric3 = result && blocks.length === 3 && isDoublySymmetric(blocks);
+      return symmetric3 ? 'Normal Stresses (General Theory)' : 'Normal Stresses';
+    }
+    return { na: 'Neutral Axis', io: 'Moments of Inertia', approx: 'Approximate Theory (Sandwich Beam)' }[name];
+  }
+
+  function calcSection(name) {
+    if (!blocks.length || !result) return;
+    setCalcSnapshot((prev) => ({ ...prev, [name]: { result, units: { ...units }, yReference, moment } }));
+    setCalcState((prev) => ({ ...prev, [name]: 'done' }));
+  }
+
+  const isSandwichNow = sandwichLinked && blocks.length === 3;
+  const momRange = momentEffectiveRange();
 
   return (
     <>
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        {blocks.length > 1 && <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}>⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요.</div>}
+        {blocks.length > 1 && (
+          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}>
+            ⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요.
+          </div>
+        )}
 
-        {blocks
-          .map((b, i) => i)
-          .reverse()
-          .map((i) => {
-            const b = blocks[i];
-            const c = blockColor(b);
-            return (
-              <div key={i} className="block-card">
-                <span className="drag-handle" title="끌어서 순서 변경">⠿</span>
-                <div className="block-title">
-                  <span className="color-dot" style={{ background: c.stroke }} />
-                  {c.name} Block{i === 0 ? ' · bottom' : i === blocks.length - 1 ? ' · top' : ''}
-                </div>
-                <div className="remove-block" onClick={() => removeBlock(i)}>×</div>
-                <div className="field">
-                  <label>Width</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.width, lenF))} onBlur={(e) => updateBlockField(i, 'width', e.target.value)} />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>Height</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.height, lenF))} onBlur={(e) => updateBlockField(i, 'height', e.target.value)} />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>E</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.E, EFor(b)))} onBlur={(e) => updateBlockField(i, 'E', e.target.value)} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        {blocks.map((_, vi) => {
+          const i = blocks.length - 1 - vi;
+          const b = blocks[i];
+          return (
+            <BlockCard
+              key={i}
+              block={b}
+              units={units}
+              isBottom={i === 0}
+              isTop={i === blocks.length - 1}
+              onFieldChange={(field, value) => updateBlockField(i, field, value)}
+              onEUnitChange={(v) => changeBlockEUnit(i, v)}
+              onLengthUnitChange={changeLengthUnit}
+              onRemove={() => removeBlock(i)}
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(i)}
+            />
+          );
+        })}
 
-        <button className="add-block" onClick={addBlock}>+ 블록 추가</button>
-
-        <div className="field">
-          <label>Moment M</label>
-          <input type="number" defaultValue={fmtInput(disp(moment, momF))} onBlur={(e) => setMoment(parseFloat(e.target.value) * momF)} />
-        </div>
+        <button className="add-block" onClick={addBlock}>
+          + 블록 추가
+        </button>
+        <button className={'add-block' + (isSandwichNow ? ' active' : '')} onClick={makeSandwich}>
+          {isSandwichNow ? '✓ 샌드위치 모드 (Doubly symmetric)' : 'Doubly symmetric section'}
+        </button>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>슬라이더는 실시간</span>
         </h3>
 
         {result ? (
           <>
-            <CrossSectionSVG result={result} />
-            <div className="result-grid">
-              <div className="result-card">
-                <div className="l">중립축 위치 (하단 기준)</div>
-                <div className="v">{fmt(disp(result.ybar, lenF))} {units.length}</div>
+            <VisualizerSVGs result={result} units={units} moment={moment} />
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', margin: '12px 0 16px' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--gray-soft)' }}>
+                응력 단위 <UnitSelect type="stress" value={units.stress} onChange={changeStressUnit} />
               </div>
-              <div className="result-card">
-                <div className="l">ΣEI</div>
-                <div className="v">{fmtSci(result.EIsum)} N·m²</div>
+              <div style={{ width: 260, flex: '0 0 auto' }}>
+                <label style={{ fontSize: 11.5, color: 'var(--gray-soft)', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+                  Moment M
+                </label>
+                <div className="field-with-slider">
+                  <div className="input-unit-group">
+                    <input
+                      key={`moment-${moment}-${units.moment}`}
+                      type="number"
+                      step="any"
+                      placeholder="값 입력"
+                      defaultValue={moment === null ? '' : fmtInput(disp(moment, momF))}
+                      onBlur={(e) => updateMoment(e.target.value)}
+                    />
+                    <UnitSelect type="moment" value={units.moment} onChange={changeMomentUnit} />
+                  </div>
+                  <input
+                    className="mini-slider"
+                    type="range"
+                    min={momRange[0]}
+                    max={momRange[1]}
+                    step={momRange[2]}
+                    value={moment === null ? 0 : disp(moment, momF)}
+                    onChange={(e) => updateMoment(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-            {symmetric3 && (
-              <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>
-                ✓ 좌우상하 대칭 샌드위치 구조 감지됨 — Approximate Theory 섹션도 추가 가능 (프로토타입 참고)
-              </p>
-            )}
+
             <div className="steps">
-              <FormulaSection title="Neutral Axis">
-                <div className="step-formula">
-                  Σ <Tip title="각 블록의 탄성계수">Eᵢ</Tip> <Tip title="각 블록의 단면적">Aᵢ</Tip> (<Tip title="각 블록 중심의 y좌표">yᵢ</Tip> − <Tip title="중립축 위치">ȳ</Tip>) = 0
+              <div className="y-ref-toggle">
+                <span>y 기준점</span>
+                <button type="button" className={yReference === 'bottom' ? 'active' : ''} onClick={() => setYRef('bottom')}>
+                  하단 기준
+                </button>
+                <button type="button" className={yReference === 'top' ? 'active' : ''} onClick={() => setYRef('top')}>
+                  상단 기준
+                </button>
+              </div>
+
+              {SECTION_NAMES.map((name) => (
+                <div className="step-card" key={name}>
+                  <div className="step-header static">{sectionTitle(name)}</div>
+                  <div className="step-body">
+                    {calcState[name] === 'idle' ? (
+                      <button className="add-block" onClick={() => calcSection(name)}>
+                        계산하기
+                      </button>
+                    ) : (
+                      <>
+                        {calcState[name] === 'stale' && (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: 'var(--crimson)',
+                              background: 'var(--crimson-soft)',
+                              borderRadius: 8,
+                              padding: '8px 12px',
+                              marginBottom: 10,
+                            }}
+                          >
+                            ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
+                          </div>
+                        )}
+                        <button className="add-block" onClick={() => calcSection(name)} style={{ marginBottom: 10 }}>
+                          다시 계산하기
+                        </button>
+                        <CalcBody name={name} snapshot={calcSnapshot[name]} />
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="step-final">ȳ = {fmt(disp(result.ybar, lenF))} {units.length} (하단 기준)</div>
-              </FormulaSection>
-              <FormulaSection title="Normal Stresses">
-                <div className="step-formula">
-                  <Tip title="이 지점의 굽힘응력">σ</Tip> = −<Tip title="굽힘모멘트">M</Tip>(<Tip title="이 지점의 y좌표">y</Tip> − ȳ)<Tip title="이 재료의 탄성계수">E</Tip> / <Tip title="전체 단면의 굽힘강성">ΣEI</Tip>
-                </div>
-                {result.blocks.map((b, k) => {
-                  const c = blockColor(b);
-                  const sBottom = result.stressAt(b.yBottom, b.E);
-                  const sTop = result.stressAt(b.yTop, b.E);
-                  return (
-                    <div className="material-block" key={k}>
-                      <div className="material-title">
-                        <span className="color-dot" style={{ background: c.stroke }} />
-                        {c.name} Block
-                      </div>
-                      <div className="step-eq">
-                        σ(하단) = <b className={sBottom >= 0 ? 'tens' : 'comp'}>{fmt(disp(sBottom, stressF))} {units.stress}</b>
-                      </div>
-                      <div className="step-eq">
-                        σ(상단) = <b className={sTop >= 0 ? 'tens' : 'comp'}>{fmt(disp(sTop, stressF))} {units.stress}</b>
-                      </div>
-                    </div>
-                  );
-                })}
-              </FormulaSection>
+              ))}
             </div>
+
             <div className="ai-hint">💬 이 식이 왜 이런 형태인지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
           </>
         ) : (
@@ -188,10 +350,325 @@ export default function CompositeBeams() {
   );
 }
 
-// 단면 + 응력 다이어그램 SVG. 프로토타입의 cbBuildVizSVGs()와 로직은 동일.
-function CrossSectionSVG({ result }) {
-  const svgW = 420, svgH = 320;
-  const padTop = 30, padBottom = 30, padLeft = 60, padRight = 160;
+// 블록 하나(폭/높이/E, 단위 셀렉트 + 슬라이더, 드래그 손잡이, 삭제)
+function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onDragStart, onDragOver, onDrop }) {
+  const c = blockColor(block);
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const disp = (base, factor) => base / factor;
+  const lenR = cbSliderRangeFor('length', units.length);
+  const ER = cbSliderRangeFor('E', block.EUnit);
+
+  return (
+    <div className="block-card" onDragOver={onDragOver} onDrop={onDrop}>
+      <span className="drag-handle" draggable title="끌어서 순서 변경" onDragStart={onDragStart}>
+        ⠿
+      </span>
+      <div className="block-title">
+        <span className="color-dot" style={{ background: c.stroke }} />
+        {c.name} Block{isBottom ? ' · bottom' : isTop ? ' · top' : ''}
+      </div>
+      <div className="remove-block" onClick={onRemove}>
+        ×
+      </div>
+
+      <div className="field">
+        <label>Width</label>
+        <div className="input-unit-group">
+          <input
+            key={`w-${block.width}-${units.length}`}
+            type="number"
+            step="any"
+            defaultValue={fmtInput(disp(block.width, lenF))}
+            onBlur={(e) => onFieldChange('width', e.target.value)}
+          />
+          <UnitSelect type="length" value={units.length} onChange={onLengthUnitChange} />
+        </div>
+        <input
+          type="range"
+          min={lenR[0]}
+          max={lenR[1]}
+          step={lenR[2]}
+          value={disp(block.width, lenF)}
+          onChange={(e) => onFieldChange('width', e.target.value)}
+          style={{ width: '100%', marginTop: 5 }}
+        />
+      </div>
+
+      <div className="field">
+        <label>Height</label>
+        <div className="input-unit-group">
+          <input
+            key={`h-${block.height}-${units.length}`}
+            type="number"
+            step="any"
+            defaultValue={fmtInput(disp(block.height, lenF))}
+            onBlur={(e) => onFieldChange('height', e.target.value)}
+          />
+          <UnitSelect type="length" value={units.length} onChange={onLengthUnitChange} />
+        </div>
+        <input
+          type="range"
+          min={lenR[0]}
+          max={lenR[1]}
+          step={lenR[2]}
+          value={disp(block.height, lenF)}
+          onChange={(e) => onFieldChange('height', e.target.value)}
+          style={{ width: '100%', marginTop: 5 }}
+        />
+      </div>
+
+      <div className="field">
+        <label>E</label>
+        <div className="input-unit-group">
+          <input
+            key={`e-${block.E}-${block.EUnit}`}
+            type="number"
+            step="any"
+            defaultValue={fmtInput(disp(block.E, EFor(block)))}
+            onBlur={(e) => onFieldChange('E', e.target.value)}
+          />
+          <UnitSelect type="E" value={block.EUnit} onChange={onEUnitChange} />
+        </div>
+        <input
+          type="range"
+          min={ER[0]}
+          max={ER[1]}
+          step={ER[2]}
+          value={disp(block.E, EFor(block))}
+          onChange={(e) => onFieldChange('E', e.target.value)}
+          style={{ width: '100%', marginTop: 5 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// 섹션별(na/io/stress/approx) 계산 결과 — calcSection()에서 찍어둔 스냅샷 기준으로만 렌더링됨
+function CalcBody({ name, snapshot }) {
+  if (!snapshot) return null;
+  if (name === 'na') return <NaBody snapshot={snapshot} />;
+  if (name === 'io') return <IoBody snapshot={snapshot} />;
+  if (name === 'stress') return <StressBody snapshot={snapshot} />;
+  if (name === 'approx') return <ApproxBody snapshot={snapshot} />;
+  return null;
+}
+
+function NaBody({ snapshot }) {
+  const { result, units, yReference } = snapshot;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const areaF = lenF * lenF;
+  const disp = (base, factor) => base / factor;
+  const yDisp = (yBottomBased) => (yReference === 'top' ? result.totalHeight - yBottomBased : yBottomBased);
+  const refLabel = yReference === 'top' ? '상단 기준' : '하단 기준';
+
+  return (
+    <>
+      <div className="step-formula">
+        Σ <Tip title="각 블록의 탄성계수 (Elastic Modulus)">Eᵢ</Tip> <Tip title="각 블록의 단면적">Aᵢ</Tip> (
+        <Tip title="각 블록 중심의 y좌표">yᵢ</Tip> − <Tip title="전체 단면의 중립축(Neutral Axis) 위치">ȳ</Tip>) = 0
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
+        각 재료가 중립축 위/아래로 미는 "1차모멘트"의 합이 0이 되는 지점이 중립축이에요.
+      </div>
+      {result.blocks.map((b, i) => {
+        const c = blockColor(b);
+        return (
+          <div className="step-row" key={i}>
+            <span className="color-dot" style={{ background: c.stroke }} />
+            {c.name} Block &nbsp; A=<Tip title="이 블록의 단면적 (폭×높이)">{fmt(disp(b.area, areaF))}</Tip> {units.length}² &nbsp; y=
+            <Tip title="이 블록 중심의 y좌표">{fmt(disp(yDisp(b.yc), lenF))}</Tip> {units.length} &nbsp; E=
+            <Tip title="이 블록의 탄성계수">{fmt(disp(b.E, EFor(b)))}</Tip> {b.EUnit}
+          </div>
+        );
+      })}
+      <div className="step-eq">
+        {result.blocks
+          .map((b) => `${fmt(disp(b.E, EFor(b)))}×${fmt(disp(b.area, areaF))}×(${fmt(disp(yDisp(b.yc), lenF))}−ȳ)`)
+          .join(' + ')}{' '}
+        = 0
+      </div>
+      <div className="step-eq">→ ȳ = ΣEᵢAᵢyᵢ / ΣEᵢAᵢ</div>
+      <div className="step-final">
+        ȳ = {fmt(disp(yDisp(result.ybar), lenF))} {units.length} &nbsp;({refLabel})
+      </div>
+    </>
+  );
+}
+
+function IoBody({ snapshot }) {
+  const { result, units } = snapshot;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const areaF = lenF * lenF;
+  const I4F = Math.pow(lenF, 4);
+  const disp = (base, factor) => base / factor;
+
+  return (
+    <>
+      <div className="step-formula">
+        <Tip title="각 블록의 관성모멘트">Iᵢ</Tip> = <Tip title="블록 자체 중심 기준 관성모멘트">bᵢhᵢ³/12</Tip> +{' '}
+        <Tip title="평행축 정리 보정항">Aᵢdᵢ²</Tip> &nbsp;(d = yᵢ − ȳ)
+      </div>
+      {result.blocks.map((b, i) => {
+        const c = blockColor(b);
+        const I0 = (b.width * Math.pow(b.height, 3)) / 12;
+        const Ad2 = b.area * b.d * b.d;
+        return (
+          <div className="material-block" key={i}>
+            <div className="material-title">
+              <span className="color-dot" style={{ background: c.stroke }} />
+              {c.name} Block
+            </div>
+            <div className="step-eq">
+              I = (<Tip title="이 블록의 폭">{fmt(disp(b.width, lenF))}</Tip>×
+              <Tip title="이 블록의 높이">{fmt(disp(b.height, lenF))}</Tip>³)/12 + (
+              <Tip title="이 블록의 단면적">{fmt(disp(b.area, areaF))}</Tip>)×(
+              <Tip title="중립축까지의 거리 d = yᵢ − ȳ">{fmt(disp(b.d, lenF))}</Tip>)² ={' '}
+              <Tip title="블록 자체의 관성모멘트 (자체 중심 기준)">{fmt(disp(I0, I4F))}</Tip> +{' '}
+              <Tip title="평행축 보정항 (A·d²)">{fmt(disp(Ad2, I4F))}</Tip> ={' '}
+              <Tip title="이 블록의 최종 관성모멘트 I">{fmt(disp(b.I, I4F))}</Tip> {units.length}⁴
+            </div>
+          </div>
+        );
+      })}
+      <div className="step-final">
+        ΣEI = {fmtSci(result.EIsum)} N·m²{' '}
+        <span style={{ fontWeight: 400, color: 'var(--gray-soft)', fontSize: 11 }}>(블록마다 E 단위가 달라 SI 기본단위로 표시)</span>
+      </div>
+    </>
+  );
+}
+
+function StressBody({ snapshot }) {
+  const { result, units, yReference, moment } = snapshot;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const stressF = UNIT_OPTIONS.stress[units.stress];
+  const momF = UNIT_OPTIONS.moment[units.moment];
+  const disp = (base, factor) => base / factor;
+  const yDisp = (yBottomBased) => (yReference === 'top' ? result.totalHeight - yBottomBased : yBottomBased);
+  const Mdisp = fmt(disp(moment || 0, momF));
+  const ybarDisp = fmt(disp(yDisp(result.ybar), lenF));
+  const EIfull = `${fmtSci(result.EIsum)} N·m²`;
+
+  return (
+    <>
+      <div className="step-formula">
+        <Tip title="이 지점의 굽힘응력">σᵢ</Tip> = −<Tip title="굽힘모멘트">M</Tip>(
+        {yReference === 'top' ? (
+          <>
+            <Tip title="중립축 위치">ȳ</Tip>−<Tip title="이 지점의 y좌표">y</Tip>
+          </>
+        ) : (
+          <>
+            <Tip title="이 지점의 y좌표">y</Tip>−<Tip title="중립축 위치">ȳ</Tip>
+          </>
+        )}
+        )<Tip title="이 재료의 탄성계수">Eᵢ</Tip> / <Tip title="전체 단면의 굽힘강성">ΣEI</Tip>
+      </div>
+      <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
+        ※ 아래 식의 E는 블록마다 설정한 단위 그대로, ΣEI는 SI 기본단위로 표시돼요. 실제 계산은 내부적으로 항상 단위를 통일해서 정확히 수행됩니다.
+      </div>
+      {result.blocks.map((b, k) => {
+        const c = blockColor(b);
+        const sBottom = result.stressAt(b.yBottom, b.E);
+        const sTop = result.stressAt(b.yTop, b.E);
+        const bottomLabel = k === 0 ? '최하단' : '경계면';
+        const topLabel = k === result.blocks.length - 1 ? '최상단' : '경계면';
+        const Ed = fmt(disp(b.E, EFor(b)));
+        const yB = fmt(disp(yDisp(b.yBottom), lenF));
+        const yT = fmt(disp(yDisp(b.yTop), lenF));
+        const termB = yReference === 'top' ? `(${ybarDisp}−${yB})` : `(${yB}−${ybarDisp})`;
+        const termT = yReference === 'top' ? `(${ybarDisp}−${yT})` : `(${yT}−${ybarDisp})`;
+        return (
+          <div className="material-block" key={k}>
+            <div className="material-title">
+              <span className="color-dot" style={{ background: c.stroke }} />
+              {c.name} Block
+            </div>
+            <div className="step-eq">
+              σ({bottomLabel}) = −<Tip title="이 단면에 작용하는 굽힘모멘트 M">{Mdisp}</Tip>×{termB}×
+              <Tip title={`${c.name} Block의 탄성계수`}>{Ed}</Tip> /{' '}
+              <Tip title="전체 단면의 굽힘강성 ΣEI (재료별 E×I의 합)">{EIfull}</Tip> ={' '}
+              <b className={sBottom >= 0 ? 'tens' : 'comp'}>
+                {fmt(disp(sBottom, stressF))} {units.stress}
+              </b>
+            </div>
+            <div className="step-eq">
+              σ({topLabel}) = −{Mdisp}×{termT}×{Ed} / {EIfull} ={' '}
+              <b className={sTop >= 0 ? 'tens' : 'comp'}>
+                {fmt(disp(sTop, stressF))} {units.stress}
+              </b>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function ApproxBody({ snapshot }) {
+  const { result, units, moment } = snapshot;
+  const symmetric3 = result.blocks.length === 3 && isDoublySymmetric(result.blocks);
+  if (!symmetric3) {
+    return (
+      <div style={{ fontSize: 12.5, color: 'var(--gray-soft)', lineHeight: 1.6 }}>
+        현재 구조는 좌우상하 대칭 샌드위치(3블록, 위/아래 face가 같은 재료)가 아니라서 근사이론을 적용할 수 없어요. Setting Menu의 "Doubly
+        symmetric section" 버튼으로 샌드위치 구조를 먼저 만들어보세요.
+      </div>
+    );
+  }
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const stressF = UNIT_OPTIONS.stress[units.stress];
+  const I4F = Math.pow(lenF, 4);
+  const disp = (base, factor) => base / factor;
+  const faceBottom = result.blocks[0];
+  const faceTop = result.blocks[2];
+  const faceI = faceBottom.I + faceTop.I;
+  const cFace = blockColor(faceBottom);
+  const m = moment || 0;
+  const sTopApprox = (-m * (faceTop.yTop - result.ybar)) / faceI;
+  const sBottomApprox = (-m * (faceBottom.yBottom - result.ybar)) / faceI;
+
+  return (
+    <>
+      <div className="step-formula">σ_face ≈ −M·(y−ȳ) / I_faces &nbsp;(core 기여 무시)</div>
+      <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
+        코어(core)는 굽힘강성 기여가 작다고 보고 무시한 근사식이에요. 두 face가 같은 재료라 식에서 E가 서로 상쇄돼요.
+      </div>
+      <div className="step-eq">
+        I_faces = I(하단 face) + I(상단 face) = {fmt(disp(faceI, I4F))} {units.length}⁴
+      </div>
+      <div className="material-block">
+        <div className="material-title">
+          <span className="color-dot" style={{ background: cFace.stroke }} />
+          Face (상/하 동일 재료)
+        </div>
+        <div className="step-eq">
+          σ(최상단) ≈ {fmt(disp(sTopApprox, stressF))} {units.stress}
+        </div>
+        <div className="step-eq">
+          σ(최하단) ≈ {fmt(disp(sBottomApprox, stressF))} {units.stress}
+        </div>
+      </div>
+      <div className="step-row" style={{ color: 'var(--gray-soft)' }}>
+        Core 응력 ≈ 0 (근사이론에서는 core가 굽힘에 기여하지 않는다고 가정)
+      </div>
+    </>
+  );
+}
+
+// 단면 + 응력 다이어그램 + 보 측면도. 프로토타입의 cbBuildVizSVGs()와 로직은 동일.
+function VisualizerSVGs({ result, units, moment }) {
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const stressF = UNIT_OPTIONS.stress[units.stress];
+  const momF = UNIT_OPTIONS.moment[units.moment];
+  const disp = (base, factor) => base / factor;
+
+  const svgW = 920;
+  const svgH = 545;
+  const padTop = 55;
+  const padBottom = 55;
+  const padLeft = 80;
+  const padRight = 380;
   const drawH = svgH - padTop - padBottom;
   const drawW = svgW - padLeft - padRight;
   const maxWidth = Math.max(...result.blocks.map((b) => b.width));
@@ -199,48 +676,214 @@ function CrossSectionSVG({ result }) {
   const centerX = padLeft + drawW / 2;
   const yToPx = (y) => padTop + (result.totalHeight - y) * scale;
 
+  const leftDimX = centerX - (maxWidth * scale) / 2 - 26;
+  const axisOx = centerX - (maxWidth * scale) / 2 - 4;
+  const axisOy = 8;
+
+  const widestBlock = result.blocks.reduce((a, b) => (b.width > a.width ? b : a), result.blocks[0]);
+  const wLabel = `${fmt(disp(widestBlock.width, lenF))} ${units.length}.`;
+  const dimY = yToPx(0) + 20;
+  const xLeft = centerX - (maxWidth * scale) / 2;
+  const xRight = centerX + (maxWidth * scale) / 2;
+
   const stressPts = [];
   result.blocks.forEach((b, i) => {
     stressPts.push({ y: b.yBottom, s: result.stressAt(b.yBottom, b.E), blockIdx: i });
     stressPts.push({ y: b.yTop, s: result.stressAt(b.yTop, b.E), blockIdx: i });
   });
-  const maxAbsStress = Math.max(1e-9, ...stressPts.map((p) => Math.abs(p.s)));
-  const diagCenterX = centerX + (maxWidth * scale) / 2 + 90;
-  const diagHalfW = 60;
+  const momRForScale = cbSliderRangeFor('moment', units.moment);
+  const momentRefBase = Math.max(Math.abs(momRForScale[0]), Math.abs(momRForScale[1])) * momF;
+  const refAbsStress = Math.max(
+    1e-9,
+    ...result.blocks.flatMap((b) => [
+      Math.abs((momentRefBase * (b.yBottom - result.ybar) * b.E) / result.EIsum),
+      Math.abs((momentRefBase * (b.yTop - result.ybar) * b.E) / result.EIsum),
+    ])
+  );
+  const maxAbsStress = refAbsStress;
+  const diagCenterX = centerX + (maxWidth * scale) / 2 + 200;
+  const diagHalfW = 120;
   const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
   const naY = yToPx(result.ybar);
 
+  const momentLabelForElevation = moment === null ? '미입력' : `${fmt(disp(moment, momF))} ${units.moment}`;
+  const momRForBend = cbSliderRangeFor('moment', units.moment);
+  const momentMaxForBend = Math.max(Math.abs(momRForBend[0]), Math.abs(momRForBend[1])) * momF;
+  const maxBendPx = 24;
+  const bendPx =
+    momentMaxForBend > 0 ? Math.max(-maxBendPx, Math.min(maxBendPx, ((moment || 0) / momentMaxForBend) * maxBendPx)) : 0;
+
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block' }}>
-      <line x1={padLeft - 10} y1={naY} x2={diagCenterX + diagHalfW + 10} y2={naY} stroke="#51626F" strokeWidth="1.2" strokeDasharray="5 4" />
-      <text x={padLeft - 10} y={naY - 6} fontSize="10" fill="#51626F" fontWeight="700">N.A.</text>
+    <>
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 760, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+        <line x1={axisOx} y1={axisOy + 28} x2={axisOx} y2={axisOy} stroke="#51626F" strokeWidth="1.4" />
+        <polygon points={`${axisOx},${axisOy} ${axisOx - 3.5},${axisOy + 7} ${axisOx + 3.5},${axisOy + 7}`} fill="#51626F" />
+        <text x={axisOx + 7} y={axisOy + 4} fontSize="11" fill="#51626F" fontWeight="800">
+          Y
+        </text>
+        <line x1={axisOx} y1={axisOy + 28} x2={axisOx + 28} y2={axisOy + 28} stroke="#51626F" strokeWidth="1.4" />
+        <polygon points={`${axisOx + 28},${axisOy + 28} ${axisOx + 21},${axisOy + 24.5} ${axisOx + 21},${axisOy + 31.5}`} fill="#51626F" />
+        <text x={axisOx + 32} y={axisOy + 32} fontSize="11" fill="#51626F" fontWeight="800">
+          Z
+        </text>
+        <text x={axisOx} y={axisOy + 42} fontSize="9.5" fill="var(--gray-soft)">
+          단면 (Y-Z 평면)
+        </text>
 
-      {result.blocks.map((b, i) => {
-        const c = blockColor(b);
-        const wPx = b.width * scale;
-        const x = centerX - wPx / 2;
-        const yTopPx = yToPx(b.yTop);
-        const hPx = b.height * scale;
-        return (
-          <g key={i}>
-            <rect x={x} y={yTopPx} width={wPx} height={hPx} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />
-            <text x={centerX + (maxWidth * scale) / 2 + 8} y={yTopPx + hPx / 2 + 3} fontSize="10" fontWeight="800" fill={c.stroke}>
-              {c.name}
-            </text>
-          </g>
-        );
-      })}
+        {result.blocks.map((b, i) => {
+          const c = blockColor(b);
+          const wPx = b.width * scale;
+          const x = centerX - wPx / 2;
+          const yTopPx = yToPx(b.yTop);
+          const yBottomPx = yToPx(b.yBottom);
+          const hPx = b.height * scale;
+          const labelY = yTopPx + hPx / 2;
+          const hLabel = `${fmt(disp(b.height, lenF))} ${units.length}.`;
+          return (
+            <g key={i}>
+              <rect x={x} y={yTopPx} width={wPx} height={hPx} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />
+              <text x={centerX + (maxWidth * scale) / 2 + 10} y={labelY + 3.5} fontSize="10.5" fontWeight="800" fill={c.stroke}>
+                {c.name}
+              </text>
+              <line x1={leftDimX} y1={yTopPx} x2={leftDimX} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
+              <line x1={leftDimX - 4} y1={yTopPx} x2={leftDimX + 4} y2={yTopPx} stroke={c.stroke} strokeWidth="1" />
+              <line x1={leftDimX - 4} y1={yBottomPx} x2={leftDimX + 4} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
+              <text x={leftDimX - 7} y={labelY + 3.5} fontSize="10" fill={c.stroke} textAnchor="end" fontWeight="700">
+                {hLabel}
+              </text>
+            </g>
+          );
+        })}
 
-      <line x1={diagCenterX} y1={padTop} x2={diagCenterX} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
-      {Array.from({ length: stressPts.length / 2 }).map((_, k) => {
-        const p1 = stressPts[k * 2], p2 = stressPts[k * 2 + 1];
-        const c = blockColor(result.blocks[p1.blockIdx]);
-        const x1 = sToPx(p1.s), y1 = yToPx(p1.y);
-        const x2 = sToPx(p2.s), y2 = yToPx(p2.y);
-        return (
-          <polygon key={k} points={`${diagCenterX},${y1} ${x1},${y1} ${x2},${y2} ${diagCenterX},${y2}`} fill={c.fill} stroke={c.stroke} strokeWidth="1.6" opacity="0.9" />
-        );
-      })}
+        <line x1={xLeft} y1={dimY} x2={xRight} y2={dimY} stroke="#51626F" strokeWidth="1" />
+        <line x1={xLeft} y1={dimY - 4} x2={xLeft} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
+        <line x1={xRight} y1={dimY - 4} x2={xRight} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
+        <text x={(xLeft + xRight) / 2} y={dimY + 16} fontSize="10" fill="#51626F" textAnchor="middle" fontWeight="700">
+          {wLabel}
+        </text>
+
+        <line
+          x1={padLeft - 10}
+          y1={naY}
+          x2={diagCenterX + diagHalfW + 18}
+          y2={naY}
+          stroke="#51626F"
+          strokeWidth="1.2"
+          strokeDasharray="5 4"
+        />
+        <text x={padLeft - 10} y={naY - 6} fontSize="11" fill="#51626F" fontWeight="700">
+          N.A. (중립축)
+        </text>
+
+        <line x1={diagCenterX} y1={padTop} x2={diagCenterX} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.5" />
+        <text x={diagCenterX - diagHalfW - 4} y={padTop - 8} fontSize="10" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
+          압축 (−)
+        </text>
+        <text x={diagCenterX + diagHalfW + 4} y={padTop - 8} fontSize="10" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
+          인장 (+)
+        </text>
+
+        {Array.from({ length: stressPts.length / 2 }).map((_, k) => {
+          const p1 = stressPts[k * 2];
+          const p2 = stressPts[k * 2 + 1];
+          const c = blockColor(result.blocks[p1.blockIdx]);
+          const x1 = sToPx(p1.s);
+          const y1 = yToPx(p1.y);
+          const x2 = sToPx(p2.s);
+          const y2 = yToPx(p2.y);
+          const label1 = `${fmt(disp(p1.s, stressF))} ${units.stress}`;
+          const label2 = `${fmt(disp(p2.s, stressF))} ${units.stress}`;
+          const anchor1 = p1.s >= 0 ? 'start' : 'end';
+          const anchor2 = p2.s >= 0 ? 'start' : 'end';
+          return (
+            <g key={k}>
+              <polygon
+                points={`${diagCenterX},${y1} ${x1},${y1} ${x2},${y2} ${diagCenterX},${y2}`}
+                fill={c.fill}
+                stroke={c.stroke}
+                strokeWidth="1.6"
+                opacity="0.9"
+              />
+              <circle cx={x1} cy={y1} r="2.5" fill={c.stroke} />
+              <circle cx={x2} cy={y2} r="2.5" fill={c.stroke} />
+              <text x={x1 + (p1.s >= 0 ? 6 : -6)} y={y1 + 3} fontSize="10" fill="#3A3A3A" textAnchor={anchor1}>
+                {label1}
+              </text>
+              {Math.abs(y2 - y1) > 12 && (
+                <text x={x2 + (p2.s >= 0 ? 6 : -6)} y={y2 + 3} fontSize="10" fill="#3A3A3A" textAnchor={anchor2}>
+                  {label2}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        <text x={diagCenterX} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+          STRESS DIAGRAM (중립축 = 0)
+        </text>
+      </svg>
+      <div style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--gray-soft)', fontWeight: 700, marginTop: 2 }}>
+        ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
+      </div>
+      <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
+    </>
+  );
+}
+
+// 순수굽힘 가정의 보 측면도(휨 곡률 표시). 프로토타입의 buildBeamElevationSVG()와 동일.
+function BeamElevationSVG({ momentLabel, bend }) {
+  const w = 420;
+  const h = 150;
+  const barY = 68;
+  const barH = 16;
+  const x1 = 55;
+  const x2 = 365;
+  const midX = (x1 + x2) / 2;
+  const topY = barY;
+  const botY = barY + barH;
+  const midLocalY = (topY + botY) / 2 + bend;
+  const bendLabel = bend === 0 ? '' : bend > 0 ? ' · 새깅(sagging)' : ' · 호깅(hogging)';
+  const ax = 20;
+  const ay = h - 18;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 520, margin: '10px auto 0', display: 'block' }}>
+      <path
+        d={`M ${x1} ${topY} Q ${midX} ${topY + bend} ${x2} ${topY} L ${x2} ${botY} Q ${midX} ${botY + bend} ${x1} ${botY} Z`}
+        fill="#F2F0EA"
+        stroke="#51626F"
+        strokeWidth="1.3"
+      />
+      {bend !== 0 && (
+        <line x1={x1} y1={(topY + botY) / 2} x2={x2} y2={(topY + botY) / 2} stroke="#C3C3C3" strokeWidth="1" strokeDasharray="3 3" />
+      )}
+      <line x1={midX} y1={midLocalY - 30} x2={midX} y2={midLocalY + 30} stroke="#C3002F" strokeWidth="1.2" strokeDasharray="4 4" />
+      <text x={midX} y={midLocalY - 35} fontSize="10" fill="#C3002F" textAnchor="middle" fontWeight="700">
+        분석 단면 위치
+      </text>
+      <path d={`M ${x1 - 5} ${topY - 16} A 17 17 0 1 1 ${x1 - 5} ${botY + 16}`} fill="none" stroke="#51626F" strokeWidth="1.7" />
+      <polygon points={`${x1 - 5},${botY + 16} ${x1 - 12},${botY + 7} ${x1 + 2},${botY + 9}`} fill="#51626F" />
+      <path d={`M ${x2 + 5} ${topY - 16} A 17 17 0 1 0 ${x2 + 5} ${botY + 16}`} fill="none" stroke="#51626F" strokeWidth="1.7" />
+      <polygon points={`${x2 + 5},${topY - 16} ${x2 - 2},${topY - 9} ${x2 + 12},${topY - 7}`} fill="#51626F" />
+      <text x={x1 - 16} y={topY - 4} fontSize="12" fill="#51626F" fontWeight="800" textAnchor="end">
+        M
+      </text>
+      <text x={x2 + 16} y={topY - 4} fontSize="12" fill="#51626F" fontWeight="800">
+        M
+      </text>
+      <text x={midX} y={h - 8} fontSize="10.5" fill="var(--gray-soft)" textAnchor="middle">
+        순수굽힘(pure bending) 가정 — M = {momentLabel}
+        {bendLabel}
+      </text>
+      <line x1={ax} y1={ay} x2={ax} y2={ay - 24} stroke="#8A97A2" strokeWidth="1.3" />
+      <polygon points={`${ax},${ay - 24} ${ax - 3},${ay - 18} ${ax + 3},${ay - 18}`} fill="#8A97A2" />
+      <text x={ax + 6} y={ay - 20} fontSize="10" fill="#8A97A2" fontWeight="800">
+        Y
+      </text>
+      <line x1={ax} y1={ay} x2={ax + 24} y2={ay} stroke="#8A97A2" strokeWidth="1.3" />
+      <polygon points={`${ax + 24},${ay} ${ax + 18},${ay - 3} ${ax + 18},${ay + 3}`} fill="#8A97A2" />
+      <text x={ax + 27} y={ay + 4} fontSize="10" fill="#8A97A2" fontWeight="800">
+        X
+      </text>
     </svg>
   );
 }
