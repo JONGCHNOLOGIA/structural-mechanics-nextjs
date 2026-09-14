@@ -1,6 +1,7 @@
 import './globals.css';
 import UserProvider from '@/components/UserProvider';
 import SiteContentProvider from '@/components/SiteContentProvider';
+import SettingsProvider from '@/components/SettingsProvider';
 
 export const metadata = {
   title: '구조역학 2 — 세종대학교 건축공학과',
@@ -12,7 +13,9 @@ export default function RootLayout({ children }) {
     <html lang="ko">
       <body>
         <SiteContentProvider>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider>
+            <SettingsProvider>{children}</SettingsProvider>
+          </UserProvider>
         </SiteContentProvider>
         <div className="footer-bar">세종대학교 건축공학과 AI 튜터 사이트</div>
       </body>

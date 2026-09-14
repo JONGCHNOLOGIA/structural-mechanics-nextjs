@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import SettingsButton from '@/components/SettingsButton';
 import EditableText from '@/components/EditableText';
 import EditableVideo from '@/components/EditableVideo';
 
@@ -17,6 +18,7 @@ export default function SubjectsPage() {
       <header>
         <div className="subject-title">과목 선택</div>
         <div className="header-right">
+          <SettingsButton />
           <LogoutButton />
           <div className="user-tag">
             {studentId} {displayName}

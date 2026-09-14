@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import SettingsButton from '@/components/SettingsButton';
 import { recordVisit } from '@/lib/progress';
 
 /*
@@ -30,6 +31,7 @@ export default function CalculatorShell({ chapter, activeSlug, children }) {
           <span>구조역학 2 — {chapter.title}</span>
         </div>
         <div className="header-right">
+          <SettingsButton />
           <LogoutButton />
           <div className="user-tag">
             {studentId} {displayName}

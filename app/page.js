@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import SettingsButton from '@/components/SettingsButton';
 import EditableText from '@/components/EditableText';
 import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
@@ -32,6 +33,7 @@ export default function HomePage() {
       <header>
         <div className="subject-title">구조역학 2</div>
         <div className="header-right">
+          <SettingsButton />
           <LogoutButton />
           <div className="user-tag">
             {studentId} {displayName}

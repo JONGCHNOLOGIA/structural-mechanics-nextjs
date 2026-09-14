@@ -7,6 +7,7 @@ import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import SettingsButton from '@/components/SettingsButton';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 import EditableText from '@/components/EditableText';
 import { recordAttempt } from '@/lib/progress';
@@ -142,6 +143,7 @@ function ProblemGeneratorContent() {
           <span>구조역학 2 — 문제 생성</span>
         </div>
         <div className="header-right">
+          <SettingsButton />
           <LogoutButton />
           <div className="user-tag">
             {studentId} {displayName}

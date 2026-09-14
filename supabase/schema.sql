@@ -6,8 +6,12 @@ create table if not exists profiles (
   role text not null default 'student' check (role in ('student','instructor')),
   display_name text,
   student_id text unique,
+  decimals int not null default 3, -- 계산 결과 표시 소수점 자리수 (설정 버튼에서 저장)
   created_at timestamptz default now()
 );
+
+-- 기존에 만들어진 profiles 테이블에는 decimals 컬럼이 없을 수 있어서 안전하게 추가
+alter table profiles add column if not exists decimals int not null default 3;
 
 create table if not exists subjects (
   id uuid primary key default gen_random_uuid(),

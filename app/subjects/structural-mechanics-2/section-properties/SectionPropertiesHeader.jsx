@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import SettingsButton from '@/components/SettingsButton';
 
 export default function SectionPropertiesHeader() {
   const { displayName, studentId } = useUser();
@@ -15,6 +16,7 @@ export default function SectionPropertiesHeader() {
         <span>구조역학 2 — 단면 특성 계산기</span>
       </div>
       <div className="header-right">
+        <SettingsButton />
         <LogoutButton />
         <div className="user-tag">
           {studentId} {displayName}

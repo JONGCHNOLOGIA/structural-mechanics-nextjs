@@ -765,16 +765,10 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
     stressPts.push({ y: b.yBottom, s: result.stressAt(b.yBottom, b.E), blockIdx: i });
     stressPts.push({ y: b.yTop, s: result.stressAt(b.yTop, b.E), blockIdx: i });
   });
-  const momRForScale = cbSliderRangeFor('moment', units.moment);
-  const momentRefBase = Math.max(Math.abs(momRForScale[0]), Math.abs(momRForScale[1])) * momF;
-  const refAbsStress = Math.max(
-    1e-9,
-    ...result.blocks.flatMap((b) => [
-      Math.abs((momentRefBase * (b.yBottom - result.ybar) * b.E) / result.EIsum),
-      Math.abs((momentRefBase * (b.yTop - result.ybar) * b.E) / result.EIsum),
-    ])
-  );
-  const maxAbsStress = refAbsStress;
+  // 응력 다이어그램은 실제 단면처럼 "물리적 비율"을 지킬 필요가 없는 그래프라서, 슬라이더가
+  // 낼 수 있는 최댓값이 아니라 지금 이 순간의 실제 최대 응력 기준으로 매번 꽉 차게 자동 스케일함
+  // (모멘트를 작게 넣어도 막대가 눈에 띄게 보이도록 — 가독성 우선, 정확한 값은 라벨로 확인).
+  const maxAbsStress = Math.max(1e-9, ...stressPts.map((p) => Math.abs(p.s)));
   const diagCenterX = centerX + (maxWidth * scale) / 2 + 200;
   const diagHalfW = 120;
   const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
