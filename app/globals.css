@@ -148,7 +148,7 @@ header, .detail-header{
 .tab.active{ color:#fff; background:var(--crimson); border-color:var(--crimson); }
 .panels{
   display:grid; grid-template-columns: 360px 1fr 340px; gap:24px; align-items:start;
-  width:100%; margin:0 0 48px; padding:0 40px; box-sizing:border-box;
+  width:100%; max-width:1600px; margin:0 auto 48px; padding:0 40px; box-sizing:border-box;
 }
 .panel{
   padding:26px; min-height:600px; background:var(--card); border:1px solid var(--line);
@@ -177,6 +177,7 @@ header, .detail-header{
 .add-block.active{
   background:var(--crimson); color:#fff; border-style:solid; border-color:var(--crimson);
 }
+.add-block.calc-trigger{ width:auto; display:inline-block; padding:9px 26px; margin:4px 0 10px; }
 .block-card{
   border:1px solid var(--line); border-radius:12px; padding:12px 12px 4px; margin-bottom:12px; position:relative; background:var(--bg);
   transition:background 0.15s ease;

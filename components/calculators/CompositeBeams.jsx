@@ -302,7 +302,7 @@ export default function CompositeBeams() {
                   <div className="step-header static">{sectionTitle(name)}</div>
                   <div className="step-body">
                     {calcState[name] === 'idle' ? (
-                      <button className="add-block" onClick={() => calcSection(name)}>
+                      <button className="add-block calc-trigger" onClick={() => calcSection(name)}>
                         계산하기
                       </button>
                     ) : (
@@ -321,7 +321,7 @@ export default function CompositeBeams() {
                             ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
                           </div>
                         )}
-                        <button className="add-block" onClick={() => calcSection(name)} style={{ marginBottom: 10 }}>
+                        <button className="add-block calc-trigger" onClick={() => calcSection(name)} style={{ marginBottom: 10 }}>
                           다시 계산하기
                         </button>
                         <CalcBody name={name} snapshot={calcSnapshot[name]} />
