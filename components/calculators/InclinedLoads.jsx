@@ -69,11 +69,15 @@ export default function InclinedLoads() {
                 <div className="v">{fmt(disp(r.My, momF))} {units.moment}</div>
               </div>
               <div className="result-card">
-                <div className="l">Iz = b·h³/12</div>
+                <div className="l" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  Iz = <Frac num="b·h³" den="12" />
+                </div>
                 <div className="v">{fmtSci(r.Iz)} m⁴</div>
               </div>
               <div className="result-card">
-                <div className="l">Iy = h·b³/12</div>
+                <div className="l" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  Iy = <Frac num="h·b³" den="12" />
+                </div>
                 <div className="v">{fmtSci(r.Iy)} m⁴</div>
               </div>
             </div>
@@ -84,7 +88,12 @@ export default function InclinedLoads() {
                   <Frac num={<><Tip title="z축에 대한 모멘트 성분">Mz</Tip>·y</>} den={<Tip title="z축 관성모멘트">Iz</Tip>} /> +{' '}
                   <Frac num={<><Tip title="y축에 대한 모멘트 성분">My</Tip>·z</>} den={<Tip title="y축 관성모멘트">Iy</Tip>} />
                 </div>
-                <div className="step-final">중립축 방향 β = {betaDeg.toFixed(1)}° <span style={{ fontWeight: 400, color: 'var(--gray-soft)', fontSize: 11 }}>(tan β = tan α · Iz/Iy)</span></div>
+                <div className="step-final">
+                  중립축 방향 β = {betaDeg.toFixed(1)}°{' '}
+                  <span style={{ fontWeight: 400, color: 'var(--gray-soft)', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    (tan β = tan α · <Frac num="Iz" den="Iy" />)
+                  </span>
+                </div>
                 <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 10, lineHeight: 1.6 }}>
                   💡 <b>Iz ≠ Iy</b>이면 중립축(β)이 모멘트 방향(α)과 <b>일치하지 않아요</b> — 이게 비대칭(2축) 굽힘의 핵심 포인트예요. 정사각형 단면(b=h)처럼 Iz=Iy일 때만 β=α가 됩니다.
                 </div>

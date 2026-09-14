@@ -64,7 +64,8 @@ export default function CastiglianosTheorem() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          <b>Castigliano 정리</b>: δ = ∂U/∂P, θ = ∂U/∂M — 변형에너지를 하중으로 편미분.<br />
+          <b>Castigliano 정리</b>: δ = <Frac num="∂U" den="∂P" />, θ = <Frac num="∂U" den="∂M" /> — 변형에너지를 하중으로 편미분.
+          <br />
           <b>단위하중법</b>: 구하려는 지점에 가상의 단위하중(=1)을 주고, 실제 모멘트 M과 가상 모멘트 m을 곱해 적분 — 결과는 Castigliano와 완전히 같아요.
         </p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
@@ -123,11 +124,15 @@ export default function CastiglianosTheorem() {
         {isCantilever ? (
           <div className="result-grid">
             <div className="result-card">
-              <div className="l">δB = ∂U/∂P</div>
+              <div className="l" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                δB = <Frac num="∂U" den="∂P" />
+              </div>
               <div className="v">{fmt(cantileverResult.deltaB * 1000)} mm</div>
             </div>
             <div className="result-card">
-              <div className="l">θB = ∂U/∂M0</div>
+              <div className="l" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                θB = <Frac num="∂U" den="∂M0" />
+              </div>
               <div className="v">{cantileverResult.thetaB.toExponential(3)} rad</div>
             </div>
           </div>
@@ -152,18 +157,24 @@ export default function CastiglianosTheorem() {
                   U = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> + <Frac num="M0²L" den="2EI" />
                 </div>
                 <div className="step-row">
-                  <Tip title="P로 편미분 → P가 작용하는 방향의 처짐">δB</Tip> = ∂U/∂P = <Frac num="PL³" den="3EI" /> + <Frac num="M0L²" den="2EI" />
+                  <Tip title="P로 편미분 → P가 작용하는 방향의 처짐">δB</Tip> = <Frac num="∂U" den="∂P" /> = <Frac num="PL³" den="3EI" /> +{' '}
+                  <Frac num="M0L²" den="2EI" />
                 </div>
                 <div className="step-row">
-                  <Tip title="M0로 편미분 → M0가 작용하는 방향의 처짐각">θB</Tip> = ∂U/∂M0 = <Frac num="PL²" den="2EI" /> + <Frac num="M0L" den="EI" />
+                  <Tip title="M0로 편미분 → M0가 작용하는 방향의 처짐각">θB</Tip> = <Frac num="∂U" den="∂M0" /> = <Frac num="PL²" den="2EI" /> +{' '}
+                  <Frac num="M0L" den="EI" />
                 </div>
                 <div className="step-final">δB = {fmt(cantileverResult.deltaB * 1000)} mm, θB = {cantileverResult.thetaB.toExponential(3)} rad</div>
               </FormulaSection>
             ) : (
               <FormulaSection title="단위하중법으로 δB 구하기">
-                <div className="step-formula">δB = ∫₀ᴸ M(s)·m₁(s)/EI ds</div>
+                <div className="step-formula">
+                  δB = ∫₀ᴸ <Frac num="M(s)·m₁(s)" den="EI" /> ds
+                </div>
                 <div className="step-row">M(s) = Ps+M0 (실제 하중), m₁(s) = s (B에 가상의 단위하중 1을 줬을 때 모멘트)</div>
-                <div className="step-row">= ∫₀ᴸ (Ps+M0)s/EI ds = PL³/3EI + M0L²/2EI</div>
+                <div className="step-row">
+                  = ∫₀ᴸ <Frac num="(Ps+M0)s" den="EI" /> ds = <Frac num="PL³" den="3EI" /> + <Frac num="M0L²" den="2EI" />
+                </div>
                 <div className="step-final">Castigliano로 구한 값과 정확히 같아요: δB = {fmt(cantileverResult.deltaB * 1000)} mm</div>
               </FormulaSection>
             )
@@ -172,16 +183,28 @@ export default function CastiglianosTheorem() {
               <div className="step-row" style={{ marginBottom: 8 }}>
                 등분포하중 q는 그 자체로 "하중 변수"가 아니라서, 원하는 지점에 <b>가상의 집중하중 Q</b>를 추가로 두고 U를 Q로 편미분한 뒤 Q=0을 대입해요 — 이게 바로 오른쪽 "단위하중법"과 같은 발상이에요.
               </div>
-              <div className="step-final">δ중앙 = ∂U/∂Q|<sub>Q=0</sub> = 5qL⁴/384EI = {fmt(ssResult.deltaMax * 1000)} mm</div>
+              <div className="step-final">
+                δ중앙 = <Frac num="∂U" den="∂Q" />|<sub>Q=0</sub> = <Frac num="5qL⁴" den="384EI" /> = {fmt(ssResult.deltaMax * 1000)} mm
+              </div>
             </FormulaSection>
           ) : (
             <FormulaSection title="단위하중법으로 θA, δ중앙 구하기">
-              <div className="step-formula">θA = ∫₀ᴸ M(x)·m₁(x)/EI dx</div>
-              <div className="step-row">M(x) = qx(L−x)/2 (실제), m₁(x) = 1−x/L (A에 가상의 단위모멘트를 줬을 때)</div>
-              <div className="step-row">θA = qL³/24EI = {ssResult.thetaA.toExponential(3)} rad</div>
-              <div className="step-formula" style={{ marginTop: 8 }}>δ중앙 = ∫₀ᴸ M(x)·m₂(x)/EI dx</div>
+              <div className="step-formula">
+                θA = ∫₀ᴸ <Frac num="M(x)·m₁(x)" den="EI" /> dx
+              </div>
+              <div className="step-row">
+                M(x) = <Frac num="qx(L−x)" den="2" /> (실제), m₁(x) = 1−<Frac num="x" den="L" /> (A에 가상의 단위모멘트를 줬을 때)
+              </div>
+              <div className="step-row">
+                θA = <Frac num="qL³" den="24EI" /> = {ssResult.thetaA.toExponential(3)} rad
+              </div>
+              <div className="step-formula" style={{ marginTop: 8 }}>
+                δ중앙 = ∫₀ᴸ <Frac num="M(x)·m₂(x)" den="EI" /> dx
+              </div>
               <div className="step-row">m₂(x) = 중앙에 가상의 단위하중 1을 줬을 때의 모멘트</div>
-              <div className="step-final">δ중앙 = 5qL⁴/384EI = {fmt(ssResult.deltaMax * 1000)} mm</div>
+              <div className="step-final">
+                δ중앙 = <Frac num="5qL⁴" den="384EI" /> = {fmt(ssResult.deltaMax * 1000)} mm
+              </div>
             </FormulaSection>
           )}
         </div>

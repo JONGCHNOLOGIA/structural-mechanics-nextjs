@@ -5,6 +5,7 @@ import { fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 캔틸레버 보인데 단면(I)이 중간(x=c)에서 바뀜 — 자유단(x=L)에 집중하중 P.
 // EI가 구간마다 다르니 M/EI 다이어그램을 구간별로 나눠 적분(수치적분)해서
@@ -53,7 +54,8 @@ export default function NonprismaticBeams() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          단면 2차모멘트가 한 값이 아니라(<b>Nonprismatic</b>) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. M/EI 다이어그램이 <b>c에서 불연속으로 꺾이고</b>, 구간을 나눠 적분해야 해요.
+          단면 2차모멘트가 한 값이 아니라(<b>Nonprismatic</b>) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. <Frac num="M" den="EI" /> 다이어그램이{' '}
+          <b>c에서 불연속으로 꺾이고</b>, 구간을 나눠 적분해야 해요.
         </p>
         <div className="field">
           <label>스팬 길이 L (m)</label>
@@ -103,9 +105,15 @@ export default function NonprismaticBeams() {
             <div className="step-formula">
               <Tip title="자유단으로부터 잰 굽힘모멘트">M(x)</Tip> = −P(L−x) (전 구간 동일, EI만 구간마다 다름)
             </div>
-            <div className="step-row">θB = ∫₀ᶜ M/EI₁ dx + ∫ᶜᴸ M/EI₂ dx</div>
-            <div className="step-row">δB = ∫₀ᶜ (M/EI₁)(L−x) dx + ∫ᶜᴸ (M/EI₂)(L−x) dx</div>
-            <div className="step-final">I₂/I₁ = {fmt(I2 / I1)} → 단면이 클수록(I₂ 구간) M/EI 다이어그램이 낮아지는 게 보이시나요?</div>
+            <div className="step-row">
+              θB = ∫₀ᶜ <Frac num="M" den="EI₁" /> dx + ∫ᶜᴸ <Frac num="M" den="EI₂" /> dx
+            </div>
+            <div className="step-row">
+              δB = ∫₀ᶜ (<Frac num="M" den="EI₁" />)(L−x) dx + ∫ᶜᴸ (<Frac num="M" den="EI₂" />)(L−x) dx
+            </div>
+            <div className="step-final">
+              <Frac num="I₂" den="I₁" /> = {fmt(I2 / I1)} → 단면이 클수록(I₂ 구간) <Frac num="M" den="EI" /> 다이어그램이 낮아지는 게 보이시나요?
+            </div>
           </FormulaSection>
         </div>
         <EditableText as="div" className="ai-hint" contentKey="calc.NonprismaticBeams.aiHint" defaultText="💬 왜 단면이 큰 쪽에서 처짐 기여도가 작아지는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />

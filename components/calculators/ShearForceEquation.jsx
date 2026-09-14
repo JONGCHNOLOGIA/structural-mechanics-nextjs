@@ -98,7 +98,10 @@ export default function ShearForceEquation() {
             <div className="step-row">V(x) = R_A − P&lt;x−a&gt;⁰ &nbsp; (한 식으로 전 구간 표현)</div>
             <div className="step-row">M(x) = R_A x − P&lt;x−a&gt;</div>
             <div className="step-formula">EIv&#8221; = R_A x − P&lt;x−a&gt;</div>
-            <div className="step-row">두 번 적분 → EIv&#8217; = R_A x²/2 − P&lt;x−a&gt;²/2 + c₁, &nbsp; EIv = R_A x³/6 − P&lt;x−a&gt;³/6 + c₁x + c₂</div>
+            <div className="step-row">
+              두 번 적분 → EIv&#8217; = <Frac num="R_A x²" den="2" /> − <Frac num="P&lt;x−a&gt;²" den="2" /> + c₁, &nbsp; EIv ={' '}
+              <Frac num="R_A x³" den="6" /> − <Frac num="P&lt;x−a&gt;³" den="6" /> + c₁x + c₂
+            </div>
             <div className="step-final">v(0)=0, v(L)=0으로 c₁, c₂ 결정 — 하중이 어디 있든 식 형태가 그대로 유지돼요.</div>
           </FormulaSection>
         </div>

@@ -527,8 +527,17 @@ function IoBody({ snapshot }) {
               {c.name} Block
             </div>
             <div className="step-eq">
-              I = (<Tip title="이 블록의 폭">{fmt(disp(b.width, lenF))}</Tip>×
-              <Tip title="이 블록의 높이">{fmt(disp(b.height, lenF))}</Tip>³)/12 + (
+              I ={' '}
+              <Frac
+                num={
+                  <>
+                    (<Tip title="이 블록의 폭">{fmt(disp(b.width, lenF))}</Tip>×
+                    <Tip title="이 블록의 높이">{fmt(disp(b.height, lenF))}</Tip>³)
+                  </>
+                }
+                den="12"
+              />{' '}
+              + (
               <Tip title="이 블록의 단면적">{fmt(disp(b.area, areaF))}</Tip>)×(
               <Tip title="중립축까지의 거리 d = yᵢ − ȳ">{fmt(disp(b.d, lenF))}</Tip>)² ={' '}
               <Tip title="블록 자체의 관성모멘트 (자체 중심 기준)">{fmt(disp(I0, I4F))}</Tip> +{' '}

@@ -32,7 +32,8 @@ export default function MaxBeamStress() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±h/2)에선 전단이 0, 중립축(y=0)에선 굽힘응력이 0이에요.
+          보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±<Frac num="h" den="2" />)에선 전단이 0, 중립축(y=0)에선
+          굽힘응력이 0이에요.
         </p>
         <div className="field">
           <label>Width (b)</label>
@@ -83,7 +84,8 @@ export default function MaxBeamStress() {
                   σx = {fmt(disp(r.sigmaX, stressF))} {units.stress} &nbsp; τ = {fmt(disp(r.tau, stressF))} {units.stress}
                 </div>
                 <div className="step-row" style={{ marginTop: 8 }}>
-                  σ1,2 = σx/2 ± √[(σx/2)²+τ²] = {fmt(disp(r.sigma1, stressF))}, {fmt(disp(r.sigma2, stressF))} {units.stress}
+                  σ1,2 = <Frac num="σx" den="2" /> ± √[(<Frac num="σx" den="2" />)²+τ²] = {fmt(disp(r.sigma1, stressF))},{' '}
+                  {fmt(disp(r.sigma2, stressF))} {units.stress}
                 </div>
                 <div className="step-row">
                   τmax = {fmt(disp(r.tauMax, stressF))} {units.stress} &nbsp; 주응력 각도 θp = {r.thetaP.toFixed(1)}°

@@ -158,7 +158,7 @@ export default function TransformedSection() {
                   return (
                     <div className="step-row" key={k}>
                       <span className="color-dot" style={{ background: c.stroke }} />
-                      {c.name} Block &nbsp; n = E/E_ref = {fmt(n)}
+                      {c.name} Block &nbsp; n = <Frac num="E" den="E_ref" /> = {fmt(n)}
                       {Math.abs(n - 1) < 1e-9 ? ' (기준)' : ''} &nbsp;→ 폭 ×{fmt(n)}
                     </div>
                   );

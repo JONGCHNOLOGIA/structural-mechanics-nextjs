@@ -81,7 +81,9 @@ export default function ElastoplasticBending() {
                 <div className="v">{fmt(disp(r.Mp, momF))} {units.moment}</div>
               </div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}>형상계수 f = Mp/My = {r.shapeFactor.toFixed(2)} (직사각형은 항상 1.5)</div>
+            <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 3 }}>
+              형상계수 f = <Frac num="Mp" den="My" /> = {r.shapeFactor.toFixed(2)} (직사각형은 항상 1.5)
+            </div>
             <div className="steps">
               <FormulaSection title="탄성코어 계산">
                 <div className="step-formula">

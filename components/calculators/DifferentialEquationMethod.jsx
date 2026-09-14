@@ -122,7 +122,10 @@ export default function DifferentialEquationMethod() {
               </div>
               <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단) → 적분상수 2개 결정</div>
               <div className="step-row">남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함</div>
-              <div className="step-final">RB = 3qL/8 = {fmt(result.reactions.RB / 1000)} kN, MA = qL²/8 = {fmt(result.reactions.MA / 1000)} kN·m</div>
+              <div className="step-final">
+                RB = <Frac num="3qL" den="8" /> = {fmt(result.reactions.RB / 1000)} kN, MA = <Frac num="qL²" den="8" /> ={' '}
+                {fmt(result.reactions.MA / 1000)} kN·m
+              </div>
             </FormulaSection>
           ) : (
             <FormulaSection title="대칭을 이용해 절반만 풀기">
@@ -131,7 +134,9 @@ export default function DifferentialEquationMethod() {
               </div>
               <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단)</div>
               <div className="step-row">남은 조건: v&#8217;(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함</div>
-              <div className="step-final">MA = PL/8 = {fmt(result.reactions.MA / 1000)} kN·m (양쪽 고정단 모두 동일)</div>
+              <div className="step-final">
+                MA = <Frac num="PL" den="8" /> = {fmt(result.reactions.MA / 1000)} kN·m (양쪽 고정단 모두 동일)
+              </div>
             </FormulaSection>
           )}
         </div>

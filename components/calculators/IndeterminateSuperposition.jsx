@@ -100,8 +100,12 @@ export default function IndeterminateSuperposition() {
               <div className="step-row">
                 δB = <Frac num="qL⁴" den="8EI" /> = {fmt(result.rb.deltaB * 1000)} mm (released 캔틸레버가 q만으로 처지는 양)
               </div>
-              <div className="step-row">δBB = L³/3EI = {fmt(result.rb.deltaBB * 1000)} mm (B에 단위하중 1을 줬을 때 처지는 양)</div>
-              <div className="step-final">RB = δB / δBB = {fmt(result.rb.RB / 1000)} kN</div>
+              <div className="step-row">
+                δBB = <Frac num="L³" den="3EI" /> = {fmt(result.rb.deltaBB * 1000)} mm (B에 단위하중 1을 줬을 때 처지는 양)
+              </div>
+              <div className="step-final">
+                RB = <Frac num="δB" den="δBB" /> = {fmt(result.rb.RB / 1000)} kN
+              </div>
             </FormulaSection>
           ) : (
             <FormulaSection title="A의 모멘트 구속을 풀어서(단순보) MA 구하기">
@@ -111,8 +115,12 @@ export default function IndeterminateSuperposition() {
               <div className="step-row">
                 θA = <Frac num="qL³" den="24EI" /> = {result.ra.thetaA.toExponential(3)} rad (released 단순보가 q만으로 회전하는 각)
               </div>
-              <div className="step-row">θAA = L/3EI = {result.ra.thetaAA.toExponential(3)} rad (A에 단위모멘트 1을 줬을 때 회전각)</div>
-              <div className="step-final">MA = θA / θAA = {fmt(result.ra.MA / 1000)} kN·m</div>
+              <div className="step-row">
+                θAA = <Frac num="L" den="3EI" /> = {result.ra.thetaAA.toExponential(3)} rad (A에 단위모멘트 1을 줬을 때 회전각)
+              </div>
+              <div className="step-final">
+                MA = <Frac num="θA" den="θAA" /> = {fmt(result.ra.MA / 1000)} kN·m
+              </div>
             </FormulaSection>
           )}
         </div>

@@ -128,7 +128,9 @@ export default function HookesLaw() {
                 </FormulaSection>
               )}
               <FormulaSection title="두께변형 · 체적변형 · 변형에너지">
-                <div className="step-row">εz (두께방향) = −(ν/E)(σx+σy) = {r.ez.toExponential(3)}</div>
+                <div className="step-row">
+                  εz (두께방향) = −(<Frac num="ν" den="E" />)(σx+σy) = {r.ez.toExponential(3)}
+                </div>
                 <div className="step-row">체적변형(dilatation) e = εx+εy+εz = {r.e.toExponential(3)}</div>
                 <div className="step-row">변형에너지밀도 u = ½(σx·εx + σy·εy + τxy·γxy) = {fmtSci(r.u)} J/m³</div>
                 {r.deltaT !== null ? (

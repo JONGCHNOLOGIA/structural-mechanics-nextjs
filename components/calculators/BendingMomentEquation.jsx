@@ -116,13 +116,17 @@ export default function BendingMomentEquation() {
                 </>
               )}
               <div className="step-final">
-                v(x) = {isSS ? 'qx(L³−2Lx²+x³)/24EI' : 'q(x⁴−4Lx³+6L²x²)/24EI'}
+                v(x) = <Frac num={isSS ? 'qx(L³−2Lx²+x³)' : 'q(x⁴−4Lx³+6L²x²)'} den="24EI" />
               </div>
             </FormulaSection>
           ) : (
             <FormulaSection title="② 4차 미분방정식을 네 번 적분">
               <div className="step-formula">EIv&#8221;&#8221; = q &nbsp; (하중강도 q를 직접 적분)</div>
-              <div className="step-row">EIv&#8221;&#8221;&#8217; = qx+c₁ &nbsp; EIv&#8221;&#8221; = qx²/2+c₁x+c₂ &nbsp; EIv&#8221; = qx³/6+c₁x²/2+c₂x+c₃ &nbsp; EIv = qx⁴/24+c₁x³/6+c₂x²/2+c₃x+c₄</div>
+              <div className="step-row">
+                EIv&#8221;&#8221;&#8217; = qx+c₁ &nbsp; EIv&#8221;&#8221; = <Frac num="qx²" den="2" />+c₁x+c₂ &nbsp; EIv&#8221; = <Frac num="qx³" den="6" />+
+                <Frac num="c₁x²" den="2" />+c₂x+c₃ &nbsp; EIv = <Frac num="qx⁴" den="24" />+<Frac num="c₁x³" den="6" />+
+                <Frac num="c₂x²" den="2" />+c₃x+c₄
+              </div>
               {isSS ? (
                 <div className="step-row">경계조건 4개: v(0)=0, EIv&#8221;(0)=0(모멘트 0), EIv&#8221;(L)=0, v(L)=0 → c₁,c₂,c₃,c₄ 결정</div>
               ) : (

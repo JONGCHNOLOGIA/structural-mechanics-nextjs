@@ -6,6 +6,7 @@ import { principalFromState } from '@/lib/calc/principalStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderCombinedLoadings()를 React로 옮긴 버전.
 
@@ -31,15 +32,15 @@ export default function CombinedLoadings() {
           <br />
           <b>자주 쓰는 개별 공식</b>
           <br />
-          · 축하중: σ = P/A
+          · 축하중: σ = <Frac num="P" den="A" />
           <br />
-          · 굽힘: σ = My/I
+          · 굽힘: σ = <Frac num="My" den="I" />
           <br />
-          · 비틀림: τ = Tr/Ip
+          · 비틀림: τ = <Frac num="Tr" den="Ip" />
           <br />
-          · 전단력: τ = VQ/(Ib)
+          · 전단력: τ = <Frac num="VQ" den="Ib" />
           <br />
-          · 압력용기: σ1=pr/t (원통 hoop), σ=pr/2t (구/원통 길이방향)
+          · 압력용기: σ1=<Frac num="pr" den="t" /> (원통 hoop), σ=<Frac num="pr" den="2t" /> (구/원통 길이방향)
         </div>
         <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 10 }}>아래에 그 점에서 <b>합쳐진 최종값</b>을 입력하세요.</div>
         <div className="field">
@@ -68,7 +69,8 @@ export default function CombinedLoadings() {
             </div>
             <div className="step-row">주응력 방향 θp = {r.thetaP.toFixed(1)}°</div>
             <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}>
-              💡 σ1, σ2 부호가 같으면(둘 다 인장 또는 둘 다 압축) 평면 밖 전단(σ/2)이 더 클 수 있어요 — 3축 응력 상태까지 고려해야 정확해요.
+              💡 σ1, σ2 부호가 같으면(둘 다 인장 또는 둘 다 압축) 평면 밖 전단(<Frac num="σ" den="2" />)이 더 클 수 있어요 — 3축 응력 상태까지 고려해야
+              정확해요.
             </div>
           </FormulaSection>
         </div>

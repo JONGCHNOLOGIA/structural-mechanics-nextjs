@@ -45,7 +45,8 @@ export default function StrainEnergyOfBending() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          굽힘모멘트가 있으면 보 안에 <b>변형에너지</b> U = ∫ M²/2EI dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서 비교해보세요.
+          굽힘모멘트가 있으면 보 안에 <b>변형에너지</b> U = ∫ <Frac num="M²" den="2EI" /> dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서
+          비교해보세요.
         </p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
           <button className={'add-block' + (caseType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('point')}>
@@ -106,7 +107,8 @@ export default function StrainEnergyOfBending() {
               <Tip title="자유단 B로부터 잰 거리 s에서의 굽힘모멘트">M(s)</Tip> = P·s + M0
             </div>
             <div className="step-row">
-              U = ∫₀ᴸ M(s)²/2EI ds = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> + <Frac num="M0²L" den="2EI" />
+              U = ∫₀ᴸ <Frac num="M(s)²" den="2EI" /> ds = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> +{' '}
+              <Frac num="M0²L" den="2EI" />
             </div>
             {caseType === 'both' && (
               <div className="step-row">

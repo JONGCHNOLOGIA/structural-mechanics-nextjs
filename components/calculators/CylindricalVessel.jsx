@@ -65,8 +65,12 @@ export default function CylindricalVessel() {
                 <div className="step-final">
                   σ1 = {fmt(disp(result.sigma1, stressF))} {units.stress} &nbsp; σ2 = {fmt(disp(result.sigma2, stressF))} {units.stress} &nbsp; (σ1 = 2σ2)
                 </div>
-                <div className="step-row" style={{ marginTop: 8 }}>외부 표면: τmax = σ1/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</div>
-                <div className="step-row">내부 표면: τmax = σ1/2 + p/2 = {fmt(disp(result.tauInner, stressF))} {units.stress}</div>
+                <div className="step-row" style={{ marginTop: 8 }}>
+                  외부 표면: τmax = <Frac num="σ1" den="2" /> = {fmt(disp(result.tauOuter, stressF))} {units.stress}
+                </div>
+                <div className="step-row">
+                  내부 표면: τmax = <Frac num="σ1" den="2" /> + <Frac num="p" den="2" /> = {fmt(disp(result.tauInner, stressF))} {units.stress}
+                </div>
                 <div className="step-final" style={{ marginTop: 8 }}>
                   θ={theta.toFixed(0)}°에서: σx1={fmt(disp(result.sx1, stressF))}, σy1={fmt(disp(result.sy1, stressF))}, τx1y1={fmt(disp(result.tx1y1, stressF))} {units.stress}
                 </div>

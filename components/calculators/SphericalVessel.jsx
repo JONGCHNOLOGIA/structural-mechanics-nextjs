@@ -30,7 +30,7 @@ export default function SphericalVessel() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(r/t≫1), 벽면에 <b>모든 방향으로 같은 크기의 인장응력</b>이 생겨요.
+          구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(<Frac num="r" den="t" />≫1), 벽면에 <b>모든 방향으로 같은 크기의 인장응력</b>이 생겨요.
         </p>
         <div className="field">
           <label>내부 반지름 r</label>
@@ -68,11 +68,20 @@ export default function SphericalVessel() {
                   <Tip title="벽면 응력 (모든 방향 동일)">σ</Tip> = <Frac num="pr" den="2t" />
                 </div>
                 <div className="step-final">σ1=σ2 = {fmt(disp(result.sigma, stressF))} {units.stress}</div>
-                <div className="step-row" style={{ marginTop: 8 }}>외부 표면: τmax = σ/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</div>
-                <div className="step-row">
-                  내부 표면: τmax = (σ+p)/2 = {fmt(disp(result.tauInner, stressF))} {units.stress} <span style={{ color: 'var(--gray-soft)', fontSize: 11 }}>(r/t≫1이면 외부와 거의 같음)</span>
+                <div className="step-row" style={{ marginTop: 8 }}>
+                  외부 표면: τmax = <Frac num="σ" den="2" /> = {fmt(disp(result.tauOuter, stressF))} {units.stress}
                 </div>
-                {result.eps !== null && <div className="step-final">변형률 ε = σ(1−ν)/E = {result.eps.toExponential(3)}</div>}
+                <div className="step-row">
+                  내부 표면: τmax = <Frac num="σ+p" den="2" /> = {fmt(disp(result.tauInner, stressF))} {units.stress}{' '}
+                  <span style={{ color: 'var(--gray-soft)', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    (<Frac num="r" den="t" />≫1이면 외부와 거의 같음)
+                  </span>
+                </div>
+                {result.eps !== null && (
+                  <div className="step-final" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    변형률 ε = <Frac num="σ(1−ν)" den="E" /> = {result.eps.toExponential(3)}
+                  </div>
+                )}
               </FormulaSection>
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.SphericalVessel.aiHint" defaultText="💬 왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />

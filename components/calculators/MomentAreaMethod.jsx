@@ -5,6 +5,7 @@ import { fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 캔틸레버 보(고정단 A, 자유단 B)의 M/EI 다이어그램을 그려서,
 // 1st 정리(면적=처짐각), 2nd 정리(면적의 1차모멘트=처짐)를 눈으로 확인.
@@ -49,8 +50,9 @@ export default function MomentAreaMethod() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          <b>1st 정리</b>: 두 점 사이 접선의 각도 차이 = 그 구간 M/EI 다이어그램의 <b>면적</b>.<br />
-          <b>2nd 정리</b>: 한 점의 접선으로부터 다른 점까지의 편차 = M/EI 면적의 <b>1차모멘트</b>(면적×도심거리).
+          <b>1st 정리</b>: 두 점 사이 접선의 각도 차이 = 그 구간 <Frac num="M" den="EI" /> 다이어그램의 <b>면적</b>.
+          <br />
+          <b>2nd 정리</b>: 한 점의 접선으로부터 다른 점까지의 편차 = <Frac num="M" den="EI" /> 면적의 <b>1차모멘트</b>(면적×도심거리).
         </p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (loadType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setLoadType('point')}>
@@ -102,9 +104,16 @@ export default function MomentAreaMethod() {
           </div>
         </div>
         <div className="steps">
-          <FormulaSection title={loadType === 'point' ? '삼각형 M/EI 다이어그램' : '포물선 M/EI 다이어그램'}>
+          <FormulaSection
+            title={
+              <>
+                {loadType === 'point' ? '삼각형 ' : '포물선 '}
+                <Frac num="M" den="EI" /> 다이어그램
+              </>
+            }
+          >
             <div className="step-formula">
-              <Tip title="1st 모멘트-면적 정리">θB</Tip> = M/EI 다이어그램의 면적 = {result.theta.toExponential(3)} rad
+              <Tip title="1st 모멘트-면적 정리">θB</Tip> = <Frac num="M" den="EI" /> 다이어그램의 면적 = {result.theta.toExponential(3)} rad
             </div>
             <div className="step-row">도심(centroid)까지 B로부터의 거리 = {fmt(result.centroidFromB)} m</div>
             <div className="step-final">
