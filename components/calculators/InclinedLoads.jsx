@@ -37,7 +37,7 @@ export default function InclinedLoads() {
   const [alphaDeg, setAlphaDeg] = useState(0);
   const [q, setQ] = useState(2 * 1000);
   const [L, setL] = useState(4);
-  const [elevation3D, setElevation3D] = useState(true);
+  const [elevation3D, setElevation3D] = useState(false);
   const [editingField, setEditingField] = useState(null); // 'width' | 'height' | null — VISUALIZER 클릭 수정용
   const [calcState, setCalcState] = useState({ loads: 'idle', inertia: 'idle', stress: 'idle', na: 'idle' });
   const [calcSnapshot, setCalcSnapshot] = useState({ loads: null, inertia: null, stress: null, na: null });
