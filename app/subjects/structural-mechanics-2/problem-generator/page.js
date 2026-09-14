@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
+import { generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
 
-// 챕터/소주제 선택 → "문제 생성하기" 프런트엔드 흐름만 구현한 화면.
-// 실제 문제 생성(AI API 연동)은 아직 없고, 선택 결과를 반영한 미리보기 카드만 보여줌.
+// 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
+// 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
+// 검증된 공식(lib/calc/*.js)으로 계산한다. AI API는 아직 쓰지 않음.
 function subtopicKey(ch, st) {
   return `${ch.num}::${st.slug}`;
 }
@@ -18,7 +20,8 @@ export default function ProblemGeneratorPage() {
   const [selectedSubtopics, setSelectedSubtopics] = useState(new Set());
   const [numQuestions, setNumQuestions] = useState(5);
   const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
+  const [problems, setProblems] = useState(null);
+  const [revealed, setRevealed] = useState(new Set());
 
   function toggleChapter(ch) {
     const willSelect = !selectedChapters.has(ch.num);
@@ -37,7 +40,7 @@ export default function ProblemGeneratorPage() {
       });
       return next;
     });
-    setGenerated(false);
+    setProblems(null);
   }
 
   function toggleSubtopic(ch, st) {
@@ -48,17 +51,33 @@ export default function ProblemGeneratorPage() {
       else next.add(key);
       return next;
     });
-    setGenerated(false);
+    setProblems(null);
   }
 
   function handleGenerate() {
     if (selectedSubtopics.size === 0) return;
     setGenerating(true);
-    setGenerated(false);
+    setProblems(null);
     setTimeout(() => {
+      const list = [];
+      for (let i = 0; i < numQuestions; i++) {
+        const src = selectedList[Math.floor(Math.random() * selectedList.length)];
+        const result = generateProblem(src.ch.num, src.st.slug);
+        if (result) list.push({ ch: src.ch, st: src.st, ...result });
+      }
+      setProblems(list);
+      setRevealed(new Set());
       setGenerating(false);
-      setGenerated(true);
-    }, 600);
+    }, 400);
+  }
+
+  function toggleReveal(i) {
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
   }
 
   const activeChapters = chapters.filter((ch) => selectedChapters.has(ch.num));
@@ -166,7 +185,7 @@ export default function ProblemGeneratorPage() {
                   value={numQuestions}
                   onChange={(e) => {
                     setNumQuestions(Number(e.target.value));
-                    setGenerated(false);
+                    setProblems(null);
                   }}
                 >
                   {[3, 5, 10].map((n) => (
@@ -186,7 +205,7 @@ export default function ProblemGeneratorPage() {
               </button>
             </div>
 
-            {generated && (
+            {problems && (
               <div style={{ marginTop: 20 }}>
                 <div
                   style={{
@@ -198,27 +217,41 @@ export default function ProblemGeneratorPage() {
                     marginBottom: 14,
                   }}
                 >
-                  ⚠️ AI 문제 생성 기능은 아직 연결되지 않았어요 — 지금은 화면 미리보기만 볼 수 있어요. (백엔드 연결 전)
+                  📐 선택한 소주제의 공식으로 매번 새로운 숫자를 뽑아 만든 문제예요. 정답은 계산기와 동일한 공식으로 계산돼요. (교재 문제를 그대로 가져오지 않고 새로 작성한 지문입니다)
                 </div>
                 <div className="steps">
-                  {Array.from({ length: numQuestions }).map((_, i) => {
-                    const src = selectedList[i % selectedList.length];
-                    return (
-                      <div className="step-card" key={i}>
-                        <div className="step-header static">
-                          문제 {i + 1} · {src.ch.num} {src.st.name}
-                        </div>
-                        <div className="step-body">
-                          <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 12 }}>
-                            (문제 내용이 여기에 표시됩니다 — AI 연결 후 이 소주제에 맞는 실제 문제가 생성돼요.)
-                          </div>
-                          <button className="add-block" disabled style={{ opacity: 0.5, margin: 0 }}>
-                            정답 확인
-                          </button>
-                        </div>
+                  {problems.map((p, i) => (
+                    <div className="step-card" key={i}>
+                      <div className="step-header static">
+                        문제 {i + 1} · {p.ch.num} {p.st.name}
                       </div>
-                    );
-                  })}
+                      <div className="step-body">
+                        <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
+                          {p.prompt}
+                        </div>
+                        <button className="add-block" onClick={() => toggleReveal(i)} style={{ margin: 0 }}>
+                          {revealed.has(i) ? '정답 숨기기' : '정답 확인'}
+                        </button>
+                        {revealed.has(i) && (
+                          <div
+                            style={{
+                              marginTop: 12,
+                              fontSize: 13,
+                              color: 'var(--teal)',
+                              background: 'var(--teal-soft)',
+                              borderRadius: 10,
+                              padding: '10px 14px',
+                              lineHeight: 1.8,
+                            }}
+                          >
+                            {p.answers.map((a, k) => (
+                              <div key={k}>{a}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
