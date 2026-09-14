@@ -735,7 +735,7 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const momF = UNIT_OPTIONS.moment[units.moment];
   const disp = (base, factor) => base / factor;
   const [elevation3D, setElevation3D] = useState(false);
-  const [editingTarget, setEditingTarget] = useState(null); // { colorId, field } | null
+  const [editingTarget, setEditingTarget] = useState(null); // { index, field } | null
 
   const svgW = 920;
   const svgH = 700;
@@ -792,15 +792,15 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
       <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 760, margin: '0 auto', display: 'block', overflow: 'visible' }}>
         <line x1={axisOx} y1={axisOy + 28} x2={axisOx} y2={axisOy} stroke="#51626F" strokeWidth="1.4" />
         <polygon points={`${axisOx},${axisOy} ${axisOx - 3.5},${axisOy + 7} ${axisOx + 3.5},${axisOy + 7}`} fill="#51626F" />
-        <text x={axisOx + 7} y={axisOy + 4} fontSize="11" fill="#51626F" fontWeight="800">
+        <text x={axisOx + 7} y={axisOy + 4} fontSize="14" fill="#51626F" fontWeight="800">
           Y
         </text>
         <line x1={axisOx} y1={axisOy + 28} x2={axisOx + 28} y2={axisOy + 28} stroke="#51626F" strokeWidth="1.4" />
         <polygon points={`${axisOx + 28},${axisOy + 28} ${axisOx + 21},${axisOy + 24.5} ${axisOx + 21},${axisOy + 31.5}`} fill="#51626F" />
-        <text x={axisOx + 32} y={axisOy + 32} fontSize="11" fill="#51626F" fontWeight="800">
+        <text x={axisOx + 32} y={axisOy + 32} fontSize="14" fill="#51626F" fontWeight="800">
           Z
         </text>
-        <text x={axisOx} y={axisOy + 42} fontSize="9.5" fill="var(--gray-soft)">
+        <text x={axisOx} y={axisOy + 46} fontSize="12.5" fill="var(--gray-soft)">
           단면 (Y-Z 평면)
         </text>
 
@@ -817,22 +817,22 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
           return (
             <g key={i}>
               <rect x={x} y={yTopPx} width={wPx} height={hPx} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />
-              <text x={centerX + (maxWidth * scale) / 2 + 10} y={labelY + 3.5} fontSize="10.5" fontWeight="800" fill={c.stroke}>
+              <text x={centerX + (maxWidth * scale) / 2 + 10} y={labelY + 3.5} fontSize="13.5" fontWeight="800" fill={c.stroke}>
                 {c.name}
               </text>
               <EditableDimText
-                editing={editingTarget && editingTarget.colorId === b.colorId && editingTarget.field === 'width'}
+                editing={editingTarget && editingTarget.index === i && editingTarget.field === 'width'}
                 x={centerX + (maxWidth * scale) / 2 + 10}
-                y={labelY + 16}
+                y={labelY + 20}
                 textAnchor="start"
                 fill={c.stroke}
-                fontSize="9.5"
+                fontSize="12"
                 fontWeight="700"
                 displayText={wLabelForBlock}
                 currentValue={disp(b.width, lenF)}
-                boxW={56}
-                boxH={17}
-                onStartEdit={() => setEditingTarget({ colorId: b.colorId, field: 'width' })}
+                boxW={68}
+                boxH={20}
+                onStartEdit={() => setEditingTarget({ index: i, field: 'width' })}
                 onCommit={(v) => {
                   onEditDim(b.colorId, 'width', v);
                   setEditingTarget(null);
@@ -843,18 +843,18 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
               <line x1={leftDimX - 4} y1={yTopPx} x2={leftDimX + 4} y2={yTopPx} stroke={c.stroke} strokeWidth="1" />
               <line x1={leftDimX - 4} y1={yBottomPx} x2={leftDimX + 4} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
               <EditableDimText
-                editing={editingTarget && editingTarget.colorId === b.colorId && editingTarget.field === 'height'}
+                editing={editingTarget && editingTarget.index === i && editingTarget.field === 'height'}
                 x={leftDimX - 7}
-                y={labelY + 3.5}
+                y={labelY + 4.5}
                 textAnchor="end"
                 fill={c.stroke}
-                fontSize="10"
+                fontSize="13"
                 fontWeight="700"
                 displayText={hLabel}
                 currentValue={disp(b.height, lenF)}
-                boxW={56}
-                boxH={18}
-                onStartEdit={() => setEditingTarget({ colorId: b.colorId, field: 'height' })}
+                boxW={64}
+                boxH={20}
+                onStartEdit={() => setEditingTarget({ index: i, field: 'height' })}
                 onCommit={(v) => {
                   onEditDim(b.colorId, 'height', v);
                   setEditingTarget(null);
@@ -869,18 +869,18 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
         <line x1={xLeft} y1={dimY - 4} x2={xLeft} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
         <line x1={xRight} y1={dimY - 4} x2={xRight} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
         <EditableDimText
-          editing={editingTarget && editingTarget.colorId === widestBlock.colorId && editingTarget.field === 'width'}
+          editing={editingTarget && editingTarget.index === 'widest' && editingTarget.field === 'width'}
           x={(xLeft + xRight) / 2}
           y={dimY + 16}
           textAnchor="middle"
           fill="#51626F"
-          fontSize="10"
+          fontSize="13"
           fontWeight="700"
           displayText={wLabel}
           currentValue={disp(widestBlock.width, lenF)}
-          boxW={64}
-          boxH={18}
-          onStartEdit={() => setEditingTarget({ colorId: widestBlock.colorId, field: 'width' })}
+          boxW={68}
+          boxH={20}
+          onStartEdit={() => setEditingTarget({ index: 'widest', field: 'width' })}
           onCommit={(v) => {
             onEditDim(widestBlock.colorId, 'width', v);
             setEditingTarget(null);
@@ -897,15 +897,15 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
           strokeWidth="1.2"
           strokeDasharray="5 4"
         />
-        <text x={padLeft - 10} y={naY - 6} fontSize="11" fill="#51626F" fontWeight="700">
+        <text x={padLeft - 10} y={naY - 8} fontSize="14" fill="#51626F" fontWeight="700">
           N.A. (중립축)
         </text>
 
         <line x1={diagCenterX} y1={padTop} x2={diagCenterX} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.5" />
-        <text x={diagCenterX - diagHalfW - 4} y={padTop - 8} fontSize="10" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
+        <text x={diagCenterX - diagHalfW - 4} y={padTop - 10} fontSize="13" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
           압축 (−)
         </text>
-        <text x={diagCenterX + diagHalfW + 4} y={padTop - 8} fontSize="10" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
+        <text x={diagCenterX + diagHalfW + 4} y={padTop - 10} fontSize="13" fill="var(--gray-soft)" textAnchor="middle" fontWeight="700">
           인장 (+)
         </text>
 
@@ -932,28 +932,28 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
               />
               <circle cx={x1} cy={y1} r="2.5" fill={c.stroke} />
               <circle cx={x2} cy={y2} r="2.5" fill={c.stroke} />
-              <text x={x1 + (p1.s >= 0 ? 6 : -6)} y={y1 + 3} fontSize="10" fill="#3A3A3A" textAnchor={anchor1}>
+              <text x={x1 + (p1.s >= 0 ? 6 : -6)} y={y1 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor1}>
                 {label1}
               </text>
-              {Math.abs(y2 - y1) > 12 && (
-                <text x={x2 + (p2.s >= 0 ? 6 : -6)} y={y2 + 3} fontSize="10" fill="#3A3A3A" textAnchor={anchor2}>
+              {Math.abs(y2 - y1) > 16 && (
+                <text x={x2 + (p2.s >= 0 ? 6 : -6)} y={y2 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor2}>
                   {label2}
                 </text>
               )}
             </g>
           );
         })}
-        <text x={diagCenterX} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+        <text x={diagCenterX} y={padTop + drawH + 20} fontSize="13.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
           STRESS DIAGRAM (중립축 = 0)
         </text>
       </svg>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2 }}>
-        <span style={{ fontSize: 10.5, color: 'var(--gray-soft)', fontWeight: 700 }}>
+        <span style={{ fontSize: 13, color: 'var(--gray-soft)', fontWeight: 700 }}>
           ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
         </span>
         <button
           className="add-block calc-trigger"
-          style={{ margin: 0, padding: '3px 10px', fontSize: 10.5 }}
+          style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
           onClick={() => setElevation3D((v) => !v)}
         >
           {elevation3D ? '2D로 보기' : '3D로 보기'}

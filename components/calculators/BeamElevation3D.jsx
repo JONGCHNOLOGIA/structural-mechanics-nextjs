@@ -43,7 +43,9 @@ export default function BeamElevation3D({ momentLabel, bend }) {
     beamMesh.add(edges);
 
     function applyBend() {
-      const curveAmount = (bendRef.current / 24) * 0.55; // bend prop(-24~24px, 2D 버전과 동일 스케일)을 3D 단위로 환산
+      // bend prop(-24~24px)은 2D 버전(SVG, y축이 아래로 증가)과 같은 스케일 — 양수(M>0, 새깅)는
+      // 2D에서 가운데가 아래로 처지는 방향. Three.js는 y축이 위로 증가하므로 부호를 반대로 적용.
+      const curveAmount = (bendRef.current / 24) * -0.55;
       const pos = beamGeo.attributes.position;
       const basePos = beamGeo.userData.basePosition || (beamGeo.userData.basePosition = pos.array.slice());
       for (let i = 0; i < pos.count; i++) {
