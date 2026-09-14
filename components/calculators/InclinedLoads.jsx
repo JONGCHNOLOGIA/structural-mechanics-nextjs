@@ -34,7 +34,7 @@ export default function InclinedLoads() {
   const [units, setUnits] = useState({ length: 'mm', stress: 'MPa', qUnit: 'kN/m', moment: 'kN·m' });
   const [b, setB] = useState(100 * 0.001);
   const [h, setH] = useState(150 * 0.001);
-  const [alphaDeg, setAlphaDeg] = useState(26.57);
+  const [alphaDeg, setAlphaDeg] = useState(0);
   const [q, setQ] = useState(2 * 1000);
   const [L, setL] = useState(4);
   const [elevation3D, setElevation3D] = useState(true);
