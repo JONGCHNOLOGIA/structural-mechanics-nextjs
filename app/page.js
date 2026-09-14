@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
@@ -12,6 +13,7 @@ export default function HomePage() {
   const [activeChapter, setActiveChapter] = useState(null);
   const activeCh = activeChapter !== null ? chapters[activeChapter] : null;
   const { displayName, studentId } = useUser();
+  const router = useRouter();
 
   return (
     <div>
@@ -77,7 +79,7 @@ export default function HomePage() {
                     {ch.ready ? <span className="tag">{ch.subtopics.length}개 소주제</span> : <span className="tag">준비중</span>}
                   </span>
                   <div className="title">{ch.title}</div>
-                  <div className="preview">{ch.desc}</div>
+                  <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
                 </div>
               </div>
             ))}
@@ -100,13 +102,23 @@ export default function HomePage() {
               <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
             ) : (
               activeCh.subtopics.map((st) => (
-                <Link key={st.slug} href={`${activeCh.base}/${st.slug}`} className="subtopic">
+                <div
+                  key={st.slug}
+                  className="subtopic"
+                  onClick={() => router.push(`${activeCh.base}/${st.slug}`)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="subtopic-row">
                     <span className="name">{st.name}</span>
                     <span className="go">열기 →</span>
                   </div>
-                  <div className="subprev">{st.desc}</div>
-                </Link>
+                  <EditableText
+                    as="div"
+                    className="subprev"
+                    contentKey={`subtopic.${activeCh.num}.${st.slug}.desc`}
+                    defaultText={st.desc}
+                  />
+                </div>
               ))
             )}
           </div>

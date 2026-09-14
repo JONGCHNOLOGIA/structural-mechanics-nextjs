@@ -7,6 +7,7 @@ import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
+import EditableText from '@/components/EditableText';
 
 // 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
 // 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
@@ -116,9 +117,12 @@ export default function ProblemGeneratorPage() {
       </div>
 
       <div style={{ maxWidth: 1600, margin: '20px auto 0', padding: '0 40px' }}>
-        <div style={{ fontSize: 12, color: 'var(--gray-soft)', lineHeight: 1.6 }}>
-          참고 문제 자료에 실제로 있던 유형만 지원해요 — 일부 소주제(예: Functionally Graded Beams, Plane Stress)는 문제 생성에서 제외되어 있어요.
-        </div>
+        <EditableText
+          as="div"
+          contentKey="problemGenerator.intro"
+          defaultText="참고 문제 자료에 실제로 있던 유형만 지원해요 — 일부 소주제(예: Functionally Graded Beams, Plane Stress)는 문제 생성에서 제외되어 있어요."
+          style={{ fontSize: 12, color: 'var(--gray-soft)', lineHeight: 1.6 }}
+        />
       </div>
 
       <div className="board">
@@ -139,7 +143,7 @@ export default function ProblemGeneratorPage() {
                       </span>
                     </span>
                     <div className="title">{ch.title}</div>
-                    <div className="preview">{ch.desc}</div>
+                    <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
                   </div>
                 </div>
               );
@@ -182,7 +186,12 @@ export default function ProblemGeneratorPage() {
                         />
                         <span>
                           <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{st.name}</span>
-                          <span style={{ display: 'block', fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 1 }}>{st.desc}</span>
+                          <EditableText
+                            as="span"
+                            contentKey={`subtopic.${ch.num}.${st.slug}.desc`}
+                            defaultText={st.desc}
+                            style={{ display: 'block', fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 1 }}
+                          />
                         </span>
                       </label>
                     );
@@ -229,7 +238,10 @@ export default function ProblemGeneratorPage() {
 
       {problems && (
         <div style={{ maxWidth: 1600, margin: '0 auto 40px', padding: '0 40px' }}>
-          <div
+          <EditableText
+            as="div"
+            contentKey="problemGenerator.resultNote"
+            defaultText="📐 선택한 소주제의 공식으로 매번 새로운 숫자를 뽑아 만든 문제예요. 정답은 계산기와 동일한 공식으로 계산돼요. (교재 문제를 그대로 가져오지 않고 새로 작성한 지문입니다)"
             style={{
               fontSize: 11,
               color: 'var(--gray-soft)',
@@ -239,9 +251,7 @@ export default function ProblemGeneratorPage() {
               padding: '8px 12px',
               marginBottom: 14,
             }}
-          >
-            📐 선택한 소주제의 공식으로 매번 새로운 숫자를 뽑아 만든 문제예요. 정답은 계산기와 동일한 공식으로 계산돼요. (교재 문제를 그대로 가져오지 않고 새로 작성한 지문입니다)
-          </div>
+          />
           <div className="steps">
             {problems.map((p, i) => (
               <div className="step-card" key={i}>

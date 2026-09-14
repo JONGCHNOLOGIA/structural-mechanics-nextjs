@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeMaxBeamStress } from '@/lib/calc/maxBeamStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
@@ -88,7 +89,7 @@ export default function MaxBeamStress() {
                 </div>
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 표면과 중립축에서 응력 요소 모양이 저렇게 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.MaxBeamStress.aiHint" defaultText="💬 왜 표면과 중립축에서 응력 요소 모양이 저렇게 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 300 }}>폭과 높이를 입력하면 결과가 나타납니다.</div>

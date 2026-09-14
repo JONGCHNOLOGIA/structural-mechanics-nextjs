@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/cal
 import { computeTransformed } from '@/lib/calc/transformedSection';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입의 renderTransformedSection()을 React로 옮긴 버전 (CompositeBeams.jsx와 같은 방식으로 단순화).
 
@@ -165,7 +166,7 @@ export default function TransformedSection() {
             <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>
               환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.
             </p>
-            <div className="ai-hint">💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.TransformedSection.aiHint" defaultText="💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 400 }}>

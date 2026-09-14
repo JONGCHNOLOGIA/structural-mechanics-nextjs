@@ -6,6 +6,7 @@ import { ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflection';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // Example 9-3 — Macaulay 괄호(단위함수) <x-a>를 이용해 집중하중 P가 임의 위치 a에 있는
 // 단순보의 처짐을, 전단력식을 적분해서 구함. 괄호는 x<a일 땐 0, x≥a일 때만 값을 가짐.
@@ -100,7 +101,7 @@ export default function ShearForceEquation() {
             <div className="step-final">v(0)=0, v(L)=0으로 c₁, c₂ 결정 — 하중이 어디 있든 식 형태가 그대로 유지돼요.</div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 Macaulay 괄호가 왜 미분·적분해도 형태가 유지되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.ShearForceEquation.aiHint" defaultText="💬 Macaulay 괄호가 왜 미분·적분해도 형태가 유지되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

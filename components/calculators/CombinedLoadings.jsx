@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { principalFromState } from '@/lib/calc/principalStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderCombinedLoadings()를 React로 옮긴 버전.
 
@@ -71,7 +72,7 @@ export default function CombinedLoadings() {
             </div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 평면 밖(out-of-plane) 전단까지 확인해야 하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.CombinedLoadings.aiHint" defaultText="💬 왜 평면 밖(out-of-plane) 전단까지 확인해야 하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

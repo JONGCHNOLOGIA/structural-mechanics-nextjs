@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeSphericalVessel } from '@/lib/calc/pressureVessels';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
@@ -73,7 +74,7 @@ export default function SphericalVessel() {
                 {result.eps !== null && <div className="step-final">변형률 ε = σ(1−ν)/E = {result.eps.toExponential(3)}</div>}
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.SphericalVessel.aiHint" defaultText="💬 왜 구형 용기가 원통형보다 응력이 낮은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 300 }}>r, t를 입력하면 결과가 나타납니다.</div>

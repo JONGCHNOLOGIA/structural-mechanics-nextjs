@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { computeInclinedLoads } from '@/lib/calc/inclinedLoads';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderInclinedLoads() / ilBuildVisuals()를 React로 옮긴 버전.
 
@@ -86,7 +87,7 @@ export default function InclinedLoads() {
                 </div>
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 중립축이 모멘트 방향과 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.InclinedLoads.aiHint" defaultText="💬 왜 중립축이 모멘트 방향과 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 400 }}>폭과 높이를 입력하면 단면과 응력 분포가 나타납니다.</div>

@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderMohrCircle() / mcBuildVisuals()를 React로 옮긴 버전.
 
@@ -64,7 +65,7 @@ export default function MohrsCircle() {
             </div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.MohrsCircle.aiHint" defaultText="💬 왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

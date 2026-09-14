@@ -5,6 +5,7 @@ import { fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { bendingStrainEnergy } from '@/lib/calc/strainEnergy';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 캔틸레버 자유단에 P, M0가 작용할 때 굽힘이 저장하는 변형에너지 U = ∫M²/2EI dx.
 // a) P만  b) M0만  c) P와 M0 동시 — 세 경우를 토글로 비교.
@@ -110,7 +111,7 @@ export default function StrainEnergyOfBending() {
             <div className="step-final">U = {fmtSci(result.U)} J</div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 U를 P로 편미분하면 왜 처짐 δ가 나오는지 궁금하다면, 다음 소주제(Castigliano's Theorem)에서 바로 이어집니다.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.StrainEnergyOfBending.aiHint" defaultText="💬 U를 P로 편미분하면 왜 처짐 δ가 나오는지 궁금하다면, 다음 소주제(Castigliano's Theorem)에서 바로 이어집니다." />
       </div>
 
       <AiTutorPanel />

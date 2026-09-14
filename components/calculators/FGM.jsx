@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { volFracA, mixColor, makeDots } from '@/lib/calc/fgm';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderFGM() / fgmBuildVisuals()를 React로 옮긴 버전.
 const COLOR_A = { name: 'Material A', hex: '#C3002F' };
@@ -71,7 +72,7 @@ export default function FGM() {
             </div>
           ))}
         </div>
-        <div className="ai-hint">💬 실제 구조 해석에서 FGM 보를 어떻게 다루는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.FGM.aiHint" defaultText="💬 실제 구조 해석에서 FGM 보를 어떻게 다루는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

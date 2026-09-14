@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeElastoplastic } from '@/lib/calc/elastoplastic';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
 
@@ -89,7 +90,7 @@ export default function ElastoplasticBending() {
                 <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 6 }}>M ≤ My면 e=c(완전탄성), M ≥ Mp면 e=0(완전소성)</div>
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 e가 이 공식으로 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.ElastoplasticBending.aiHint" defaultText="💬 왜 e가 이 공식으로 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 400 }}>폭·높이·항복응력을 입력하면 단면과 응력 분포가 나타납니다.</div>

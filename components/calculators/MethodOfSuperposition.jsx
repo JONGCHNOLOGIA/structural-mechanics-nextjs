@@ -6,6 +6,7 @@ import { ssUDL, ssUDLmax, ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflec
 import FormulaSection from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 단순보에 등분포하중 q와 중앙 집중하중 P를 동시에(혹은 하나씩) 작용시켜,
 // 표준 케이스 두 개의 처짐을 그냥 더하면(중첩) 실제 결합하중의 처짐이 된다는 걸 보여줌.
@@ -104,7 +105,7 @@ export default function MethodOfSuperposition() {
             <div className="step-final">합산 δ중앙 = {fmt(result.deltaCenter * 1000)} mm</div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 중첩이 선형탄성 범위에서만 성립하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.MethodOfSuperposition.aiHint" defaultText="💬 왜 중첩이 선형탄성 범위에서만 성립하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

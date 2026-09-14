@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { computeHookesLaw } from '@/lib/calc/hookesLaw';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
@@ -130,7 +131,7 @@ export default function HookesLaw() {
                 )}
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 εz가 σx, σy로만 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.HookesLaw.aiHint" defaultText="💬 왜 εz가 σx, σy로만 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 300 }}>E와 ν를 입력하면 계산 결과가 나타납니다.</div>

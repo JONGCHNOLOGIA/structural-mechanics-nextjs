@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeCylindricalVessel } from '@/lib/calc/pressureVessels';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -70,7 +71,7 @@ export default function CylindricalVessel() {
                 </div>
               </FormulaSection>
             </div>
-            <div className="ai-hint">💬 왜 용접선이 이 각도로 설계되는 경우가 많은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.CylindricalVessel.aiHint" defaultText="💬 왜 용접선이 이 각도로 설계되는 경우가 많은지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 300 }}>r, t를 입력하면 결과가 나타납니다.</div>

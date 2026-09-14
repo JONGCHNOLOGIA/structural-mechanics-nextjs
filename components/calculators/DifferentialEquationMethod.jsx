@@ -6,6 +6,7 @@ import { proppedCantileverUDL, proppedCantileverUDLCurve, fixedFixedCenterLoad, 
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // Example 10-1(돌출 캔틸레버, UDL) / 10-2(양단고정, 중앙집중하중) —
 // 반력 중 하나를 "여분력(redundant)"으로 남겨두고 EIv''=M(x)를 적분,
@@ -133,7 +134,7 @@ export default function DifferentialEquationMethod() {
             </FormulaSection>
           )}
         </div>
-        <div className="ai-hint">💬 왜 '남는 조건' 하나로 미지수를 구할 수 있는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.DifferentialEquationMethod.aiHint" defaultText="💬 왜 '남는 조건' 하나로 미지수를 구할 수 있는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

@@ -6,6 +6,7 @@ import { releaseAtB, releaseAtA, proppedCantileverUDLCurve } from '@/lib/calc/in
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 돌출 캔틸레버(고정단 A, 롤러 B, 등분포하중 q)를 "어느 지점을 놓아주느냐(release)"에 따라
 // 두 가지로 풀 수 있음을 보여줌 — Fig.10-1의 (b)/(c)와 같은 아이디어.
@@ -110,7 +111,7 @@ export default function IndeterminateSuperposition() {
             </FormulaSection>
           )}
         </div>
-        <div className="ai-hint">💬 어느 쪽을 풀어줘도 결국 같은 보인데 왜 같은 답이 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.IndeterminateSuperposition.aiHint" defaultText="💬 어느 쪽을 풀어줘도 결국 같은 보인데 왜 같은 답이 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

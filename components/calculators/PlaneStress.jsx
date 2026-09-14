@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입 renderPlaneStress() / psBuildVisuals()를 React로 옮긴 버전.
 
@@ -78,7 +79,7 @@ export default function PlaneStress() {
             </div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 주응력 방향에서는 전단응력이 0이 되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.PlaneStress.aiHint" defaultText="💬 왜 주응력 방향에서는 전단응력이 0이 되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

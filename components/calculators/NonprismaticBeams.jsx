@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 캔틸레버 보인데 단면(I)이 중간(x=c)에서 바뀜 — 자유단(x=L)에 집중하중 P.
 // EI가 구간마다 다르니 M/EI 다이어그램을 구간별로 나눠 적분(수치적분)해서
@@ -107,7 +108,7 @@ export default function NonprismaticBeams() {
             <div className="step-final">I₂/I₁ = {fmt(I2 / I1)} → 단면이 클수록(I₂ 구간) M/EI 다이어그램이 낮아지는 게 보이시나요?</div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 단면이 큰 쪽에서 처짐 기여도가 작아지는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.NonprismaticBeams.aiHint" defaultText="💬 왜 단면이 큰 쪽에서 처짐 기여도가 작아지는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

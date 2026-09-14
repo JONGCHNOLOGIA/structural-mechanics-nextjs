@@ -5,6 +5,7 @@ import { UNIT_OPTIONS, cbSliderRangeFor, fmt, fmtInput, fmtSci, blockColor, EFor
 import { computeComposite, isDoublySymmetric } from '@/lib/calc/compositeBeams';
 import { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 /*
   프로토타입의 renderCompositeBeams()/cbBuildVizSVGs()/cbCalcSection() 등을 React로 그대로 옮긴 버전.
@@ -330,7 +331,7 @@ export default function CompositeBeams() {
               ))}
             </div>
 
-            <div className="ai-hint">💬 이 식이 왜 이런 형태인지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+            <EditableText as="div" className="ai-hint" contentKey="calc.CompositeBeams.aiHint" defaultText="💬 이 식이 왜 이런 형태인지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
           <div className="viz-placeholder" style={{ minHeight: 400 }}>

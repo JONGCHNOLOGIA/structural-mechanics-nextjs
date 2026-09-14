@@ -7,6 +7,7 @@ import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import { ssUDL } from '@/lib/calc/deflection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 캔틸레버(P, M0)는 Castigliano 정리(U를 P, M0로 편미분)로,
 // 단순보(등분포하중 q)는 단위하중법(가상의 단위하중을 준 뒤 M·m1을 적분)으로 처짐을 구함.
@@ -183,7 +184,7 @@ export default function CastiglianosTheorem() {
             </FormulaSection>
           )}
         </div>
-        <div className="ai-hint">💬 왜 가상의 단위하중을 줘도 결과가 맞는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.CastiglianosTheorem.aiHint" defaultText="💬 왜 가상의 단위하중을 줘도 결과가 맞는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

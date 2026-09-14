@@ -1,33 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useUser } from './UserProvider';
+import { useSiteContent } from './SiteContentProvider';
 
-// 사이트 여기저기 흩어진 짧은 설명 문구를 코드 수정 없이 관리자(instructor) 계정에서
-// 직접 고칠 수 있게 해주는 컴포넌트. contentKey로 Supabase site_content 테이블에서
-// 커스텀 값을 읽어오고, 없으면 defaultText를 그대로 보여준다.
+// 사이트 여기저기 흩어진 고정 문구(AI 응답이나 계산 결과처럼 코드로 계산되는 값은 제외)를
+// 코드 수정 없이 관리자(instructor) 계정에서 직접 고칠 수 있게 해주는 컴포넌트.
+// contentKey로 SiteContentProvider가 미리 불러온 site_content 맵에서 커스텀 값을 찾고,
+// 없으면 defaultText를 그대로 보여준다.
 export default function EditableText({ contentKey, defaultText, as: Tag = 'p', style, className }) {
   const { isAdmin } = useUser();
-  const [text, setText] = useState(defaultText);
+  const { content, setLocal } = useSiteContent();
+  const text = content[contentKey] ?? defaultText;
+
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(defaultText);
+  const [draft, setDraft] = useState(text);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from('site_content').select('value').eq('key', contentKey).maybeSingle();
-      if (!cancelled && data?.value) {
-        setText(data.value);
-        setDraft(data.value);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [contentKey]);
+  function startEditing() {
+    setDraft(text);
+    setError('');
+    setEditing(true);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -43,13 +39,13 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
       setError('저장에 실패했어요. 다시 시도해주세요.');
       return;
     }
-    setText(draft);
+    setLocal(contentKey, draft);
     setEditing(false);
   }
 
   if (editing) {
     return (
-      <div style={{ margin: '4px 0' }}>
+      <div style={{ margin: '4px 0' }} onClick={(e) => e.preventDefault()}>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -70,15 +66,7 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
           <button className="add-block active" style={{ margin: 0 }} onClick={handleSave} disabled={saving}>
             {saving ? '저장 중...' : '저장'}
           </button>
-          <button
-            className="add-block"
-            style={{ margin: 0 }}
-            onClick={() => {
-              setDraft(text);
-              setError('');
-              setEditing(false);
-            }}
-          >
+          <button className="add-block" style={{ margin: 0 }} onClick={() => setEditing(false)}>
             취소
           </button>
         </div>
@@ -91,22 +79,27 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
       {text}
       {isAdmin && (
         <button
-          onClick={() => setEditing(true)}
-          title="이 설명 수정하기 (관리자 전용)"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startEditing();
+          }}
+          title="이 문구 수정하기 (관리자 전용)"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 20,
-            height: 20,
-            marginLeft: 8,
+            width: 18,
+            height: 18,
+            marginLeft: 6,
             verticalAlign: 'middle',
             borderRadius: '50%',
             border: '1px solid var(--line)',
             background: 'var(--card)',
             color: 'var(--gray-soft)',
-            fontSize: 11,
+            fontSize: 10,
             cursor: 'pointer',
+            flexShrink: 0,
           }}
         >
           ✎

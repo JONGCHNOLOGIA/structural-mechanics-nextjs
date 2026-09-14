@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { fmt, fmtInput } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // 캔틸레버 보(고정단 A, 자유단 B)의 M/EI 다이어그램을 그려서,
 // 1st 정리(면적=처짐각), 2nd 정리(면적의 1차모멘트=처짐)를 눈으로 확인.
@@ -111,7 +112,7 @@ export default function MomentAreaMethod() {
             </div>
           </FormulaSection>
         </div>
-        <div className="ai-hint">💬 왜 도심까지의 거리를 곱해야 처짐이 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.MomentAreaMethod.aiHint" defaultText="💬 왜 도심까지의 거리를 곱해야 처짐이 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />

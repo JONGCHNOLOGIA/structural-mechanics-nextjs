@@ -6,6 +6,7 @@ import { ssUDL, ssUDLmax, cantileverUDL, cantileverUDLmax } from '@/lib/calc/def
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
+import EditableText from '@/components/EditableText';
 
 // Example 9-1 (단순보) / 9-2 (캔틸레버) — 등분포하중 q를 받는 보를
 // (a) 굽힘모멘트식을 두 번 적분하는 방법과 (b) 4차 미분방정식 EIv''''=q를 네 번 적분하는 방법,
@@ -130,7 +131,7 @@ export default function BendingMomentEquation() {
             </FormulaSection>
           )}
         </div>
-        <div className="ai-hint">💬 두 방법이 왜 같은 결과를 주는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요.</div>
+        <EditableText as="div" className="ai-hint" contentKey="calc.BendingMomentEquation.aiHint" defaultText="💬 두 방법이 왜 같은 결과를 주는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
       <AiTutorPanel />
