@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
+import { useRef, useState, useMemo } from 'react';
+import { UNIT_OPTIONS, cbSliderRangeFor, fmt, fmtInput, fmtSci, blockColor, EFor } from '@/lib/calc/unitOptions';
 import { computeTransformed } from '@/lib/calc/transformedSection';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 
-// 프로토타입의 renderTransformedSection()을 React로 옮긴 버전 (CompositeBeams.jsx와 같은 방식으로 단순화).
+// 프로토타입의 renderTransformedSection()을 React로 옮긴 버전. 블록 편집 UI(슬라이더+3분할 타일,
+// 드래그 순서변경)는 CompositeBeams.jsx와 동일한 패턴으로 맞춤.
 
 let nextColorId = 2;
 
@@ -24,6 +25,7 @@ export default function TransformedSection() {
   const [blocks, setBlocks] = useState(makeInitialBlocks);
   const [refIndex, setRefIndex] = useState(0);
   const [moment, setMoment] = useState(60 * 112.9848);
+  const dragIndexRef = useRef(null);
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const momF = UNIT_OPTIONS.moment[units.moment];
@@ -41,6 +43,11 @@ export default function TransformedSection() {
     setBlocks((prev) => prev.map((b) => (b.colorId === cid ? { ...b, [field]: newVal } : b)));
   }
 
+  function changeBlockEUnit(index, v) {
+    const cid = blocks[index].colorId;
+    setBlocks((prev) => prev.map((b) => (b.colorId === cid ? { ...b, EUnit: v } : b)));
+  }
+
   function addBlock() {
     setBlocks((prev) => {
       const last = prev[prev.length - 1];
@@ -54,6 +61,27 @@ export default function TransformedSection() {
   function removeBlock(index) {
     setBlocks((prev) => prev.filter((_, i) => i !== index));
     setRefIndex((r) => Math.min(r, Math.max(0, blocks.length - 2)));
+  }
+
+  function handleDragStart(index) {
+    dragIndexRef.current = index;
+  }
+  function handleDrop(targetIndex) {
+    const src = dragIndexRef.current;
+    if (src === null || src === targetIndex) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(src, 1);
+      next.splice(targetIndex, 0, moved);
+      return next;
+    });
+    setRefIndex((r) => {
+      if (r === src) return targetIndex;
+      if (src < r && targetIndex >= r) return r - 1;
+      if (src > r && targetIndex <= r) return r + 1;
+      return r;
+    });
+    dragIndexRef.current = null;
   }
 
   return (
@@ -70,53 +98,28 @@ export default function TransformedSection() {
         {blocks
           .map((b, i) => i)
           .reverse()
-          .map((i) => {
-            const b = blocks[i];
-            const c = blockColor(b);
-            const isRef = i === refIndex;
-            return (
-              <div key={i} className="block-card">
-                <span className="drag-handle" title="끌어서 순서 변경">⠿</span>
-                <div className="block-title">
-                  <span className="color-dot" style={{ background: c.stroke }} />
-                  {c.name} Block{i === 0 ? ' · bottom' : i === blocks.length - 1 ? ' · top' : ''}
-                  {isRef && <span className="badge live" style={{ marginLeft: 4 }}>기준(n=1)</span>}
-                </div>
-                {blocks.length > 1 && (
-                  <div className="remove-block" onClick={() => removeBlock(i)}>×</div>
-                )}
-                <div className="field">
-                  <label>Top Width (상단폭)</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.topWidth, lenF))} onBlur={(e) => updateBlockField(i, 'topWidth', e.target.value)} />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>Bottom Width (하단폭)</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.bottomWidth, lenF))} onBlur={(e) => updateBlockField(i, 'bottomWidth', e.target.value)} />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>Height</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.height, lenF))} onBlur={(e) => updateBlockField(i, 'height', e.target.value)} />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>E</label>
-                  <div className="input-unit-group">
-                    <input type="number" defaultValue={fmtInput(disp(b.E, EFor(b)))} onBlur={(e) => updateBlockField(i, 'E', e.target.value)} />
-                  </div>
-                </div>
-                <button className={'add-block' + (isRef ? ' active' : '')} style={{ marginTop: 0 }} onClick={() => setRefIndex(i)}>
-                  {isRef ? '✓ 기준 재료' : '기준 재료로 지정'}
-                </button>
-              </div>
-            );
-          })}
+          .map((i) => (
+            <TransformedBlockCard
+              key={i}
+              block={blocks[i]}
+              units={units}
+              isBottom={i === 0}
+              isTop={i === blocks.length - 1}
+              isRef={i === refIndex}
+              canRemove={blocks.length > 1}
+              onFieldChange={(field, value) => updateBlockField(i, field, value)}
+              onEUnitChange={(v) => changeBlockEUnit(i, v)}
+              onRemove={() => removeBlock(i)}
+              onSetRef={() => setRefIndex(i)}
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(i)}
+            />
+          ))}
 
-        <button className="add-block" onClick={addBlock}>+ 블록 추가</button>
+        <button className="add-block" onClick={addBlock}>
+          + 블록 추가
+        </button>
 
         <div className="field">
           <label>Moment M</label>
@@ -136,11 +139,15 @@ export default function TransformedSection() {
             <div className="result-grid">
               <div className="result-card">
                 <div className="l">중립축 위치 (하단 기준)</div>
-                <div className="v">{fmt(disp(result.ybar, lenF))} {units.length}</div>
+                <div className="v">
+                  {fmt(disp(result.ybar, lenF))} {units.length}
+                </div>
               </div>
               <div className="result-card">
                 <div className="l">ΣEI</div>
-                <div className="v">{fmtSci(result.EIsum)} N·m²</div>
+                <div className="v">
+                  {fmtSci(disp(result.EIsum, EFor(result.blocks[0]) * Math.pow(lenF, 4)))} {result.blocks[0].EUnit}·{units.length}⁴
+                </div>
               </div>
             </div>
             <div className="steps">
@@ -165,9 +172,7 @@ export default function TransformedSection() {
                 })}
               </FormulaSection>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>
-              환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.
-            </p>
+            <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.</p>
             <EditableText as="div" className="ai-hint" contentKey="calc.TransformedSection.aiHint" defaultText="💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
@@ -188,14 +193,119 @@ export default function TransformedSection() {
   );
 }
 
+// Width/Height/E 필드를 각자 label+input로 통째로 늘어놓던 걸 CompositeBeams.jsx와 동일한
+// "활성 필드 슬라이더 1줄 + 타일 그리드" 패턴으로 압축한 버전. 이 계산기는 상단폭/하단폭이
+// 따로 있어서 타일이 4개(Top/Bottom/Height/E).
+function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove, onFieldChange, onEUnitChange, onRemove, onSetRef, onDragStart, onDragOver, onDrop }) {
+  const c = blockColor(block);
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const disp = (base, factor) => base / factor;
+  const lenR = cbSliderRangeFor('length', units.length);
+  const ER = cbSliderRangeFor('E', block.EUnit);
+  const [activeField, setActiveField] = useState('topWidth');
+
+  const FIELD_META = {
+    topWidth: { label: 'Top W', value: disp(block.topWidth, lenF), range: lenR, unit: units.length, unitType: 'length' },
+    bottomWidth: { label: 'Bottom W', value: disp(block.bottomWidth, lenF), range: lenR, unit: units.length, unitType: 'length' },
+    height: { label: 'Height', value: disp(block.height, lenF), range: lenR, unit: units.length, unitType: 'length' },
+    E: { label: 'E', value: disp(block.E, EFor(block)), range: ER, unit: block.EUnit, unitType: 'E' },
+  };
+  const active = FIELD_META[activeField];
+
+  return (
+    <div className="block-card" onDragOver={onDragOver} onDrop={onDrop}>
+      <span className="drag-handle" draggable title="끌어서 순서 변경" onDragStart={onDragStart}>
+        ⠿
+      </span>
+      <div className="block-title">
+        <span className="color-dot" style={{ background: c.stroke }} />
+        {c.name} Block{isBottom ? ' · bottom' : isTop ? ' · top' : ''}
+        {isRef && (
+          <span className="badge live" style={{ marginLeft: 4 }}>
+            기준(n=1)
+          </span>
+        )}
+      </div>
+      {canRemove && (
+        <div className="remove-block" onClick={onRemove}>
+          ×
+        </div>
+      )}
+
+      <div className="block-active-field" style={{ background: c.fill, borderColor: c.stroke }}>
+        <div className="block-active-field-label" style={{ color: c.stroke }}>
+          {c.name} Block · {active.label}
+        </div>
+        <div className="block-active-field-row">
+          <input
+            type="range"
+            min={active.range[0]}
+            max={active.range[1]}
+            step={active.range[2]}
+            value={active.value}
+            onChange={(e) => onFieldChange(activeField, e.target.value)}
+            style={{ flex: 1, accentColor: c.stroke }}
+          />
+          {active.unitType === 'E' ? (
+            <select className="unit-inline" value={active.unit} onChange={(e) => onEUnitChange(e.target.value)}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="unit-inline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {active.unit}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="block-field-tiles" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        {['topWidth', 'bottomWidth', 'height', 'E'].map((key) => {
+          const meta = FIELD_META[key];
+          const isActive = key === activeField;
+          return (
+            <div
+              key={key}
+              className={'block-field-tile' + (isActive ? ' active' : '')}
+              style={isActive ? { background: c.fill, borderColor: c.stroke } : undefined}
+              onClick={() => setActiveField(key)}
+            >
+              <div className="block-field-tile-label">{meta.label}</div>
+              <input
+                key={`${key}-${meta.value}-${meta.unit}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(meta.value)}
+                onFocus={() => setActiveField(key)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => onFieldChange(key, e.target.value)}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <button className={'add-block' + (isRef ? ' active' : '')} style={{ marginTop: 0 }} onClick={onSetRef}>
+        {isRef ? '✓ 기준 재료' : '기준 재료로 지정'}
+      </button>
+    </div>
+  );
+}
+
 // 원래 단면 | 환산 단면 | 응력 다이어그램, 세 구역을 한 SVG에 그림 (프로토타입 tsBuildVizSVG와 동일 로직)
 function TransformedSVG({ result, refBlock }) {
-  const svgW = 720, svgH = 340;
-  const padTop = 40, padBottom = 40;
+  const svgW = 720,
+    svgH = 380;
+  const padTop = 44,
+    padBottom = 44;
   const drawH = svgH - padTop - padBottom;
   const scale = drawH / result.totalHeight;
 
-  const zoneW = 150, zoneGap = 60;
+  const zoneW = 150,
+    zoneGap = 60;
   const zoneA_cx = 90 + zoneW / 2;
   const zoneB_cx = 90 + zoneW + zoneGap + zoneW / 2;
   const diagCenterX = 90 + 2 * zoneW + zoneGap + 110;
@@ -214,8 +324,10 @@ function TransformedSVG({ result, refBlock }) {
   const scaleB = Math.min(zoneW / maxWidthTrans, 1e9);
 
   function trapezoidPts(cx, sc, topW, botW, yTopPx, yBottomPx) {
-    const x1 = cx - (topW * sc) / 2, x2 = cx + (topW * sc) / 2;
-    const x3 = cx + (botW * sc) / 2, x4 = cx - (botW * sc) / 2;
+    const x1 = cx - (topW * sc) / 2,
+      x2 = cx + (topW * sc) / 2;
+    const x3 = cx + (botW * sc) / 2,
+      x4 = cx - (botW * sc) / 2;
     return `${x1},${yTopPx} ${x2},${yTopPx} ${x3},${yBottomPx} ${x4},${yBottomPx}`;
   }
 
@@ -231,28 +343,62 @@ function TransformedSVG({ result, refBlock }) {
 
   return (
     <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 720, margin: '0 auto', display: 'block' }}>
-      <text x={zoneA_cx} y={padTop - 14} fontSize="11" fill="#8A97A2" textAnchor="middle" fontWeight="800">원래 단면</text>
+      <text x={zoneA_cx} y={padTop - 16} fontSize="14" fill="#8A97A2" textAnchor="middle" fontWeight="800">
+        원래 단면
+      </text>
       {result.blocks.map((b, i) => {
         const c = blockColor(b);
-        return <polygon key={i} points={trapezoidPts(zoneA_cx, scaleA, b.topWidth, b.bottomWidth, yToPx(b.yTop), yToPx(b.yBottom))} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />;
+        return (
+          <polygon
+            key={i}
+            points={trapezoidPts(zoneA_cx, scaleA, b.topWidth, b.bottomWidth, yToPx(b.yTop), yToPx(b.yBottom))}
+            fill={c.fill}
+            stroke={c.stroke}
+            strokeWidth="1.4"
+          />
+        );
       })}
       <line x1={zoneA_cx - zoneW / 2 - 8} y1={naY} x2={zoneA_cx + zoneW / 2 + 8} y2={naY} stroke="#51626F" strokeWidth="1.1" strokeDasharray="5 4" />
 
-      <line x1={zoneA_cx + zoneW / 2 + 12} y1={padTop + drawH / 2} x2={zoneB_cx - zoneW / 2 - 20} y2={padTop + drawH / 2} stroke="#C3002F" strokeWidth="1.6" />
-      <polygon points={`${zoneB_cx - zoneW / 2 - 12},${padTop + drawH / 2} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 - 5} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 + 5}`} fill="#C3002F" />
-      <text x={(zoneA_cx + zoneB_cx) / 2} y={padTop + drawH / 2 - 10} fontSize="10" fill="#C3002F" textAnchor="middle" fontWeight="800">n = Eᵢ/E_ref</text>
+      <line
+        x1={zoneA_cx + zoneW / 2 + 12}
+        y1={padTop + drawH / 2}
+        x2={zoneB_cx - zoneW / 2 - 20}
+        y2={padTop + drawH / 2}
+        stroke="#C3002F"
+        strokeWidth="1.6"
+      />
+      <polygon
+        points={`${zoneB_cx - zoneW / 2 - 12},${padTop + drawH / 2} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 - 5} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 + 5}`}
+        fill="#C3002F"
+      />
+      <text x={(zoneA_cx + zoneB_cx) / 2} y={padTop + drawH / 2 - 12} fontSize="13" fill="#C3002F" textAnchor="middle" fontWeight="800">
+        n = Eᵢ/E_ref
+      </text>
 
-      <text x={zoneB_cx} y={padTop - 14} fontSize="11" fill="#8A97A2" textAnchor="middle" fontWeight="800">환산 단면 ({blockColor(refBlock).name} 재료로 통일)</text>
+      <text x={zoneB_cx} y={padTop - 16} fontSize="14" fill="#8A97A2" textAnchor="middle" fontWeight="800">
+        환산 단면 ({blockColor(refBlock).name} 재료로 통일)
+      </text>
       {result.blocks.map((b, i) => {
         const c = blockColor(b);
         const n = b.E / refBlock.E;
-        return <polygon key={i} points={trapezoidPts(zoneB_cx, scaleB, b.topWidth * n, b.bottomWidth * n, yToPx(b.yTop), yToPx(b.yBottom))} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" strokeDasharray={Math.abs(n - 1) > 1e-6 ? '3 2' : undefined} />;
+        return (
+          <polygon
+            key={i}
+            points={trapezoidPts(zoneB_cx, scaleB, b.topWidth * n, b.bottomWidth * n, yToPx(b.yTop), yToPx(b.yBottom))}
+            fill={c.fill}
+            stroke={c.stroke}
+            strokeWidth="1.4"
+            strokeDasharray={Math.abs(n - 1) > 1e-6 ? '3 2' : undefined}
+          />
+        );
       })}
       <line x1={zoneB_cx - zoneW / 2 - 8} y1={naY} x2={zoneB_cx + zoneW / 2 + 8} y2={naY} stroke="#51626F" strokeWidth="1.1" strokeDasharray="5 4" />
 
       <line x1={diagCenterX} y1={padTop} x2={diagCenterX} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       {Array.from({ length: stressPts.length / 2 }).map((_, k) => {
-        const p1 = stressPts[k * 2], p2 = stressPts[k * 2 + 1];
+        const p1 = stressPts[k * 2],
+          p2 = stressPts[k * 2 + 1];
         const c = blockColor(result.blocks[p1.blockIdx]);
         return (
           <polygon
@@ -265,7 +411,9 @@ function TransformedSVG({ result, refBlock }) {
           />
         );
       })}
-      <text x={diagCenterX} y={padTop + drawH + 20} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">STRESS DIAGRAM</text>
+      <text x={diagCenterX} y={padTop + drawH + 22} fontSize="13.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+        STRESS DIAGRAM
+      </text>
     </svg>
   );
 }

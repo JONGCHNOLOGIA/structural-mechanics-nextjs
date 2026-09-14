@@ -550,8 +550,7 @@ function IoBody({ snapshot }) {
         );
       })}
       <div className="step-final">
-        ΣEI = {fmtSci(result.EIsum)} N·m²{' '}
-        <span style={{ fontWeight: 400, color: 'var(--gray-soft)', fontSize: 11 }}>(블록마다 E 단위가 달라 SI 기본단위로 표시)</span>
+        ΣEI = {fmtSci(disp(result.EIsum, EFor(result.blocks[0]) * I4F))} {result.blocks[0].EUnit}·{units.length}⁴
       </div>
     </>
   );
@@ -566,7 +565,7 @@ function StressBody({ snapshot }) {
   const yDisp = (yBottomBased) => (yReference === 'top' ? result.totalHeight - yBottomBased : yBottomBased);
   const Mdisp = fmt(disp(moment || 0, momF));
   const ybarDisp = fmt(disp(yDisp(result.ybar), lenF));
-  const EIfull = `${fmtSci(result.EIsum)} N·m²`;
+  const EIfull = `${fmtSci(disp(result.EIsum, EFor(result.blocks[0]) * Math.pow(lenF, 4)))} ${result.blocks[0].EUnit}·${units.length}⁴`;
 
   return (
     <>
