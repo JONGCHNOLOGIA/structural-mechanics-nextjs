@@ -14,7 +14,7 @@ export default function MaxStressPointDiagram({ widthLabel, heightLabel, MLabel,
       <text x={x0 - 18} y={cy + 4} fontSize="9.5" fill="#8A97A2" textAnchor="end">N.A.</text>
 
       <circle cx={cx} cy={pointY} r="4" fill="#C3002F" />
-      <text x={cx + 10} y={pointY + 4} fontSize="10.5" fontWeight="800" fill="#C3002F">분석점</text>
+      <text x={cx + 10} y={pointY + 4} fontSize="10.5" fontWeight="800" fill="#C3002F">Point</text>
 
       <text x={x0 - 10} y={cy + 4} fontSize="10" fill="#51626F" textAnchor="end" />
       <text x={cx} y={y0 - 34} fontSize="12" fontWeight="800" fill="#4A5FBF" textAnchor="middle">{MLabel}</text>
