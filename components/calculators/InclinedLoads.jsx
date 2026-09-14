@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { UNIT_OPTIONS, cbSliderRangeFor, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
-import { computeInclinedLoads, slopeRatioToRad } from '@/lib/calc/inclinedLoads';
-import FormulaSection, { Tip } from './FormulaSection';
+import { computeInclinedLoads } from '@/lib/calc/inclinedLoads';
+import { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
@@ -11,8 +11,8 @@ import InclinedLoads3D from './InclinedLoads3D';
 
 // 참고자료(mmch6.pdf) Example 6-6 그대로: 지붕 purlin(직사각형 단면)이 경사 α만큼 기울어진 채로
 // 얹혀 있고, 등분포하중 q(수직)가 그 기울어진 단면 기준 qy/qz로 분해되어 2축 굽힘(My, Mz)을 만듦.
-// Composite Beams처럼 "계산하기" 버튼으로 단계별(하중·모멘트 → 단면 2차모멘트 → 굽힘응력 →
-// 중립축)로 결과를 공개하고, 각도는 소수점 슬라이더 대신 "지붕 경사 1:N" 정수비로 고름.
+// SETTING MENU는 Composite Beams의 블록 카드(슬라이더 1줄 + 타일 그리드)를 그대로 가져와서
+// Width/Height/α 세 칸으로 씀 — 다른 점은 하중 q, 스팬 길이 L을 추가로 설정한다는 것뿐.
 
 const Q_UNITS = {
   'kN/m': 1000,
@@ -20,7 +20,6 @@ const Q_UNITS = {
   'lb/ft': 14.5939,
 };
 
-const SLOPE_PRESETS = [1, 2, 3, 4, 6, 12];
 const SECTION_NAMES = ['loads', 'inertia', 'stress', 'na'];
 
 function sectionTitle(name) {
@@ -35,10 +34,11 @@ export default function InclinedLoads() {
   const [units, setUnits] = useState({ length: 'mm', stress: 'MPa', qUnit: 'kN/m', moment: 'kN·m' });
   const [b, setB] = useState(100 * 0.001);
   const [h, setH] = useState(150 * 0.001);
+  const [alphaDeg, setAlphaDeg] = useState(26.57);
   const [q, setQ] = useState(2 * 1000);
   const [L, setL] = useState(4);
-  const [slopeRun, setSlopeRun] = useState(2);
   const [elevation3D, setElevation3D] = useState(true);
+  const [editingField, setEditingField] = useState(null); // 'width' | 'height' | null — VISUALIZER 클릭 수정용
   const [calcState, setCalcState] = useState({ loads: 'idle', inertia: 'idle', stress: 'idle', na: 'idle' });
   const [calcSnapshot, setCalcSnapshot] = useState({ loads: null, inertia: null, stress: null, na: null });
 
@@ -46,11 +46,8 @@ export default function InclinedLoads() {
   const stressF = UNIT_OPTIONS.stress[units.stress];
   const qF = Q_UNITS[units.qUnit];
   const disp = (base, factor) => base / factor;
-  const lenR = cbSliderRangeFor('length', units.length);
 
-  const alphaRad = useMemo(() => slopeRatioToRad(slopeRun), [slopeRun]);
-  const alphaDeg = (alphaRad * 180) / Math.PI;
-
+  const alphaRad = (alphaDeg * Math.PI) / 180;
   const r = useMemo(() => (b && h && L ? computeInclinedLoads(b, h, q, L, alphaRad) : null), [b, h, q, L, alphaRad]);
   const betaDeg = r ? (r.betaRad * 180) / Math.PI : 0;
 
@@ -77,6 +74,14 @@ export default function InclinedLoads() {
     };
   }
 
+  function updateField(field, value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    if (field === 'width') updateAndStale(setB)(val * lenF);
+    else if (field === 'height') updateAndStale(setH)(val * lenF);
+    else if (field === 'alpha') updateAndStale(setAlphaDeg)(Math.max(0, Math.min(90, val)));
+  }
+
   return (
     <>
       {/* ---------------- Setting Menu ---------------- */}
@@ -88,50 +93,18 @@ export default function InclinedLoads() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
 
-        <div className="field">
-          <label>지붕 경사 — 1 : {slopeRun} (α = {fmt(alphaDeg)}°)</label>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-            {SLOPE_PRESETS.map((n) => (
-              <button
-                key={n}
-                className={'add-block' + (slopeRun === n ? ' active' : '')}
-                style={{ margin: 0, flex: '1 1 60px', padding: '7px 4px', fontSize: 11.5 }}
-                onClick={() => updateAndStale(setSlopeRun)(n)}
-              >
-                1:{n}
-              </button>
-            ))}
-          </div>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            step="0.5"
-            value={slopeRun}
-            onChange={(e) => updateAndStale(setSlopeRun)(parseFloat(e.target.value))}
-            style={{ width: '100%' }}
-          />
-          <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginTop: 4 }}>
-            각도를 직접 입력하는 대신, "1:N" 정수 경사비로 골라요 (지붕에서 흔히 쓰는 표기).
-          </div>
-        </div>
+        <SectionBlockCard
+          b={b}
+          h={h}
+          alphaDeg={alphaDeg}
+          units={units}
+          onFieldChange={updateField}
+          onLengthUnitChange={(v) => setUnits((p) => ({ ...p, length: v }))}
+        />
 
         <div className="field">
-          <label>폭 b — {fmt(disp(b, lenF))} {units.length}</label>
-          <input type="range" min={lenR[0]} max={lenR[1]} step={lenR[2]} value={disp(b, lenF)} onChange={(e) => updateAndStale(setB)(parseFloat(e.target.value) * lenF)} style={{ width: '100%' }} />
-        </div>
-        <div className="field">
-          <label>높이 h — {fmt(disp(h, lenF))} {units.length}</label>
-          <input type="range" min={lenR[0]} max={lenR[1]} step={lenR[2]} value={disp(h, lenF)} onChange={(e) => updateAndStale(setH)(parseFloat(e.target.value) * lenF)} style={{ width: '100%' }} />
-        </div>
-        <div className="field">
-          <label>단위 (길이 / 응력 / 하중 / 모멘트)</label>
+          <label>단위 (응력 / 하중 / 모멘트)</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
             <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
               {Object.keys(UNIT_OPTIONS.stress).map((u) => (
                 <option key={u} value={u}>{u}</option>
@@ -152,11 +125,7 @@ export default function InclinedLoads() {
 
         <div className="field">
           <label>등분포하중 q — {fmt(disp(q, qF))} {units.qUnit}</label>
-          <input
-            type="number"
-            defaultValue={fmtInput(disp(q, qF))}
-            onBlur={(e) => updateAndStale(setQ)(parseFloat(e.target.value) * qF)}
-          />
+          <input type="number" defaultValue={fmtInput(disp(q, qF))} onBlur={(e) => updateAndStale(setQ)(parseFloat(e.target.value) * qF)} />
         </div>
         <div className="field">
           <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
@@ -179,7 +148,19 @@ export default function InclinedLoads() {
             {elevation3D ? (
               <InclinedLoads3D b={b} h={h} alphaRad={alphaRad} corners={r.corners} betaRad={r.betaRad} />
             ) : (
-              <InclinedLoadsSVG b={b} h={h} alphaRad={alphaRad} betaRad={r.betaRad} corners={r.corners} stressF={stressF} unitStress={units.stress} />
+              <InclinedLoadsSVG
+                b={b}
+                h={h}
+                alphaRad={alphaRad}
+                betaRad={r.betaRad}
+                corners={r.corners}
+                stressF={stressF}
+                unitStress={units.stress}
+                units={units}
+                editingField={editingField}
+                setEditingField={setEditingField}
+                onCommitDim={updateField}
+              />
             )}
 
             <div className="steps" style={{ marginTop: 14 }}>
@@ -216,6 +197,84 @@ export default function InclinedLoads() {
 
       <AiTutorPanel />
     </>
+  );
+}
+
+// Composite Beams의 블록 카드(슬라이더 1줄 + 3분할 타일)를 그대로 가져온 버전 — Width/Height/α.
+// 여기선 블록이 하나뿐이라 colorId 없이 고정 크림슨 색을 씀.
+function SectionBlockCard({ b, h, alphaDeg, units, onFieldChange, onLengthUnitChange }) {
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const disp = (base, factor) => base / factor;
+  const lenR = cbSliderRangeFor('length', units.length);
+  const [activeField, setActiveField] = useState('width');
+
+  const FIELD_META = {
+    width: { label: 'Width', value: disp(b, lenF), range: lenR, unit: units.length, hasUnit: true },
+    height: { label: 'Height', value: disp(h, lenF), range: lenR, unit: units.length, hasUnit: true },
+    alpha: { label: 'α (기울기)', value: alphaDeg, range: [0, 90, 0.5], unit: '°', hasUnit: false },
+  };
+  const active = FIELD_META[activeField];
+  const color = { fill: '#F7E3E6', stroke: '#C3002F' };
+
+  return (
+    <div className="block-card">
+      <div className="block-title">
+        <span className="color-dot" style={{ background: color.stroke }} />
+        단면 (Rectangular)
+      </div>
+
+      <div className="block-active-field" style={{ background: color.fill, borderColor: color.stroke }}>
+        <div className="block-active-field-label" style={{ color: color.stroke }}>
+          단면 · {active.label}
+        </div>
+        <div className="block-active-field-row">
+          <input
+            type="range"
+            min={active.range[0]}
+            max={active.range[1]}
+            step={active.range[2]}
+            value={active.value}
+            onChange={(e) => onFieldChange(activeField, e.target.value)}
+            style={{ flex: 1, accentColor: color.stroke }}
+          />
+          {active.hasUnit ? (
+            <select className="unit-inline" value={active.unit} onChange={(e) => onLengthUnitChange(e.target.value)}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="unit-inline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>°</span>
+          )}
+        </div>
+      </div>
+
+      <div className="block-field-tiles">
+        {['width', 'height', 'alpha'].map((key) => {
+          const meta = FIELD_META[key];
+          const isActive = key === activeField;
+          return (
+            <div
+              key={key}
+              className={'block-field-tile' + (isActive ? ' active' : '')}
+              style={isActive ? { background: color.fill, borderColor: color.stroke } : undefined}
+              onClick={() => setActiveField(key)}
+            >
+              <div className="block-field-tile-label">{meta.label}</div>
+              <input
+                key={`${key}-${meta.value}-${meta.unit}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(meta.value)}
+                onFocus={() => setActiveField(key)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => onFieldChange(key, e.target.value)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -344,59 +403,144 @@ function SectionBody({ name, snapshot }) {
   return null;
 }
 
-// 경사진 단면 + D/E/F/G 코너 + 중립축(β)을 참고자료 도식 스타일로 2D 표시
-function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStress }) {
+// VISUALIZER의 폭/높이 라벨을 클릭하면 바로 입력칸이 뜨는 작은 헬퍼 (CompositeBeams의
+// EditableDimText와 같은 패턴, 여기선 단일 단면이라 colorId 없이 field 이름만으로 구분).
+function EditableDimLabel({ editing, x, y, textAnchor, fill, fontSize, fontWeight, displayText, currentValue, boxW, boxH, onStartEdit, onCommit, onCancel }) {
+  if (editing) {
+    const boxX = textAnchor === 'end' ? x - boxW : textAnchor === 'middle' ? x - boxW / 2 : x;
+    return (
+      <foreignObject x={boxX} y={y - boxH / 2 - 2} width={boxW} height={boxH} style={{ overflow: 'visible' }}>
+        <input
+          type="number"
+          step="any"
+          autoFocus
+          defaultValue={fmtInput(currentValue)}
+          style={{
+            width: '100%',
+            height: '100%',
+            fontSize,
+            fontWeight,
+            color: fill,
+            border: `1.3px solid ${fill}`,
+            borderRadius: 4,
+            textAlign: 'center',
+            padding: '0 2px',
+            fontFamily: "'JetBrains Mono',monospace",
+            background: '#fff',
+            boxSizing: 'border-box',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onBlur={(e) => onCommit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.target.blur();
+            if (e.key === 'Escape') onCancel();
+          }}
+        />
+      </foreignObject>
+    );
+  }
+  return (
+    <text x={x} y={y} fontSize={fontSize} fill={fill} textAnchor={textAnchor} fontWeight={fontWeight} style={{ cursor: 'pointer' }} onClick={onStartEdit}>
+      {displayText}
+    </text>
+  );
+}
+
+// 중심을 지나는 고정 수직 기준선(0°) + 그 기준선에서 α만큼 돌아간 단면. D/E/F/G 코너와
+// 중립축(β)을 참고자료 도식 스타일로 표시. 폭/높이 라벨은 클릭해서 바로 수정 가능.
+function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStress, units, editingField, setEditingField, onCommitDim }) {
   const w = 460,
-    hh = 340,
+    hh = 360,
     cx = w / 2,
-    cy = hh / 2 + 10;
-  const scale = Math.min(140 / b, 140 / h);
+    cy = hh / 2;
+  const scale = Math.min(130 / b, 130 / h);
   const bPx = b * scale,
     hPx = h * scale;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const disp = (base, factor) => base / factor;
 
-  // 기울어진 사각형: 로컬(가로=bPx,세로=hPx) 좌표를 α만큼 회전해서 배치
-  const rot = (lx, ly) => ({
-    x: cx + lx * Math.cos(alphaRad) - ly * Math.sin(alphaRad),
-    y: cy - (lx * Math.sin(alphaRad) + ly * Math.cos(alphaRad)),
-  });
-  const rectPts = [
-    rot(-bPx / 2, hPx / 2),
-    rot(bPx / 2, hPx / 2),
-    rot(bPx / 2, -hPx / 2),
-    rot(-bPx / 2, -hPx / 2),
-  ];
+  // 중심 기준 회전: α=0일 때 세로로 선 직사각형(기준 수직선과 나란함)이 되도록 회전
+  const rot2 = (lx, ly) => {
+    const ang = alphaRad;
+    return {
+      x: cx + lx * Math.cos(ang) - ly * Math.sin(ang),
+      y: cy - (lx * Math.sin(ang) + ly * Math.cos(ang)),
+    };
+  };
+  const rectPts = [rot2(-bPx / 2, hPx / 2), rot2(bPx / 2, hPx / 2), rot2(bPx / 2, -hPx / 2), rot2(-bPx / 2, -hPx / 2)];
 
-  const naLen = Math.max(bPx, hPx) * 0.9;
-  const na1 = rot(0, 0);
+  const refLen = Math.max(bPx, hPx) / 2 + 55;
+  const naLen = Math.max(bPx, hPx) * 0.85;
   const naP1 = { x: cx + naLen * Math.cos(betaRad), y: cy - naLen * Math.sin(betaRad) };
   const naP2 = { x: cx - naLen * Math.cos(betaRad), y: cy + naLen * Math.sin(betaRad) };
 
-  const groundY = cy + hPx / 2 + bPx / 2 + 30;
-
   const cornerPx = {
-    D: rot(bPx / 2, hPx / 2),
-    E: rot(-bPx / 2, -hPx / 2),
-    F: rot(-bPx / 2, hPx / 2),
-    G: rot(bPx / 2, -hPx / 2),
+    D: rot2(bPx / 2, hPx / 2),
+    E: rot2(-bPx / 2, -hPx / 2),
+    F: rot2(-bPx / 2, hPx / 2),
+    G: rot2(bPx / 2, -hPx / 2),
   };
 
+  const widthLabelPos = rot2(0, hPx / 2 + 22);
+  const heightLabelPos = rot2(bPx / 2 + 30, 0);
+
   return (
-    <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block' }}>
-      <line x1="20" y1={groundY} x2={w - 20} y2={groundY} stroke="#8A97A2" strokeWidth="1.4" />
-      <text x="30" y={groundY + 18} fontSize="11" fill="#8A97A2" fontWeight="700">
-        지붕면 (α = {fmt((alphaRad * 180) / Math.PI)}°)
+    <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+      <text x={cx} y="20" fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+        점선 = 중립축(n-n), 회색 세로선 = 기준(α=0°)
       </text>
+
+      {/* 중심을 뚫는 고정 수직 기준선 */}
+      <line x1={cx} y1={cy - refLen} x2={cx} y2={cy + refLen} stroke="#8A97A2" strokeWidth="1.3" strokeDasharray="3 3" />
 
       <polygon points={rectPts.map((p) => `${p.x},${p.y}`).join(' ')} fill="#F7E3E6" stroke="#51626F" strokeWidth="1.6" />
 
-      <line x1={na1.x} y1={na1.y} x2={naP1.x} y2={naP1.y} stroke="#3A3A3A" strokeWidth="1.4" strokeDasharray="6 4" />
-      <line x1={na1.x} y1={na1.y} x2={naP2.x} y2={naP2.y} stroke="#3A3A3A" strokeWidth="1.4" strokeDasharray="6 4" />
+      <line x1={naP2.x} y1={naP2.y} x2={naP1.x} y2={naP1.y} stroke="#3A3A3A" strokeWidth="1.4" strokeDasharray="6 4" />
       <text x={naP1.x + 6} y={naP1.y - 6} fontSize="11" fill="#3A3A3A" fontWeight="800">
         n
       </text>
       <text x={naP2.x - 12} y={naP2.y + 14} fontSize="11" fill="#3A3A3A" fontWeight="800">
         n
       </text>
+
+      <EditableDimLabel
+        editing={editingField === 'width'}
+        x={widthLabelPos.x}
+        y={widthLabelPos.y}
+        textAnchor="middle"
+        fill="#51626F"
+        fontSize="12"
+        fontWeight="700"
+        displayText={`b = ${fmt(disp(b, lenF))} ${units.length}`}
+        currentValue={disp(b, lenF)}
+        boxW={70}
+        boxH={20}
+        onStartEdit={() => setEditingField('width')}
+        onCommit={(v) => {
+          onCommitDim('width', v);
+          setEditingField(null);
+        }}
+        onCancel={() => setEditingField(null)}
+      />
+      <EditableDimLabel
+        editing={editingField === 'height'}
+        x={heightLabelPos.x}
+        y={heightLabelPos.y}
+        textAnchor="start"
+        fill="#51626F"
+        fontSize="12"
+        fontWeight="700"
+        displayText={`h = ${fmt(disp(h, lenF))} ${units.length}`}
+        currentValue={disp(h, lenF)}
+        boxW={70}
+        boxH={20}
+        onStartEdit={() => setEditingField('height')}
+        onCommit={(v) => {
+          onCommitDim('height', v);
+          setEditingField(null);
+        }}
+        onCancel={() => setEditingField(null)}
+      />
 
       {corners.map((c) => {
         const p = cornerPx[c.name];
@@ -414,8 +558,8 @@ function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStres
         );
       })}
 
-      <text x={cx} y="20" fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
-        점선 = 중립축(n-n), 점 색은 압축(빨강)/인장(초록)
+      <text x={cx} y={hh - 12} fontSize="11" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+        α = {fmt((alphaRad * 180) / Math.PI)}°
       </text>
     </svg>
   );
