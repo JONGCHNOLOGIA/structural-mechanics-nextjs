@@ -60,10 +60,20 @@ create table if not exists topic_reports (
   summary_content text
 );
 
+-- 사이트 곳곳의 소소한 설명 문구를 코드 수정 없이 교수자(관리자) 계정으로 직접 고칠 수 있게 하는 테이블.
+-- key: EditableText contentKey (예: 'home.hero.description'), value: 화면에 보일 실제 텍스트.
+create table if not exists site_content (
+  key text primary key,
+  value text not null,
+  updated_by uuid references auth.users(id),
+  updated_at timestamptz default now()
+);
+
 -- RLS(Row Level Security): 각자 자기 데이터만 보게
 alter table profiles enable row level security;
 alter table user_progress enable row level security;
 alter table chat_logs enable row level security;
+alter table site_content enable row level security;
 
 create policy "본인 프로필만 조회/수정" on profiles
   for all using (auth.uid() = id);
@@ -75,5 +85,14 @@ create policy "본인 대화만 조회, 본인 이름으로만 작성" on chat_l
   for select using (auth.uid() = user_id);
 create policy "본인 이름으로 대화 작성" on chat_logs
   for insert with check (auth.uid() = user_id);
+
+-- site_content: 문구는 누구나 읽을 수 있지만, 수정은 role='instructor'인 계정만 가능
+create policy "누구나 문구 조회 가능" on site_content
+  for select using (true);
+create policy "관리자만 문구 등록/수정" on site_content
+  for insert with check (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+create policy "관리자만 문구 수정" on site_content
+  for update using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'))
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
 
 -- 교수자는 role 컬럼을 보고 별도 정책/뷰로 익명 열람 처리 (필요시 추가)

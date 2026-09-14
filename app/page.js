@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import EditableText from '@/components/EditableText';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
@@ -27,7 +28,10 @@ export default function HomePage() {
       <div className="hero">
         <div className="hero-text">
           <h1>안녕하세요, {displayName}님 👋</h1>
-          <p>구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요.</p>
+          <EditableText
+            contentKey="home.hero.description"
+            defaultText="구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요."
+          />
           <div className="hero-stats">
             <Link href="/subjects/structural-mechanics-2/problem-generator" className="hero-stat hero-stat-link">
               <div className="n">✎</div>
