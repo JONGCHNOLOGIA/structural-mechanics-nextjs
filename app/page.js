@@ -29,18 +29,10 @@ export default function HomePage() {
           <h1>안녕하세요, {displayName}님 👋</h1>
           <p>구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요.</p>
           <div className="hero-stats">
-            <div className="hero-stat">
-              <div className="n">⟳</div>
-              <div className="l">실시간 계산</div>
-            </div>
-            <div className="hero-stat">
-              <div className="n">▤</div>
-              <div className="l">단면 시각화</div>
-            </div>
-            <div className="hero-stat">
-              <div className="n">◎</div>
-              <div className="l">AI 설명</div>
-            </div>
+            <Link href="/subjects/structural-mechanics-2/problem-generator" className="hero-stat hero-stat-link">
+              <div className="n">✎</div>
+              <div className="l">문제 생성</div>
+            </Link>
           </div>
         </div>
         <div className="hero-art">
