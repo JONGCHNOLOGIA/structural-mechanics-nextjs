@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
 
 export default function ElastoplasticBending() {
-  const [units] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
+  const [units, setUnits] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
   const [width, setWidth] = useState(4 * 0.0254);
   const [height, setHeight] = useState(6 * 0.0254);
   const [sigmaY, setSigmaY] = useState(36 * 6894.757);
@@ -38,15 +38,35 @@ export default function ElastoplasticBending() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>Width (b)</label>
+          <label>단위 (길이 / 응력 / 모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>Width (b) — {fmt(disp(width, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>Height (h)</label>
+          <label>Height (h) — {fmt(disp(height, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>항복응력 σY</label>
+          <label>항복응력 σY — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
         </div>
         {r0 && (
@@ -137,11 +157,11 @@ function ElastoplasticSVG({ width, height, r }) {
         </>
       )}
       <line x1={cx1 - bPx / 2 - 10} y1={cy} x2={cx1 + bPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
-      <text x={cx1} y={cy - hPx / 2 - 10} fontSize="11" fill="#8A97A2" textAnchor="middle" fontWeight="700">단면 (탄성코어 vs 소성영역)</text>
+      <text x={cx1} y={cy - hPx / 2 - 10} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">단면 (탄성코어 vs 소성영역)</text>
 
       <line x1={diagCx} y1={padTop} x2={diagCx} y2={padTop + hPx} stroke="#8A97A2" strokeWidth="1.3" />
-      <text x={diagCx - diagHalfW - 4} y={padTop - 8} fontSize="10" fill="#8A97A2" textAnchor="middle" fontWeight="700">압축(−)</text>
-      <text x={diagCx + diagHalfW + 4} y={padTop - 8} fontSize="10" fill="#8A97A2" textAnchor="middle" fontWeight="700">인장(+)</text>
+      <text x={diagCx - diagHalfW - 4} y={padTop - 8} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">압축(−)</text>
+      <text x={diagCx + diagHalfW + 4} y={padTop - 8} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">인장(+)</text>
       {ePx < hPx && (
         <>
           <rect x={diagCx - sYpx} y={yTopPx} width={sYpx} height={yMidTopPx - yTopPx} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
@@ -150,7 +170,7 @@ function ElastoplasticSVG({ width, height, r }) {
       )}
       <line x1={diagCx - sYpx} y1={yMidTopPx} x2={diagCx} y2={cy} stroke="#C3002F" strokeWidth="1.8" />
       <line x1={diagCx} y1={cy} x2={diagCx + sYpx} y2={yMidBotPx} stroke="#1E7F72" strokeWidth="1.8" />
-      <text x={diagCx} y={padTop + hPx + 20} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">STRESS DIAGRAM</text>
+      <text x={diagCx} y={padTop + hPx + 20} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">STRESS DIAGRAM</text>
     </svg>
   );
 }
