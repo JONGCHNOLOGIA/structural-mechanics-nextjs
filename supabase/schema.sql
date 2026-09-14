@@ -69,11 +69,41 @@ create table if not exists site_content (
   updated_at timestamptz default now()
 );
 
+-- 홈 화면 "이어서 학습하기"용: 소주제를 들어갈 때마다 방문 시각을 기록 (챕터/소주제는
+-- lib/chapters.js의 num/slug 문자열로 식별 — topics 테이블은 실제로는 쓰지 않아서 그대로 둠).
+create table if not exists topic_visits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  chapter_num text not null,
+  subtopic_slug text not null,
+  visited_at timestamptz not null default now(),
+  unique (user_id, chapter_num, subtopic_slug)
+);
+
+-- 문제 생성기에서 "정답 확인" 후 본인이 맞았는지/틀렸는지 스스로 표시한 기록.
+-- 홈 화면의 "문제 풀이 %"와 "오답 횟수", "최근 틀린 개념"의 근거 데이터로 씀.
+create table if not exists problem_attempts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  chapter_num text not null,
+  subtopic_slug text not null,
+  is_correct boolean not null,
+  created_at timestamptz not null default now()
+);
+
 -- RLS(Row Level Security): 각자 자기 데이터만 보게
 alter table profiles enable row level security;
 alter table user_progress enable row level security;
 alter table chat_logs enable row level security;
 alter table site_content enable row level security;
+alter table topic_visits enable row level security;
+alter table problem_attempts enable row level security;
+
+create policy "본인 방문기록만 조회/작성" on topic_visits
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "본인 풀이기록만 조회/작성" on problem_attempts
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "본인 프로필만 조회/수정" on profiles
   for all using (auth.uid() = id);

@@ -1,19 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
+import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
 import EditableText from '@/components/EditableText';
+import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
+import ContinueLearning from '@/components/ContinueLearning';
+import LearningStatus from '@/components/LearningStatus';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
   const [activeChapter, setActiveChapter] = useState(null);
   const activeCh = activeChapter !== null ? chapters[activeChapter] : null;
-  const { displayName, studentId } = useUser();
+  const { displayName, studentId, userId } = useUser();
   const router = useRouter();
+
+  const [recentVisits, setRecentVisits] = useState([]);
+  const [progressSummary, setProgressSummary] = useState([]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetchRecentVisits(3).then(setRecentVisits);
+    fetchProgressSummary().then(setProgressSummary);
+  }, [userId]);
 
   return (
     <div>
@@ -61,6 +73,9 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <ContinueLearning visits={recentVisits} />
+      <LearningStatus summary={progressSummary} />
 
       <div className="board">
         <div>

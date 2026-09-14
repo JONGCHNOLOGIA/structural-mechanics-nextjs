@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 import EditableText from '@/components/EditableText';
+import { recordAttempt } from '@/lib/progress';
 
 // 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
 // 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
@@ -23,7 +25,16 @@ const SUPPORTED_CHAPTERS = chapters
   .filter((ch) => ch.subtopics.length > 0);
 
 export default function ProblemGeneratorPage() {
-  const { displayName, studentId } = useUser();
+  return (
+    <Suspense fallback={null}>
+      <ProblemGeneratorContent />
+    </Suspense>
+  );
+}
+
+function ProblemGeneratorContent() {
+  const { displayName, studentId, userId } = useUser();
+  const searchParams = useSearchParams();
   const [selectedChapters, setSelectedChapters] = useState(new Set());
   const [selectedSubtopics, setSelectedSubtopics] = useState(new Set());
   const [numQuestions, setNumQuestions] = useState(5);
@@ -31,6 +42,20 @@ export default function ProblemGeneratorPage() {
   const [problems, setProblems] = useState(null);
   const [revealed, setRevealed] = useState(new Set());
   const [solutionImages, setSolutionImages] = useState({});
+  const [graded, setGraded] = useState({}); // { [problemIndex]: 'correct' | 'wrong' }
+
+  // 홈 화면 "최근 틀린 개념 → 다시 풀기"에서 ?ch=CH.6&slug=composite-beams 로 들어오면 자동 선택
+  useEffect(() => {
+    const ch = searchParams.get('ch');
+    const slug = searchParams.get('slug');
+    if (!ch || !slug) return;
+    const chapter = SUPPORTED_CHAPTERS.find((c) => c.num === ch);
+    const subtopic = chapter?.subtopics.find((s) => s.slug === slug);
+    if (!chapter || !subtopic) return;
+    setSelectedChapters(new Set([ch]));
+    setSelectedSubtopics(new Set([subtopicKey(chapter, subtopic)]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggleChapter(ch) {
     const willSelect = !selectedChapters.has(ch.num);
@@ -76,6 +101,7 @@ export default function ProblemGeneratorPage() {
       }
       setProblems(list);
       setRevealed(new Set());
+      setGraded({});
       setGenerating(false);
     }, 400);
   }
@@ -87,6 +113,13 @@ export default function ProblemGeneratorPage() {
       else next.add(i);
       return next;
     });
+  }
+
+  // AI 자동 채점은 아직 연결 전이라, 정답 확인 후 본인이 맞았는지/틀렸는지 스스로 표시하는 방식으로
+  // 대신함. 이 기록이 홈 화면의 "문제 풀이 %"와 "오답 횟수", "최근 틀린 개념"의 근거가 됨.
+  function handleSelfGrade(i, p, isCorrect) {
+    setGraded((prev) => ({ ...prev, [i]: isCorrect ? 'correct' : 'wrong' }));
+    recordAttempt(p.ch.num, p.st.slug, isCorrect);
   }
 
   function handleUploadSolution(i, file) {
@@ -287,6 +320,37 @@ export default function ProblemGeneratorPage() {
                         {p.answers.map((a, k) => (
                           <div key={k}>{a}</div>
                         ))}
+                      </div>
+                    )}
+                    {revealed.has(i) && !graded[i] && (
+                      <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                        <span style={{ fontSize: 12, color: 'var(--gray-soft)', alignSelf: 'center' }}>내 풀이는 —</span>
+                        <button
+                          className="add-block"
+                          style={{ margin: 0, color: 'var(--teal)', borderColor: 'var(--teal)' }}
+                          onClick={() => handleSelfGrade(i, p, true)}
+                        >
+                          맞았어요
+                        </button>
+                        <button
+                          className="add-block"
+                          style={{ margin: 0, color: 'var(--crimson)', borderColor: 'var(--crimson)' }}
+                          onClick={() => handleSelfGrade(i, p, false)}
+                        >
+                          틀렸어요
+                        </button>
+                      </div>
+                    )}
+                    {graded[i] && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: graded[i] === 'correct' ? 'var(--teal)' : 'var(--crimson)',
+                        }}
+                      >
+                        {graded[i] === 'correct' ? '✓ 정답으로 기록했어요.' : '✗ 오답으로 기록했어요 — 홈 화면에서 다시 확인할 수 있어요.'}
                       </div>
                     )}
                   </div>

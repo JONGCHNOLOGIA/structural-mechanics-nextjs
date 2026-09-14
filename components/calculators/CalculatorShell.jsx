@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import { recordVisit } from '@/lib/progress';
 
 /*
   프로토타입의 "상세 페이지" 틀(detail-header + tabs + panels)을 그대로 옮긴 것.
@@ -11,7 +13,12 @@ import LogoutButton from '@/components/LogoutButton';
   보이는 모습과 눌렀을 때의 결과(다른 소주제로 전환)는 동일함.
 */
 export default function CalculatorShell({ chapter, activeSlug, children }) {
-  const { displayName, studentId } = useUser();
+  const { displayName, studentId, userId } = useUser();
+
+  // 소주제 페이지를 열 때마다 방문 시각 기록 → 홈 화면 "이어서 학습하기"에서 사용
+  useEffect(() => {
+    if (userId) recordVisit(chapter.num, activeSlug);
+  }, [userId, chapter.num, activeSlug]);
 
   return (
     <div>

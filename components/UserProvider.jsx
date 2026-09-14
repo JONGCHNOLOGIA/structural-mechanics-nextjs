@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabaseClient';
 // 시연 중 아무나 실제 사이트 문구를 고칠 수 있게 되어버림 — 그래서 studentId로 따로 구분)
 const CONTENT_EDITOR_STUDENT_ID = '22011031';
 
-const UserContext = createContext({ studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: false });
+const UserContext = createContext({ userId: null, studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: false });
 
 export function useUser() {
   return useContext(UserContext);
@@ -21,7 +21,7 @@ export function useUser() {
 export default function UserProvider({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [state, setState] = useState({ studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: false });
+  const [state, setState] = useState({ userId: null, studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +32,7 @@ export default function UserProvider({ children }) {
 
       if (!session) {
         if (pathname !== '/login') router.replace('/login');
-        if (!cancelled) setState({ studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: true });
+        if (!cancelled) setState({ userId: null, studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: true });
         return;
       }
 
@@ -40,6 +40,7 @@ export default function UserProvider({ children }) {
 
       if (!cancelled) {
         setState({
+          userId: session.user.id,
           studentId: profile?.student_id ?? null,
           displayName: profile?.display_name ?? null,
           role: profile?.role ?? 'student',
