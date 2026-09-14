@@ -36,7 +36,7 @@ export default function SubjectsPage() {
               <span className="num">
                 구조역학 1<span className="tag">준비중</span>
               </span>
-              <div className="title">Mechanics of Materials 1</div>
+              <div className="title">Structural Mechanics 1</div>
               <EditableText as="div" className="preview" contentKey="subjects.sm1.desc" defaultText="다른 팀원이 만들고 있어요. 곧 열립니다." />
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function SubjectsPage() {
               <span className="num">
                 구조역학 2<span className="tag">입장 가능</span>
               </span>
-              <div className="title">Mechanics of Materials 2</div>
+              <div className="title">Structural Mechanics 2</div>
               <EditableText
                 as="div"
                 className="preview"

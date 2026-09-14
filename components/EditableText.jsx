@@ -46,7 +46,13 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
 
   if (editing) {
     return (
-      <div style={{ margin: '4px 0' }} onClick={(e) => e.preventDefault()}>
+      <div
+        style={{ margin: '4px 0' }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
