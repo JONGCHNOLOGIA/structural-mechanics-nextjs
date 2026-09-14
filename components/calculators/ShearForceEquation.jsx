@@ -40,9 +40,11 @@ export default function ShearForceEquation() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          집중하중 P가 지점 A에서 a만큼 떨어진 위치에 있어요. <b>Macaulay 괄호</b> &lt;x−a&gt;를 쓰면 x&lt;a와 x≥a 구간을 나눠 적분할 필요 없이 <b>식 하나</b>로 전체 구간을 표현할 수 있어요.
-        </p>
+        <EditableText
+          contentKey="calc.ShearForceEquation.intro"
+          defaultText="집중하중 P가 지점 A에서 a만큼 떨어진 위치에 있어요. **Macaulay 괄호** &lt;x−a&gt;를 쓰면 x&lt;a와 x≥a 구간을 나눠 적분할 필요 없이 **식 하나**로 전체 구간을 표현할 수 있어요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>스팬 길이 L (m)</label>
           <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />

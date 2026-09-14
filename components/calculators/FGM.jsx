@@ -47,9 +47,11 @@ export default function FGM() {
             </button>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 16, lineHeight: 1.6 }}>
-          n=1이면 선형으로 섞이고, n&lt;1이면 하단(B-rich) 근처에서, n&gt;1이면 상단(A-rich) 근처에서 조성이 급하게 바뀝니다.
-        </p>
+        <EditableText
+          contentKey="calc.FGM.note"
+          defaultText="n=1이면 선형으로 섞이고, n&lt;1이면 하단(B-rich) 근처에서, n&gt;1이면 상단(A-rich) 근처에서 조성이 급하게 바뀝니다."
+          style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 16, lineHeight: 1.6 }}
+        />
       </div>
 
       {/* ---------------- Visualizer ---------------- */}

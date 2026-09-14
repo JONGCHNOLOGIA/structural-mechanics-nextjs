@@ -27,9 +27,11 @@ export default function MohrsCircle() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          Plane Stress와 <b>같은 입력</b>이에요 — 같은 계산을 숫자 대신 <b>원(circle)</b>으로 표현하는 방법입니다.
-        </p>
+        <EditableText
+          contentKey="calc.MohrsCircle.intro"
+          defaultText="Plane Stress와 **같은 입력**이에요 — 같은 계산을 숫자 대신 **원(circle)**으로 표현하는 방법입니다."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>σx</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
@@ -63,9 +65,12 @@ export default function MohrsCircle() {
             </div>
             <div className="step-row">σave = {fmt(disp(r.avg, stressF))} {units.stress} &nbsp; R = {fmt(disp(r.R, stressF))} {units.stress}</div>
             <div className="step-row">x1면 점 = (σx1, τx1y1) = ({fmt(disp(r.sx1, stressF))}, {fmt(disp(r.tx1y1, stressF))}) {units.stress}</div>
-            <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}>
-              지름의 양 끝(x1면·y1면)을 중심 C를 기준으로 <b>2θ</b>만큼 돌리면, 실제 θ만큼 요소를 돌렸을 때의 응력이 나와요.
-            </div>
+            <EditableText
+              as="div"
+              style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}
+              contentKey="calc.MohrsCircle.note"
+              defaultText="지름의 양 끝(x1면·y1면)을 중심 C를 기준으로 **2θ**만큼 돌리면, 실제 θ만큼 요소를 돌렸을 때의 응력이 나와요."
+            />
           </FormulaSection>
         </div>
         <EditableText as="div" className="ai-hint" contentKey="calc.MohrsCircle.aiHint" defaultText="💬 왜 각도가 θ가 아니라 2θ만큼 회전하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />

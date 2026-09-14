@@ -30,9 +30,11 @@ export default function InclinedLoads() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          직사각형 단면에 <b>Z축에서 α만큼 기울어진 방향</b>으로 굽힘모멘트가 작용해요. 이 모멘트는 My, Mz 두 성분으로 분해되고, 단면 각 지점의 응력은 두 성분의 중첩으로 결정돼요.
-        </p>
+        <EditableText
+          contentKey="calc.InclinedLoads.intro"
+          defaultText="직사각형 단면에 **Z축에서 α만큼 기울어진 방향**으로 굽힘모멘트가 작용해요. 이 모멘트는 My, Mz 두 성분으로 분해되고, 단면 각 지점의 응력은 두 성분의 중첩으로 결정돼요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>Width (b)</label>
           <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
@@ -94,9 +96,12 @@ export default function InclinedLoads() {
                     (tan β = tan α · <Frac num="Iz" den="Iy" />)
                   </span>
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 10, lineHeight: 1.6 }}>
-                  💡 <b>Iz ≠ Iy</b>이면 중립축(β)이 모멘트 방향(α)과 <b>일치하지 않아요</b> — 이게 비대칭(2축) 굽힘의 핵심 포인트예요. 정사각형 단면(b=h)처럼 Iz=Iy일 때만 β=α가 됩니다.
-                </div>
+                <EditableText
+                  as="div"
+                  style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 10, lineHeight: 1.6 }}
+                  contentKey="calc.InclinedLoads.note"
+                  defaultText="💡 **Iz ≠ Iy**이면 중립축(β)이 모멘트 방향(α)과 **일치하지 않아요** — 이게 비대칭(2축) 굽힘의 핵심 포인트예요. 정사각형 단면(b=h)처럼 Iz=Iy일 때만 β=α가 됩니다."
+                />
               </FormulaSection>
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.InclinedLoads.aiHint" defaultText="💬 왜 중립축이 모멘트 방향과 다른지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />

@@ -43,9 +43,11 @@ export default function BendingMomentEquation() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          등분포하중 q를 받는 보의 처짐곡선을, <b>굽힘모멘트식 적분</b>과 <b>4차 미분방정식(EIv&#8371;&#8371;&#8371;&#8371;=q)</b> 두 방법으로 풀어서 같은 결과가 나오는 걸 비교합니다.
-        </p>
+        <EditableText
+          contentKey="calc.BendingMomentEquation.intro"
+          defaultText="등분포하중 q를 받는 보의 처짐곡선을, **굽힘모멘트식 적분**과 **4차 미분방정식(EIv₳₳₳₳=q)** 두 방법으로 풀어서 같은 결과가 나오는 걸 비교합니다."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           <button className={'add-block' + (isSS ? ' active' : '')} style={{ margin: 0 }} onClick={() => setBeamType('simply-supported')}>
             단순보
@@ -105,14 +107,24 @@ export default function BendingMomentEquation() {
                   <div className="step-formula">
                     <Tip title="단순보의 굽힘모멘트식">M(x)</Tip> = <Frac num="qx(L−x)" den="2" /> &nbsp; → &nbsp; EIv&#8221; = M(x)
                   </div>
-                  <div className="step-row">v(0)=0, v(L)=0 (양단 처짐 0) — 두 번 적분 후 이 두 조건으로 적분상수 결정</div>
+                  <EditableText
+                    as="div"
+                    className="step-row"
+                    contentKey="calc.BendingMomentEquation.bc.ss"
+                    defaultText="v(0)=0, v(L)=0 (양단 처짐 0) — 두 번 적분 후 이 두 조건으로 적분상수 결정"
+                  />
                 </>
               ) : (
                 <>
                   <div className="step-formula">
                     <Tip title="자유단에서 잰 굽힘모멘트식">M(x)</Tip> = −<Frac num="q(L−x)²" den="2" /> &nbsp; → &nbsp; EIv&#8221; = M(x)
                   </div>
-                  <div className="step-row">v(0)=0, v&#8217;(0)=0 (고정단에서 처짐·처짐각 모두 0)</div>
+                  <EditableText
+                    as="div"
+                    className="step-row"
+                    contentKey="calc.BendingMomentEquation.bc.cant"
+                    defaultText="v(0)=0, v'(0)=0 (고정단에서 처짐·처짐각 모두 0)"
+                  />
                 </>
               )}
               <div className="step-final">
@@ -128,11 +140,26 @@ export default function BendingMomentEquation() {
                 <Frac num="c₂x²" den="2" />+c₃x+c₄
               </div>
               {isSS ? (
-                <div className="step-row">경계조건 4개: v(0)=0, EIv&#8221;(0)=0(모멘트 0), EIv&#8221;(L)=0, v(L)=0 → c₁,c₂,c₃,c₄ 결정</div>
+                <EditableText
+                  as="div"
+                  className="step-row"
+                  contentKey="calc.BendingMomentEquation.bc4.ss"
+                  defaultText="경계조건 4개: v(0)=0, EIv''(0)=0(모멘트 0), EIv''(L)=0, v(L)=0 → c₁,c₂,c₃,c₄ 결정"
+                />
               ) : (
-                <div className="step-row">경계조건 4개: v(0)=0, v&#8217;(0)=0, EIv&#8221;(L)=0(자유단 모멘트 0), EIv&#8221;&#8217;(L)=0(자유단 전단 0) → c₁,c₂,c₃,c₄ 결정</div>
+                <EditableText
+                  as="div"
+                  className="step-row"
+                  contentKey="calc.BendingMomentEquation.bc4.cant"
+                  defaultText="경계조건 4개: v(0)=0, v'(0)=0, EIv''(L)=0(자유단 모멘트 0), EIv'''(L)=0(자유단 전단 0) → c₁,c₂,c₃,c₄ 결정"
+                />
               )}
-              <div className="step-final">굽힘모멘트식으로 풀었을 때와 <b>완전히 같은</b> v(x)가 나옵니다.</div>
+              <EditableText
+                as="div"
+                className="step-final"
+                contentKey="calc.BendingMomentEquation.conclusion"
+                defaultText="굽힘모멘트식으로 풀었을 때와 **완전히 같은** v(x)가 나옵니다."
+              />
             </FormulaSection>
           )}
         </div>

@@ -44,9 +44,11 @@ export default function IndeterminateSuperposition() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          부정정보를 풀려면 반력·모멘트 중 하나를 <b>여분력(redundant)</b>으로 남기고, 그 지점을 <b>풀어준(released)</b> 정정구조로 바꿔요. <b>어디를 풀어주느냐</b>에 따라 released structure가 달라지지만, 최종 답은 같아요.
-        </p>
+        <EditableText
+          contentKey="calc.IndeterminateSuperposition.intro"
+          defaultText="부정정보를 풀려면 반력·모멘트 중 하나를 **여분력(redundant)**으로 남기고, 그 지점을 **풀어준(released)** 정정구조로 바꿔요. **어디를 풀어주느냐**에 따라 released structure가 달라지지만, 최종 답은 같아요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (isB ? ' active' : '')} style={{ margin: 0 }} onClick={() => setRelease('B')}>
             B의 롤러 → 캔틸레버

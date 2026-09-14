@@ -32,9 +32,11 @@ export default function ElastoplasticBending() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          직사각형 단면에 모멘트를 점점 키우면, 처음엔 <b>탄성</b>이다가 표면부터 <b>항복</b>하기 시작하고, 계속 키우면 단면 전체가 <b>완전소성</b> 상태가 돼요. 아래 슬라이더로 모멘트를 올려보세요.
-        </p>
+        <EditableText
+          contentKey="calc.ElastoplasticBending.intro"
+          defaultText="직사각형 단면에 모멘트를 점점 키우면, 처음엔 **탄성**이다가 표면부터 **항복**하기 시작하고, 계속 키우면 단면 전체가 **완전소성** 상태가 돼요. 아래 슬라이더로 모멘트를 올려보세요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>Width (b)</label>
           <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
@@ -92,7 +94,12 @@ export default function ElastoplasticBending() {
                 <div className="step-row">
                   My = <Frac num="σY·I" den="c" /> &nbsp; Mp = <Frac num="σY·b·h²" den="4" /> &nbsp; f = <Frac num="Mp" den="My" /> = 1.5
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 6 }}>M ≤ My면 e=c(완전탄성), M ≥ Mp면 e=0(완전소성)</div>
+                <EditableText
+                  as="div"
+                  style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 6 }}
+                  contentKey="calc.ElastoplasticBending.note"
+                  defaultText="M ≤ My면 e=c(완전탄성), M ≥ Mp면 e=0(완전소성)"
+                />
               </FormulaSection>
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.ElastoplasticBending.aiHint" defaultText="💬 왜 e가 이 공식으로 나오는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />

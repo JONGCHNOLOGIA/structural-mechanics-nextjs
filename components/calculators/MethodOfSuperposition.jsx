@@ -46,9 +46,11 @@ export default function MethodOfSuperposition() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          보가 <b>선형탄성</b>이면, 여러 하중을 동시에 받을 때의 처짐은 각 하중을 <b>따로 작용시켰을 때의 처짐을 그냥 더한 것</b>과 같아요. 표준 공식표에 있는 케이스들을 조합해서 복잡한 하중도 빠르게 풀 수 있어요.
-        </p>
+        <EditableText
+          contentKey="calc.MethodOfSuperposition.intro"
+          defaultText="보가 **선형탄성**이면, 여러 하중을 동시에 받을 때의 처짐은 각 하중을 **따로 작용시켰을 때의 처짐을 그냥 더한 것**과 같아요. 표준 공식표에 있는 케이스들을 조합해서 복잡한 하중도 빠르게 풀 수 있어요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>스팬 길이 L (m)</label>
           <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />

@@ -43,9 +43,11 @@ export default function DifferentialEquationMethod() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          반력이 평형방정식 3개보다 많으면(<b>부정정</b>) 반력 하나를 <b>여분력</b>으로 남겨두고 EIv&#8221;=M(x)를 적분해요. 그러면 처짐·처짐각 조건이 하나 더 남는데, 그걸로 여분력을 거꾸로 구합니다.
-        </p>
+        <EditableText
+          contentKey="calc.DifferentialEquationMethod.intro"
+          defaultText="반력이 평형방정식 3개보다 많으면(**부정정**) 반력 하나를 **여분력**으로 남겨두고 EIv''=M(x)를 적분해요. 그러면 처짐·처짐각 조건이 하나 더 남는데, 그걸로 여분력을 거꾸로 구합니다."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (isPropped ? ' active' : '')} style={{ margin: 0 }} onClick={() => setBeamType('propped')}>
             돌출 캔틸레버 (UDL)
@@ -120,8 +122,18 @@ export default function DifferentialEquationMethod() {
               <div className="step-formula">
                 <Tip title="A로부터 잰 굽힘모멘트, RB는 아직 모르는 값">EIv&#8221;</Tip> = RA·x − MA − <Frac num="qx²" den="2" /> &nbsp; (단, RA, MA도 RB로 표현됨)
               </div>
-              <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단) → 적분상수 2개 결정</div>
-              <div className="step-row">남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함</div>
+              <EditableText
+                as="div"
+                className="step-row"
+                contentKey="calc.DifferentialEquationMethod.bc.propped1"
+                defaultText="경계조건: v(0)=0, v'(0)=0 (A는 고정단) → 적분상수 2개 결정"
+              />
+              <EditableText
+                as="div"
+                className="step-row"
+                contentKey="calc.DifferentialEquationMethod.bc.propped2"
+                defaultText="남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함"
+              />
               <div className="step-final">
                 RB = <Frac num="3qL" den="8" /> = {fmt(result.reactions.RB / 1000)} kN, MA = <Frac num="qL²" den="8" /> ={' '}
                 {fmt(result.reactions.MA / 1000)} kN·m
@@ -132,8 +144,18 @@ export default function DifferentialEquationMethod() {
               <div className="step-formula">
                 <Tip title="중앙에서 대칭이라 절반(0~L/2)만 풀면 됨">EIv&#8221;</Tip> = <Frac num="P" den="2" />x − MA &nbsp; (0 ≤ x ≤ L/2)
               </div>
-              <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단)</div>
-              <div className="step-row">남은 조건: v&#8217;(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함</div>
+              <EditableText
+                as="div"
+                className="step-row"
+                contentKey="calc.DifferentialEquationMethod.bc.fixed1"
+                defaultText="경계조건: v(0)=0, v'(0)=0 (A는 고정단)"
+              />
+              <EditableText
+                as="div"
+                className="step-row"
+                contentKey="calc.DifferentialEquationMethod.bc.fixed2"
+                defaultText="남은 조건: v'(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함"
+              />
               <div className="step-final">
                 MA = <Frac num="PL" den="8" /> = {fmt(result.reactions.MA / 1000)} kN·m (양쪽 고정단 모두 동일)
               </div>

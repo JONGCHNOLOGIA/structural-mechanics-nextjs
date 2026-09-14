@@ -27,7 +27,11 @@ export default function CombinedLoadings() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.7, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          <b style={{ color: 'var(--ink)' }}>방법</b>: 축하중·굽힘·비틀림·압력 등 여러 하중이 겹치면, 각각의 응력식으로 따로 구한 다음 <b>한 점에서 σx, σy, τxy로 합쳐서</b> Plane Stress 방식으로 최종 정리해요.
+          <EditableText
+            as="span"
+            contentKey="calc.CombinedLoadings.intro"
+            defaultText="**방법**: 축하중·굽힘·비틀림·압력 등 여러 하중이 겹치면, 각각의 응력식으로 따로 구한 다음 **한 점에서 σx, σy, τxy로 합쳐서** Plane Stress 방식으로 최종 정리해요."
+          />
           <br />
           <br />
           <b>자주 쓰는 개별 공식</b>

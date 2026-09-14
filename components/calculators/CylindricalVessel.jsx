@@ -28,9 +28,11 @@ export default function CylindricalVessel() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          원통형 압력용기는 <b>원주방향(hoop) 응력이 길이방향의 2배</b>예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요.
-        </p>
+        <EditableText
+          contentKey="calc.CylindricalVessel.intro"
+          defaultText="원통형 압력용기는 **원주방향(hoop) 응력이 길이방향의 2배**예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
           <label>내부 반지름 r</label>
           <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />

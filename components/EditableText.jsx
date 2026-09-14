@@ -10,6 +10,18 @@ import { useSiteContent } from './SiteContentProvider';
 // UserProvider의 canEditContent(특정 학번 1명)로 한정됨 — "관리자로 시연" 데모 계정은 못 고침.
 // contentKey로 SiteContentProvider가 미리 불러온 site_content 맵에서 커스텀 값을 찾고,
 // 없으면 defaultText를 그대로 보여준다.
+// **굵게** 마크다운 문법을 <b>로 렌더링해서, 원래 <b> 태그로 강조돼 있던 문구도
+// 서식을 잃지 않고 편집할 수 있게 함 (편집창에는 **...** 그대로 보임).
+function renderFormatted(text) {
+  const parts = String(text ?? '').split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <b key={i}>{part.slice(2, -2)}</b>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export default function EditableText({ contentKey, defaultText, as: Tag = 'p', style, className }) {
   const { canEditContent } = useUser();
   const { content, setLocal } = useSiteContent();
@@ -68,6 +80,7 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
             resize: 'vertical',
           }}
         />
+        <p style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4 }}>강조하고 싶은 부분은 **이렇게** 별표 두 개로 감싸면 굵게 표시돼요.</p>
         {error && <p style={{ color: 'var(--crimson)', fontSize: 12, marginTop: 4 }}>{error}</p>}
         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
           <button className="add-block active" style={{ margin: 0 }} onClick={handleSave} disabled={saving}>
@@ -83,7 +96,7 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
 
   return (
     <Tag className={className} style={style}>
-      {text}
+      {renderFormatted(text)}
       {canEditContent && (
         <button
           onClick={(e) => {
