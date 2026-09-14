@@ -239,14 +239,14 @@ export default function ProblemGeneratorPage() {
                         문제 {i + 1} · {p.ch.num} {p.st.name}
                       </div>
                       <div className="step-body">
-                        {p.diagram && (
-                          <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 6px', marginBottom: 12 }}>
-                            <ProblemDiagram diagram={p.diagram} />
-                          </div>
-                        )}
                         <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
                           {p.prompt}
                         </div>
+                        {p.diagram && (
+                          <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 10px', marginBottom: 12 }}>
+                            <ProblemDiagram diagram={p.diagram} />
+                          </div>
+                        )}
                         <button className="add-block" onClick={() => toggleReveal(i)} style={{ margin: 0 }}>
                           {revealed.has(i) ? '정답 숨기기' : '정답 확인'}
                         </button>

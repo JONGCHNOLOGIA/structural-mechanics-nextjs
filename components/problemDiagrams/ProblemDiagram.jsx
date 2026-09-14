@@ -25,11 +25,11 @@ export default function ProblemDiagram({ diagram }) {
       return <MaxStressPointDiagram {...diagram.props} />;
     case 'beamAndCrossSection':
       return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'flex-start' }}>
-          <div style={{ flex: '1 1 220px', maxWidth: 300 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 200px', maxWidth: 260 }}>
             <BeamDiagram {...diagram.beamProps} />
           </div>
-          <div style={{ flex: '1 1 160px', maxWidth: 220 }}>
+          <div style={{ flex: '0 1 150px', maxWidth: 170 }}>
             <CrossSectionDiagram {...diagram.crossSectionProps} />
           </div>
         </div>
