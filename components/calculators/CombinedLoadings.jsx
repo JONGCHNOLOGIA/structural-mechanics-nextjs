@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderCombinedLoadings()를 React로 옮긴 버전.
 
 export default function CombinedLoadings() {
-  const [units] = useState({ stress: 'psi' });
+  const [units, setUnits] = useState({ stress: 'psi' });
   const [sigmaX, setSigmaX] = useState(8000 * 6894.757);
   const [sigmaY, setSigmaY] = useState(2000 * 6894.757);
   const [tauXY, setTauXY] = useState(3000 * 6894.757);
@@ -48,15 +48,23 @@ export default function CombinedLoadings() {
         </div>
         <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 10 }}>아래에 그 점에서 <b>합쳐진 최종값</b>을 입력하세요.</div>
         <div className="field">
-          <label>σx (합산값)</label>
+          <label>응력 단위</label>
+          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>σx (합산값) — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>σy (합산값)</label>
+          <label>σy (합산값) — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>τxy (합산값)</label>
+          <label>τxy (합산값) — {fmt(disp(tauXY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
         </div>
       </div>
@@ -116,7 +124,7 @@ function ElementSVG({ sx, sy, txy }) {
       {svgArrow(cx - s, cy - tl * 0.4 * to, cx - s, cy + tl * 0.6 * to, color, 'c6')}
       {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'c7')}
       {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'c8')}
-      <text x={cx} y={cy + s + 40} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">합쳐진 응력 상태</text>
+      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">합쳐진 응력 상태</text>
     </svg>
   );
 }

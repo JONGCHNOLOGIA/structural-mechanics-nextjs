@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
 export default function MaxBeamStress() {
-  const [units] = useState({ length: 'in', stress: 'psi', moment: 'kip·in', force: 'lb' });
+  const [units, setUnits] = useState({ length: 'in', stress: 'psi', moment: 'kip·in', force: 'lb' });
   const [width, setWidth] = useState(4 * 0.0254);
   const [height, setHeight] = useState(8 * 0.0254);
   const [M, setM] = useState(60 * 112.9848);
@@ -31,24 +31,55 @@ export default function MaxBeamStress() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±<Frac num="h" den="2" />)에선 전단이 0, 중립축(y=0)에선
-          굽힘응력이 0이에요.
-        </p>
+        <EditableText
+          contentKey="calc.MaxBeamStress.intro"
+          defaultText="보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±h/2)에선 전단이 0, 중립축(y=0)에선 굽힘응력이 0이에요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
-          <label>Width (b)</label>
+          <label>단위 (길이 / 응력)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (모멘트 / 전단력)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>Width (b) — {fmt(disp(width, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>Height (h)</label>
+          <label>Height (h) — {fmt(disp(height, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>Moment M</label>
+          <label>Moment M — {fmt(disp(M, momF))} {units.moment}</label>
           <input type="number" defaultValue={fmtInput(disp(M, momF))} onBlur={(e) => setM(parseFloat(e.target.value) * momF)} />
         </div>
         <div className="field">
-          <label>Shear V</label>
+          <label>Shear V — {fmt(disp(V, forceF))} {units.force}</label>
           <input type="number" defaultValue={fmtInput(disp(V, forceF))} onBlur={(e) => setV(parseFloat(e.target.value) * forceF)} />
         </div>
         {width && height && (
@@ -134,7 +165,7 @@ function StressElement({ cx, cy, size, sx, sy, txy, color, label }) {
       {svgArrow(cx - s, cy - tl * 0.4 * to, cx - s, cy + tl * 0.6 * to, color, 'm6')}
       {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'm7')}
       {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'm8')}
-      <text x={cx} y={cy + s + 40} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">
+      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">
         {label}
       </text>
     </g>
@@ -151,8 +182,8 @@ function MaxBeamStressSVG({ width, height, y, r }) {
       <rect x={cx - wPx / 2} y={cy - hPx / 2} width={wPx} height={hPx} fill="#F4F1E8" stroke="#51626F" strokeWidth="1.3" />
       <line x1={cx - wPx / 2 - 10} y1={cy} x2={cx + wPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
       <circle cx={cx} cy={yPx} r="5" fill="#C3002F" />
-      <text x={cx + wPx / 2 + 16} y={yPx + 4} fontSize="10.5" fill="#C3002F" fontWeight="800">현재 y</text>
-      <text x={cx} y={cy - hPx / 2 - 12} fontSize="10.5" fill="#8A97A2" textAnchor="middle">단면 (y 위치 표시)</text>
+      <text x={cx + wPx / 2 + 16} y={yPx + 4} fontSize="13" fill="#C3002F" fontWeight="800">현재 y</text>
+      <text x={cx} y={cy - hPx / 2 - 12} fontSize="13" fill="#8A97A2" textAnchor="middle">단면 (y 위치 표시)</text>
       <StressElement cx={330} cy={140} size={100} sx={r.sigmaX} sy={0} txy={r.tau} color="#1E7F72" label="현재 y에서의 응력 요소" />
     </svg>
   );

@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
 export default function SphericalVessel() {
-  const [units] = useState({ length: 'in', stress: 'psi' });
+  const [units, setUnits] = useState({ length: 'in', stress: 'psi' });
   const [r, setR] = useState(20 * 0.0254);
   const [t, setT] = useState(0.5 * 0.0254);
   const [p, setP] = useState(200 * 6894.757);
@@ -29,27 +29,44 @@ export default function SphericalVessel() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
-          구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(<Frac num="r" den="t" />≫1), 벽면에 <b>모든 방향으로 같은 크기의 인장응력</b>이 생겨요.
-        </p>
+        <EditableText
+          contentKey="calc.SphericalVessel.intro"
+          defaultText="구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(r/t≫1), 벽면에 **모든 방향으로 같은 크기의 인장응력**이 생겨요."
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+        />
         <div className="field">
-          <label>내부 반지름 r</label>
+          <label>단위 (길이 / 응력)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>내부 반지름 r — {fmt(disp(r, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>두께 t</label>
+          <label>두께 t — {fmt(disp(t, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>내부압력 p</label>
+          <label>내부압력 p — {fmt(disp(p, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>E (변형률 계산용, 선택)</label>
+          <label>E (변형률 계산용, 선택){E !== null ? ` — ${fmt(disp(E, stressF))} ${units.stress}` : ''}</label>
           <input type="number" placeholder="값 입력" defaultValue={E === null ? '' : fmt(disp(E, stressF))} onBlur={(e) => setE(e.target.value === '' ? null : parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>ν (선택)</label>
+          <label>ν (선택){nu !== null ? ` — ${nu}` : ''}</label>
           <input type="number" placeholder="0~0.5" defaultValue={nu === null ? '' : nu} onBlur={(e) => setNu(e.target.value === '' ? null : parseFloat(e.target.value))} />
         </div>
       </div>
@@ -123,14 +140,14 @@ function SphericalVesselSVG({ sigma }) {
     <svg viewBox="0 0 420 260" style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
       <circle cx="120" cy="120" r="85" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       {arrows}
-      <text x="120" y="225" fontSize="11" fill="#8A97A2" textAnchor="middle">내부압력 p</text>
+      <text x="120" y="225" fontSize="13" fill="#8A97A2" textAnchor="middle">내부압력 p</text>
 
       <rect x={cx - s} y={cy - s} width={s * 2} height={s * 2} fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />
       {svgArrow(cx + s, cy, cx + s + sxo * L, cy, color, 'sv1')}
       {svgArrow(cx - s, cy, cx - s - sxo * L, cy, color, 'sv2')}
       {svgArrow(cx, cy - s, cx, cy - s - sxo * L, color, 'sv3')}
       {svgArrow(cx, cy + s, cx, cy + s + sxo * L, color, 'sv4')}
-      <text x={cx} y={cy + s + 40} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">벽면 요소 (등이축 인장)</text>
+      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">벽면 요소 (등이축 인장)</text>
     </svg>
   );
 }

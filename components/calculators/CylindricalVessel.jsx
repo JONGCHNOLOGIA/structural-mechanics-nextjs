@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
 export default function CylindricalVessel() {
-  const [units] = useState({ length: 'in', stress: 'psi' });
+  const [units, setUnits] = useState({ length: 'in', stress: 'psi' });
   const [r, setR] = useState(20 * 0.0254);
   const [t, setT] = useState(0.5 * 0.0254);
   const [p, setP] = useState(200 * 6894.757);
@@ -34,15 +34,30 @@ export default function CylindricalVessel() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>내부 반지름 r</label>
+          <label>단위 (길이 / 응력)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>내부 반지름 r — {fmt(disp(r, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>두께 t</label>
+          <label>두께 t — {fmt(disp(t, lenF))} {units.length}</label>
           <input type="number" defaultValue={fmtInput(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
         </div>
         <div className="field">
-          <label>내부압력 p</label>
+          <label>내부압력 p — {fmt(disp(p, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
@@ -122,7 +137,7 @@ function StressElement({ cx, cy, size, sx, sy, txy, rotateDeg, color, label }) {
         {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'e7')}
         {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'e8')}
       </g>
-      <text x={cx} y={cy + s + 40} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">
+      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">
         {label}
       </text>
     </g>
@@ -133,7 +148,7 @@ function CylindricalVesselSVG({ r, theta }) {
   return (
     <svg viewBox="0 0 620 260" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block' }}>
       <rect x="40" y="80" width="180" height="90" rx="45" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
-      <text x="130" y="65" fontSize="11" fill="#8A97A2" textAnchor="middle">원통 (길이방향 = x)</text>
+      <text x="130" y="65" fontSize="13" fill="#8A97A2" textAnchor="middle">원통 (길이방향 = x)</text>
       <StressElement cx={150} cy={200} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />
       <StressElement cx={460} cy={200} size={80} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ=${theta.toFixed(0)}° (용접선 방향)`} />
     </svg>
