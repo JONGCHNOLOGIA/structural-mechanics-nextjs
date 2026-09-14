@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderPlaneStress() / psBuildVisuals()를 React로 옮긴 버전.
 
 export default function PlaneStress() {
-  const [units] = useState({ stress: 'psi' });
+  const [units, setUnits] = useState({ stress: 'psi' });
   const [sigmaX, setSigmaX] = useState(10000 * 6894.757);
   const [sigmaY, setSigmaY] = useState(-4000 * 6894.757);
   const [tauXY, setTauXY] = useState(3000 * 6894.757);
@@ -33,15 +33,25 @@ export default function PlaneStress() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>σx</label>
+          <label>응력 단위</label>
+          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>σy</label>
+          <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>τxy</label>
+          <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
@@ -132,7 +142,7 @@ function StressElement({ cx, cy, size, sx, sy, txy, rotateDeg, color, label }) {
         {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'a7')}
         {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'a8')}
       </g>
-      <text x={cx} y={cy + s + 50} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">
+      <text x={cx} y={cy + s + 50} fontSize="14" fontWeight="800" fill={color} textAnchor="middle">
         {label}
       </text>
     </g>
@@ -146,13 +156,13 @@ function ElementsSVG({ sigmaX, sigmaY, tauXY, theta, r, stressF, unitStress }) {
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
       <StressElement cx={150} cy={150} size={130} sx={sigmaX} sy={sigmaY} txy={tauXY} rotateDeg={0} color="#51626F" label="θ = 0° (원래 상태)" />
       <StressElement cx={460} cy={150} size={130} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ = ${theta.toFixed(0)}° (회전된 상태)`} />
-      <text x={150} y={290} fontSize="11" textAnchor="middle" fill="#51626F">
+      <text x={150} y={290} fontSize="14" textAnchor="middle" fill="#51626F">
         σx={fmt(disp(sigmaX, stressF))} σy={fmt(disp(sigmaY, stressF))} τxy={fmt(disp(tauXY, stressF))} {unitStress}
       </text>
-      <text x={460} y={290} fontSize="11" textAnchor="middle" fill="#C3002F">
+      <text x={460} y={290} fontSize="14" textAnchor="middle" fill="#C3002F">
         σx1={fmt(disp(r.sx1, stressF))} σy1={fmt(disp(r.sy1, stressF))} τx1y1={fmt(disp(r.tx1y1, stressF))} {unitStress}
       </text>
-      <text x={w / 2} y={320} fontSize="10.5" textAnchor="middle" fill="#8A97A2">
+      <text x={w / 2} y={320} fontSize="13" textAnchor="middle" fill="#8A97A2">
         시계반대 방향 = (+) 각도
       </text>
     </svg>

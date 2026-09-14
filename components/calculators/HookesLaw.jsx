@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
 export default function HookesLaw() {
-  const [units] = useState({ stress: 'psi', length: 'in' });
+  const [units, setUnits] = useState({ stress: 'psi', length: 'in' });
   const [mode, setMode] = useState('stressToStrain');
   const [E, setE] = useState(30000 * 6894757);
   const [nu, setNu] = useState(0.3);
@@ -51,46 +51,65 @@ export default function HookesLaw() {
           </button>
         </div>
         <div className="field">
-          <label>탄성계수 E</label>
+          <label>단위 (응력 / 길이)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>탄성계수 E — {fmt(disp(E, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(E, stressF))} onBlur={(e) => setE(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>포아송비 ν</label>
+          <label>포아송비 ν — {nu}</label>
           <input type="number" placeholder="0~0.5" defaultValue={nu} onBlur={(e) => setNu(parseFloat(e.target.value))} />
         </div>
         {mode === 'stressToStrain' ? (
           <>
             <div className="field">
-              <label>σx</label>
+              <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
               <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
             </div>
             <div className="field">
-              <label>σy</label>
+              <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
               <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
             </div>
             <div className="field">
-              <label>τxy</label>
+              <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
               <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
             </div>
           </>
         ) : (
           <>
             <div className="field">
-              <label>εx</label>
+              <label>εx — {fmt(epsX)}</label>
               <input type="number" defaultValue={epsX} onBlur={(e) => setEpsX(parseFloat(e.target.value))} />
             </div>
             <div className="field">
-              <label>εy</label>
+              <label>εy — {fmt(epsY)}</label>
               <input type="number" defaultValue={epsY} onBlur={(e) => setEpsY(parseFloat(e.target.value))} />
             </div>
             <div className="field">
-              <label>γxy</label>
+              <label>γxy — {fmt(gammaXY)}</label>
               <input type="number" defaultValue={gammaXY} onBlur={(e) => setGammaXY(parseFloat(e.target.value))} />
             </div>
           </>
         )}
         <div className="field">
-          <label>두께 t (선택, Δt 계산용)</label>
+          <label>두께 t (선택, Δt 계산용){thickness !== null ? ` — ${fmt(disp(thickness, lenF))} ${units.length}` : ''}</label>
           <input
             type="number"
             placeholder="값 입력"
@@ -184,7 +203,7 @@ function ElementSVG({ sx, sy, txy }) {
       {svgArrow(cx - s, cy - tl * 0.4 * to, cx - s, cy + tl * 0.6 * to, color, 'a6')}
       {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'a7')}
       {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'a8')}
-      <text x={cx} y={cy + s + 40} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">현재 상태</text>
+      <text x={cx} y={cy + s + 40} fontSize="14" fontWeight="800" fill={color} textAnchor="middle">현재 상태</text>
     </svg>
   );
 }

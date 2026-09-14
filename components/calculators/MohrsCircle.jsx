@@ -11,7 +11,7 @@ import Frac from '@/components/Frac';
 // 프로토타입 renderMohrCircle() / mcBuildVisuals()를 React로 옮긴 버전.
 
 export default function MohrsCircle() {
-  const [units] = useState({ stress: 'psi' });
+  const [units, setUnits] = useState({ stress: 'psi' });
   const [sigmaX, setSigmaX] = useState(10000 * 6894.757);
   const [sigmaY, setSigmaY] = useState(-4000 * 6894.757);
   const [tauXY, setTauXY] = useState(3000 * 6894.757);
@@ -33,15 +33,25 @@ export default function MohrsCircle() {
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
         <div className="field">
-          <label>σx</label>
+          <label>응력 단위</label>
+          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
+            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>σy</label>
+          <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
-          <label>τxy</label>
+          <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
           <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
         </div>
         <div className="field">
@@ -95,30 +105,30 @@ function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r }) {
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 520, margin: '0 auto', display: 'block' }}>
       <line x1="20" y1={cy} x2={w - 20} y2={cy} stroke="#8A97A2" strokeWidth="1.2" />
       <line x1={cx} y1="20" x2={cx} y2={h - 60} stroke="#8A97A2" strokeWidth="1.2" />
-      <text x={w - 16} y={cy - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="700">σ</text>
-      <text x={cx + 8} y="26" fontSize="11" fill="#8A97A2" fontWeight="700">τ (아래 = +)</text>
+      <text x={w - 16} y={cy - 6} fontSize="13" fill="#8A97A2" textAnchor="end" fontWeight="700">σ</text>
+      <text x={cx + 8} y="26" fontSize="13" fill="#8A97A2" fontWeight="700">τ (아래 = +)</text>
 
       <circle cx={cx} cy={cy} r={R_px} fill="#F7E3E6" fillOpacity="0.35" stroke="#51626F" strokeWidth="1.4" />
       <circle cx={cx} cy={cy} r="2.5" fill="#51626F" />
-      <text x={cx} y={cy - 8} fontSize="10" fill="#51626F" textAnchor="middle">C</text>
+      <text x={cx} y={cy - 8} fontSize="13" fill="#51626F" textAnchor="middle">C</text>
 
       <line x1={ax} y1={ay} x2={bx} y2={by} stroke="#8A97A2" strokeWidth="1.2" strokeDasharray="4 3" />
       <circle cx={ax} cy={ay} r="3" fill="#8A97A2" />
-      <text x={ax + 6} y={ay - 6} fontSize="9.5" fill="#8A97A2">A(θ=0)</text>
+      <text x={ax + 6} y={ay - 6} fontSize="13" fill="#8A97A2">A(θ=0)</text>
 
       <line x1={px} y1={py} x2={qx} y2={qy} stroke="#C3002F" strokeWidth="1.8" />
       <circle cx={px} cy={py} r="4" fill="#C3002F" />
-      <text x={px + 7} y={py + 4} fontSize="10.5" fill="#C3002F" fontWeight="800">x1면</text>
+      <text x={px + 7} y={py + 4} fontSize="14" fill="#C3002F" fontWeight="800">x1면</text>
       <circle cx={qx} cy={qy} r="4" fill="#1E7F72" />
-      <text x={qx + 7} y={qy + 4} fontSize="10.5" fill="#1E7F72" fontWeight="800">y1면</text>
+      <text x={qx + 7} y={qy + 4} fontSize="14" fill="#1E7F72" fontWeight="800">y1면</text>
 
       <circle cx={cx + R_px} cy={cy} r="3" fill="#B0790A" />
-      <text x={cx + R_px} y={cy + 16} fontSize="9.5" fill="#B0790A" textAnchor="middle">σ1</text>
+      <text x={cx + R_px} y={cy + 16} fontSize="13" fill="#B0790A" textAnchor="middle">σ1</text>
       <circle cx={cx - R_px} cy={cy} r="3" fill="#B0790A" />
-      <text x={cx - R_px} y={cy + 16} fontSize="9.5" fill="#B0790A" textAnchor="middle">σ2</text>
+      <text x={cx - R_px} y={cy + 16} fontSize="13" fill="#B0790A" textAnchor="middle">σ2</text>
       <circle cx={cx} cy={cy + R_px} r="3" fill="#4A5FBF" />
-      <text x={cx + 8} y={cy + R_px + 3} fontSize="9.5" fill="#4A5FBF">τmax</text>
-      <text x={cx} y={h - 30} fontSize="10.5" fill="#8A97A2" textAnchor="middle">2θ = {(2 * theta).toFixed(0)}° (θ={theta.toFixed(0)}°)</text>
+      <text x={cx + 8} y={cy + R_px + 3} fontSize="13" fill="#4A5FBF">τmax</text>
+      <text x={cx} y={h - 30} fontSize="14" fill="#8A97A2" textAnchor="middle">2θ = {(2 * theta).toFixed(0)}° (θ={theta.toFixed(0)}°)</text>
     </svg>
   );
 }
