@@ -7,6 +7,7 @@ import { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import BeamElevation3D from './BeamElevation3D';
 
 /*
   프로토타입의 renderCompositeBeams()/cbBuildVizSVGs()/cbCalcSection() 등을 React로 그대로 옮긴 버전.
@@ -689,6 +690,7 @@ function VisualizerSVGs({ result, units, moment }) {
   const stressF = UNIT_OPTIONS.stress[units.stress];
   const momF = UNIT_OPTIONS.moment[units.moment];
   const disp = (base, factor) => base / factor;
+  const [elevation3D, setElevation3D] = useState(false);
 
   const svgW = 920;
   const svgH = 545;
@@ -848,10 +850,23 @@ function VisualizerSVGs({ result, units, moment }) {
           STRESS DIAGRAM (중립축 = 0)
         </text>
       </svg>
-      <div style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--gray-soft)', fontWeight: 700, marginTop: 2 }}>
-        ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2 }}>
+        <span style={{ fontSize: 10.5, color: 'var(--gray-soft)', fontWeight: 700 }}>
+          ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
+        </span>
+        <button
+          className="add-block calc-trigger"
+          style={{ margin: 0, padding: '3px 10px', fontSize: 10.5 }}
+          onClick={() => setElevation3D((v) => !v)}
+        >
+          {elevation3D ? '2D로 보기' : '3D로 보기'}
+        </button>
       </div>
-      <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
+      {elevation3D ? (
+        <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} />
+      ) : (
+        <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
+      )}
     </>
   );
 }
