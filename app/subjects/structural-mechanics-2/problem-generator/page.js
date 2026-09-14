@@ -3,16 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
-import { generateProblem } from '@/lib/problemBank';
+import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
 
 // 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
 // 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
 // 검증된 공식(lib/calc/*.js)으로 계산한다. AI API는 아직 쓰지 않음.
+// 참고자료(PDF)에 실제로 있던 유형만 지원하므로, PROBLEM_BANK에 없는 소주제(예: FGM, Plane Stress)는
+// 아예 선택 목록에 나타나지 않는다.
 function subtopicKey(ch, st) {
   return `${ch.num}::${st.slug}`;
 }
+
+const SUPPORTED_CHAPTERS = chapters
+  .map((ch) => ({ ...ch, subtopics: ch.subtopics.filter((st) => PROBLEM_BANK[subtopicKey(ch, st)]) }))
+  .filter((ch) => ch.subtopics.length > 0);
 
 export default function ProblemGeneratorPage() {
   const { displayName, studentId } = useUser();
@@ -80,7 +86,7 @@ export default function ProblemGeneratorPage() {
     });
   }
 
-  const activeChapters = chapters.filter((ch) => selectedChapters.has(ch.num));
+  const activeChapters = SUPPORTED_CHAPTERS.filter((ch) => selectedChapters.has(ch.num));
   const selectedList = activeChapters.flatMap((ch) =>
     ch.subtopics.filter((st) => selectedSubtopics.has(subtopicKey(ch, st))).map((st) => ({ ch, st }))
   );
@@ -102,11 +108,17 @@ export default function ProblemGeneratorPage() {
         </div>
       </div>
 
+      <div style={{ maxWidth: 1600, margin: '20px auto 0', padding: '0 40px' }}>
+        <div style={{ fontSize: 12, color: 'var(--gray-soft)', lineHeight: 1.6 }}>
+          참고 문제 자료에 실제로 있던 유형만 지원해요 — 일부 소주제(예: Functionally Graded Beams, Plane Stress)는 문제 생성에서 제외되어 있어요.
+        </div>
+      </div>
+
       <div className="board">
         <div>
           <div className="col-label">CHAPTERS</div>
           <div className="chapter-list">
-            {chapters.map((ch) => {
+            {SUPPORTED_CHAPTERS.map((ch) => {
               const active = selectedChapters.has(ch.num);
               const checkedCount = ch.subtopics.filter((st) => selectedSubtopics.has(subtopicKey(ch, st))).length;
               return (
