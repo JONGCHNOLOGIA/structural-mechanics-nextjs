@@ -172,26 +172,26 @@ header, .detail-header{
 
 /* 슬라이더(input[type=range])는 텍스트 입력용 박스 스타일(테두리/배경/패딩)을 물려받으면
    네이티브 트랙이 그 박스 안에서 어긋나 보여서 — 끝까지 밀면 썸(thumb) 뒤로 박스의 둥근
-   테두리가 따로 튀어나온 것처럼 보이는 문제가 생김. range만 따로 완전히 새로 그림. */
-.field input[type='range']{
+   테두리가 따로 튀어나온 것처럼 보이는 문제가 생김. range는 어디에 있든 따로 완전히 새로 그림. */
+input[type='range']{
   -webkit-appearance:none; appearance:none;
   width:100%; height:6px; padding:0; margin:8px 0 4px;
   background:var(--line); border:none; border-radius:999px;
 }
-.field input[type='range']:focus{ border:none; }
-.field input[type='range']::-webkit-slider-runnable-track{
+input[type='range']:focus{ border:none; }
+input[type='range']::-webkit-slider-runnable-track{
   height:6px; background:var(--line); border-radius:999px;
 }
-.field input[type='range']::-webkit-slider-thumb{
+input[type='range']::-webkit-slider-thumb{
   -webkit-appearance:none; appearance:none;
   width:16px; height:16px; margin-top:-5px; border-radius:50%;
   background:var(--crimson); border:2px solid var(--card); cursor:pointer;
   box-shadow:0 1px 3px rgba(0,0,0,0.25);
 }
-.field input[type='range']::-moz-range-track{
+input[type='range']::-moz-range-track{
   height:6px; background:var(--line); border-radius:999px;
 }
-.field input[type='range']::-moz-range-thumb{
+input[type='range']::-moz-range-thumb{
   width:16px; height:16px; border-radius:50%;
   background:var(--crimson); border:2px solid var(--card); cursor:pointer;
   box-shadow:0 1px 3px rgba(0,0,0,0.25);
@@ -222,6 +222,25 @@ header, .detail-header{
   font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
 .remove-block:hover{ color:var(--crimson); border-color:var(--crimson); }
+.block-active-field{
+  border:1.3px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px;
+}
+.block-active-field-label{ font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.02em; margin-bottom:8px; }
+.block-active-field-row{ display:flex; align-items:center; gap:10px; }
+.block-active-field-row input[type='range']{ background:rgba(255,255,255,0.6); }
+.block-field-tiles{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:10px; }
+.block-field-tile{
+  border:1.3px solid var(--line); border-radius:8px; padding:6px 4px 7px; text-align:center;
+  background:var(--card); cursor:pointer; transition:border-color 0.15s ease;
+}
+.block-field-tile:hover{ border-color:var(--gray-soft); }
+.block-field-tile.active{ font-weight:700; }
+.block-field-tile-label{ font-size:10px; font-weight:700; color:var(--gray-soft); margin-bottom:3px; }
+.block-field-tile input{
+  width:100%; border:none; background:transparent; text-align:center; font-size:12.5px;
+  color:var(--ink); padding:0; font-family:'JetBrains Mono',monospace;
+}
+.block-field-tile input:focus{ outline:none; }
 .input-unit-group{ display:flex; }
 .input-unit-group input{ flex:1 1 auto; min-width:0; border-radius:10px 0 0 10px; border-right:none; }
 .unit-inline{

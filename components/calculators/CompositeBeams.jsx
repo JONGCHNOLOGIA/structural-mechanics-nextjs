@@ -75,6 +75,21 @@ export default function CompositeBeams() {
     markStale();
   }
 
+  // VISUALIZER 치수 라벨을 직접 클릭해서 고칠 때 씀 — SETTING MENU 쪽 index가 아니라
+  // colorId로 블록을 찾는다 (VisualizerSVGs는 result.blocks만 갖고 있어서).
+  function updateBlockDimByColorId(colorId, field, value) {
+    const val = parseFloat(value);
+    if (isNaN(val) || val <= 0) return;
+    setBlocks((prev) =>
+      prev.map((b) => {
+        if (b.colorId !== colorId) return b;
+        const factor = field === 'E' ? UNIT_OPTIONS.E[b.EUnit] : lenF;
+        return { ...b, [field]: val * factor };
+      })
+    );
+    markStale();
+  }
+
   function changeLengthUnit(v) {
     setUnits((p) => ({ ...p, length: v }));
     markStale();
@@ -252,7 +267,7 @@ export default function CompositeBeams() {
 
         {result ? (
           <>
-            <VisualizerSVGs result={result} units={units} moment={moment} />
+            <VisualizerSVGs result={result} units={units} moment={moment} onEditDim={updateBlockDimByColorId} />
 
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', margin: '12px 0 16px' }}>
               <div style={{ fontSize: 11.5, color: 'var(--gray-soft)' }}>
@@ -354,12 +369,23 @@ export default function CompositeBeams() {
 }
 
 // 블록 하나(폭/높이/E, 단위 셀렉트 + 슬라이더, 드래그 손잡이, 삭제)
+// Width/Height/E 세 필드를 각자 label+input+unit+slider로 통째로 늘어놓던 걸 압축한 버전.
+// 세 필드 중 하나를 "활성 필드"로 골라 위쪽 슬라이더 한 줄로만 조작하고, 아래 3분할 타일은
+// 값 확인 + 직접 타이핑 + 활성 필드 전환(클릭)을 겸함.
 function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onDragStart, onDragOver, onDrop }) {
   const c = blockColor(block);
   const lenF = UNIT_OPTIONS.length[units.length];
   const disp = (base, factor) => base / factor;
   const lenR = cbSliderRangeFor('length', units.length);
   const ER = cbSliderRangeFor('E', block.EUnit);
+  const [activeField, setActiveField] = useState('width');
+
+  const FIELD_META = {
+    width: { label: 'Width', value: disp(block.width, lenF), range: lenR, unit: units.length, unitType: 'length', onUnitChange: onLengthUnitChange },
+    height: { label: 'Height', value: disp(block.height, lenF), range: lenR, unit: units.length, unitType: 'length', onUnitChange: onLengthUnitChange },
+    E: { label: 'E', value: disp(block.E, EFor(block)), range: ER, unit: block.EUnit, unitType: 'E', onUnitChange: onEUnitChange },
+  };
+  const active = FIELD_META[activeField];
 
   return (
     <div className="block-card" onDragOver={onDragOver} onDrop={onDrop}>
@@ -374,73 +400,48 @@ function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange
         ×
       </div>
 
-      <div className="field">
-        <label>Width</label>
-        <div className="input-unit-group">
-          <input
-            key={`w-${block.width}-${units.length}`}
-            type="number"
-            step="any"
-            defaultValue={fmtInput(disp(block.width, lenF))}
-            onBlur={(e) => onFieldChange('width', e.target.value)}
-          />
-          <UnitSelect type="length" value={units.length} onChange={onLengthUnitChange} />
+      <div className="block-active-field" style={{ background: c.fill, borderColor: c.stroke }}>
+        <div className="block-active-field-label" style={{ color: c.stroke }}>
+          {c.name} Block · {active.label}
         </div>
-        <input
-          type="range"
-          min={lenR[0]}
-          max={lenR[1]}
-          step={lenR[2]}
-          value={disp(block.width, lenF)}
-          onChange={(e) => onFieldChange('width', e.target.value)}
-          style={{ width: '100%', marginTop: 5 }}
-        />
+        <div className="block-active-field-row">
+          <input
+            type="range"
+            min={active.range[0]}
+            max={active.range[1]}
+            step={active.range[2]}
+            value={active.value}
+            onChange={(e) => onFieldChange(activeField, e.target.value)}
+            style={{ flex: 1, accentColor: c.stroke }}
+          />
+          <UnitSelect type={active.unitType} value={active.unit} onChange={active.onUnitChange} />
+        </div>
       </div>
 
-      <div className="field">
-        <label>Height</label>
-        <div className="input-unit-group">
-          <input
-            key={`h-${block.height}-${units.length}`}
-            type="number"
-            step="any"
-            defaultValue={fmtInput(disp(block.height, lenF))}
-            onBlur={(e) => onFieldChange('height', e.target.value)}
-          />
-          <UnitSelect type="length" value={units.length} onChange={onLengthUnitChange} />
-        </div>
-        <input
-          type="range"
-          min={lenR[0]}
-          max={lenR[1]}
-          step={lenR[2]}
-          value={disp(block.height, lenF)}
-          onChange={(e) => onFieldChange('height', e.target.value)}
-          style={{ width: '100%', marginTop: 5 }}
-        />
-      </div>
-
-      <div className="field">
-        <label>E</label>
-        <div className="input-unit-group">
-          <input
-            key={`e-${block.E}-${block.EUnit}`}
-            type="number"
-            step="any"
-            defaultValue={fmtInput(disp(block.E, EFor(block)))}
-            onBlur={(e) => onFieldChange('E', e.target.value)}
-          />
-          <UnitSelect type="E" value={block.EUnit} onChange={onEUnitChange} />
-        </div>
-        <input
-          type="range"
-          min={ER[0]}
-          max={ER[1]}
-          step={ER[2]}
-          value={disp(block.E, EFor(block))}
-          onChange={(e) => onFieldChange('E', e.target.value)}
-          style={{ width: '100%', marginTop: 5 }}
-        />
+      <div className="block-field-tiles">
+        {['width', 'height', 'E'].map((key) => {
+          const meta = FIELD_META[key];
+          const isActive = key === activeField;
+          return (
+            <div
+              key={key}
+              className={'block-field-tile' + (isActive ? ' active' : '')}
+              style={isActive ? { background: c.fill, borderColor: c.stroke } : undefined}
+              onClick={() => setActiveField(key)}
+            >
+              <div className="block-field-tile-label">{meta.label}</div>
+              <input
+                key={`${key}-${meta.value}-${meta.unit}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(meta.value)}
+                onFocus={() => setActiveField(key)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => onFieldChange(key, e.target.value)}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -684,13 +685,57 @@ function ApproxBody({ snapshot }) {
   );
 }
 
+// VISUALIZER의 치수 라벨(예: "1.00 in.")을 클릭하면 그 자리에 바로 입력칸이 뜨는 컴포넌트.
+// SVG 안이라 <input>을 직접 못 쓰고 <foreignObject>로 감싸서 띄움.
+function EditableDimText({ editing, x, y, textAnchor, fill, fontSize, fontWeight, displayText, currentValue, boxW, boxH, onStartEdit, onCommit, onCancel }) {
+  if (editing) {
+    const boxX = textAnchor === 'end' ? x - boxW : textAnchor === 'middle' ? x - boxW / 2 : x;
+    return (
+      <foreignObject x={boxX} y={y - boxH / 2 - 2} width={boxW} height={boxH} style={{ overflow: 'visible' }}>
+        <input
+          type="number"
+          step="any"
+          autoFocus
+          defaultValue={fmtInput(currentValue)}
+          style={{
+            width: '100%',
+            height: '100%',
+            fontSize,
+            fontWeight,
+            color: fill,
+            border: `1.3px solid ${fill}`,
+            borderRadius: 4,
+            textAlign: 'center',
+            padding: '0 2px',
+            fontFamily: "'JetBrains Mono',monospace",
+            background: '#fff',
+            boxSizing: 'border-box',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onBlur={(e) => onCommit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.target.blur();
+            if (e.key === 'Escape') onCancel();
+          }}
+        />
+      </foreignObject>
+    );
+  }
+  return (
+    <text x={x} y={y} fontSize={fontSize} fill={fill} textAnchor={textAnchor} fontWeight={fontWeight} style={{ cursor: 'pointer' }} onClick={onStartEdit}>
+      {displayText}
+    </text>
+  );
+}
+
 // 단면 + 응력 다이어그램 + 보 측면도. 프로토타입의 cbBuildVizSVGs()와 로직은 동일.
-function VisualizerSVGs({ result, units, moment }) {
+function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
   const momF = UNIT_OPTIONS.moment[units.moment];
   const disp = (base, factor) => base / factor;
   const [elevation3D, setElevation3D] = useState(false);
+  const [editingTarget, setEditingTarget] = useState(null); // { colorId, field } | null
 
   const svgW = 920;
   const svgH = 545;
@@ -777,9 +822,25 @@ function VisualizerSVGs({ result, units, moment }) {
               <line x1={leftDimX} y1={yTopPx} x2={leftDimX} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
               <line x1={leftDimX - 4} y1={yTopPx} x2={leftDimX + 4} y2={yTopPx} stroke={c.stroke} strokeWidth="1" />
               <line x1={leftDimX - 4} y1={yBottomPx} x2={leftDimX + 4} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
-              <text x={leftDimX - 7} y={labelY + 3.5} fontSize="10" fill={c.stroke} textAnchor="end" fontWeight="700">
-                {hLabel}
-              </text>
+              <EditableDimText
+                editing={editingTarget && editingTarget.colorId === b.colorId && editingTarget.field === 'height'}
+                x={leftDimX - 7}
+                y={labelY + 3.5}
+                textAnchor="end"
+                fill={c.stroke}
+                fontSize="10"
+                fontWeight="700"
+                displayText={hLabel}
+                currentValue={disp(b.height, lenF)}
+                boxW={56}
+                boxH={18}
+                onStartEdit={() => setEditingTarget({ colorId: b.colorId, field: 'height' })}
+                onCommit={(v) => {
+                  onEditDim(b.colorId, 'height', v);
+                  setEditingTarget(null);
+                }}
+                onCancel={() => setEditingTarget(null)}
+              />
             </g>
           );
         })}
@@ -787,9 +848,25 @@ function VisualizerSVGs({ result, units, moment }) {
         <line x1={xLeft} y1={dimY} x2={xRight} y2={dimY} stroke="#51626F" strokeWidth="1" />
         <line x1={xLeft} y1={dimY - 4} x2={xLeft} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
         <line x1={xRight} y1={dimY - 4} x2={xRight} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
-        <text x={(xLeft + xRight) / 2} y={dimY + 16} fontSize="10" fill="#51626F" textAnchor="middle" fontWeight="700">
-          {wLabel}
-        </text>
+        <EditableDimText
+          editing={editingTarget && editingTarget.colorId === widestBlock.colorId && editingTarget.field === 'width'}
+          x={(xLeft + xRight) / 2}
+          y={dimY + 16}
+          textAnchor="middle"
+          fill="#51626F"
+          fontSize="10"
+          fontWeight="700"
+          displayText={wLabel}
+          currentValue={disp(widestBlock.width, lenF)}
+          boxW={64}
+          boxH={18}
+          onStartEdit={() => setEditingTarget({ colorId: widestBlock.colorId, field: 'width' })}
+          onCommit={(v) => {
+            onEditDim(widestBlock.colorId, 'width', v);
+            setEditingTarget(null);
+          }}
+          onCancel={() => setEditingTarget(null)}
+        />
 
         <line
           x1={padLeft - 10}
