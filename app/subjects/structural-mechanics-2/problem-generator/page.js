@@ -6,6 +6,7 @@ import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
+import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 
 // 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
 // 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
@@ -238,6 +239,11 @@ export default function ProblemGeneratorPage() {
                         문제 {i + 1} · {p.ch.num} {p.st.name}
                       </div>
                       <div className="step-body">
+                        {p.diagram && (
+                          <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 6px', marginBottom: 12 }}>
+                            <ProblemDiagram diagram={p.diagram} />
+                          </div>
+                        )}
                         <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
                           {p.prompt}
                         </div>
