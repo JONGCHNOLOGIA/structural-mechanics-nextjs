@@ -110,30 +110,41 @@ alter table chapters enable row level security;
 alter table topics enable row level security;
 alter table topic_reports enable row level security;
 
+-- 정책(policy)은 create if not exists가 없어서, 이 파일을 여러 번 통째로 다시 실행해도
+-- 에러 없이 안전하게 돌아가도록 매번 drop policy if exists로 먼저 지우고 다시 만듦.
+drop policy if exists "본인 방문기록만 조회/작성" on topic_visits;
 create policy "본인 방문기록만 조회/작성" on topic_visits
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "본인 풀이기록만 조회/작성" on problem_attempts;
 create policy "본인 풀이기록만 조회/작성" on problem_attempts
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "본인 프로필만 조회/수정" on profiles;
 create policy "본인 프로필만 조회/수정" on profiles
   for all using (auth.uid() = id);
 
+drop policy if exists "본인 진도만 조회/수정" on user_progress;
 create policy "본인 진도만 조회/수정" on user_progress
   for all using (auth.uid() = user_id);
 
+drop policy if exists "본인 대화만 조회, 본인 이름으로만 작성" on chat_logs;
 create policy "본인 대화만 조회, 본인 이름으로만 작성" on chat_logs
   for select using (auth.uid() = user_id);
+drop policy if exists "본인 이름으로 대화 작성" on chat_logs;
 create policy "본인 이름으로 대화 작성" on chat_logs
   for insert with check (auth.uid() = user_id);
 
 -- site_content: 문구는 누구나 읽을 수 있지만, 수정은 특정 학번(22011031) 계정만 가능.
 -- role='instructor' 전체로 허용하면 "관리자로 시연" 데모 계정도 실제 문구를 고칠 수 있게 되므로
 -- role이 아니라 student_id로 딱 한 명만 지정함.
+drop policy if exists "누구나 문구 조회 가능" on site_content;
 create policy "누구나 문구 조회 가능" on site_content
   for select using (true);
+drop policy if exists "지정된 학번만 문구 등록" on site_content;
 create policy "지정된 학번만 문구 등록" on site_content
   for insert with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
+drop policy if exists "지정된 학번만 문구 수정" on site_content;
 create policy "지정된 학번만 문구 수정" on site_content
   for update using (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'))
   with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
