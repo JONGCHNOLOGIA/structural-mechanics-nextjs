@@ -169,6 +169,33 @@ header, .detail-header{
 }
 .field input:focus, .field select:focus{ outline:none; border-color:var(--crimson); }
 .field input.invalid{ border-color:var(--crimson); background:var(--crimson-soft); }
+
+/* 슬라이더(input[type=range])는 텍스트 입력용 박스 스타일(테두리/배경/패딩)을 물려받으면
+   네이티브 트랙이 그 박스 안에서 어긋나 보여서 — 끝까지 밀면 썸(thumb) 뒤로 박스의 둥근
+   테두리가 따로 튀어나온 것처럼 보이는 문제가 생김. range만 따로 완전히 새로 그림. */
+.field input[type='range']{
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:6px; padding:0; margin:8px 0 4px;
+  background:var(--line); border:none; border-radius:999px;
+}
+.field input[type='range']:focus{ border:none; }
+.field input[type='range']::-webkit-slider-runnable-track{
+  height:6px; background:var(--line); border-radius:999px;
+}
+.field input[type='range']::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:16px; height:16px; margin-top:-5px; border-radius:50%;
+  background:var(--crimson); border:2px solid var(--card); cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,0.25);
+}
+.field input[type='range']::-moz-range-track{
+  height:6px; background:var(--line); border-radius:999px;
+}
+.field input[type='range']::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%;
+  background:var(--crimson); border:2px solid var(--card); cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,0.25);
+}
 .add-block{
   width:100%; padding:9px; margin:4px 0 18px; background:var(--bg); color:var(--crimson);
   border:1px dashed var(--crimson); border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;
