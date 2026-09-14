@@ -6,6 +6,7 @@ import { computeElastoplastic } from '@/lib/calc/elastoplastic';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
 
@@ -84,9 +85,11 @@ export default function ElastoplasticBending() {
             <div className="steps">
               <FormulaSection title="탄성코어 계산">
                 <div className="step-formula">
-                  <Tip title="탄성코어 절반 높이">e</Tip> = c·√(3 − 2M/My) (My ≤ M ≤ Mp)
+                  <Tip title="탄성코어 절반 높이">e</Tip> = c·√(3 − <Frac num="2M" den="My" />) (My ≤ M ≤ Mp)
                 </div>
-                <div className="step-row">My = σY·I/c &nbsp; Mp = σY·b·h²/4 &nbsp; f = Mp/My = 1.5</div>
+                <div className="step-row">
+                  My = <Frac num="σY·I" den="c" /> &nbsp; Mp = <Frac num="σY·b·h²" den="4" /> &nbsp; f = <Frac num="Mp" den="My" /> = 1.5
+                </div>
                 <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 6 }}>M ≤ My면 e=c(완전탄성), M ≥ Mp면 e=0(완전소성)</div>
               </FormulaSection>
             </div>

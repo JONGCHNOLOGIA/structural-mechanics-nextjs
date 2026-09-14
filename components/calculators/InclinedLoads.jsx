@@ -6,6 +6,7 @@ import { computeInclinedLoads } from '@/lib/calc/inclinedLoads';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderInclinedLoads() / ilBuildVisuals()를 React로 옮긴 버전.
 
@@ -79,7 +80,9 @@ export default function InclinedLoads() {
             <div className="steps">
               <FormulaSection title="My / Mz 분해와 응력">
                 <div className="step-formula">
-                  <Tip title="이 지점의 굽힘응력">σ(y,z)</Tip> = −(<Tip title="z축에 대한 모멘트 성분">Mz</Tip>·y)/<Tip title="z축 관성모멘트">Iz</Tip> + (<Tip title="y축에 대한 모멘트 성분">My</Tip>·z)/<Tip title="y축 관성모멘트">Iy</Tip>
+                  <Tip title="이 지점의 굽힘응력">σ(y,z)</Tip> = −
+                  <Frac num={<><Tip title="z축에 대한 모멘트 성분">Mz</Tip>·y</>} den={<Tip title="z축 관성모멘트">Iz</Tip>} /> +{' '}
+                  <Frac num={<><Tip title="y축에 대한 모멘트 성분">My</Tip>·z</>} den={<Tip title="y축 관성모멘트">Iy</Tip>} />
                 </div>
                 <div className="step-final">중립축 방향 β = {betaDeg.toFixed(1)}° <span style={{ fontWeight: 400, color: 'var(--gray-soft)', fontSize: 11 }}>(tan β = tan α · Iz/Iy)</span></div>
                 <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 10, lineHeight: 1.6 }}>

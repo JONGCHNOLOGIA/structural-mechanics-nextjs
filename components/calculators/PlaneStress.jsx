@@ -6,6 +6,7 @@ import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderPlaneStress() / psBuildVisuals()를 React로 옮긴 버전.
 
@@ -57,17 +58,27 @@ export default function PlaneStress() {
         <ElementsSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} stressF={stressF} unitStress={units.stress} />
         <div className="steps">
           <FormulaSection title="응력 변환식">
-            <div className="step-formula">σx1 = (σx+σy)/2 + (σx−σy)/2·cos2θ + τxy·sin2θ</div>
-            <div className="step-row">σy1 = (σx+σy)/2 − (σx−σy)/2·cos2θ − τxy·sin2θ</div>
-            <div className="step-row">τx1y1 = −(σx−σy)/2·sin2θ + τxy·cos2θ</div>
+            <div className="step-formula">
+              σx1 = <Frac num="σx+σy" den="2" /> + <Frac num="σx−σy" den="2" />·cos2θ + τxy·sin2θ
+            </div>
+            <div className="step-row">
+              σy1 = <Frac num="σx+σy" den="2" /> − <Frac num="σx−σy" den="2" />·cos2θ − τxy·sin2θ
+            </div>
+            <div className="step-row">τx1y1 = −<Frac num="σx−σy" den="2" />·sin2θ + τxy·cos2θ</div>
             <div className="step-final">
               현재 θ={theta.toFixed(0)}°: σx1={fmt(disp(r.sx1, stressF))}, σy1={fmt(disp(r.sy1, stressF))}, τx1y1={fmt(disp(r.tx1y1, stressF))} {units.stress}
             </div>
           </FormulaSection>
           <FormulaSection title="주응력 (Principal Stresses)">
-            <div className="step-formula">tan 2θp = 2τxy / (σx−σy)</div>
-            <div className="step-row">σave = (σx+σy)/2 = {fmt(disp(r.avg, stressF))} {units.stress}</div>
-            <div className="step-row">R = √[((σx−σy)/2)² + τxy²] = {fmt(disp(r.R, stressF))} {units.stress}</div>
+            <div className="step-formula">
+              tan 2θp = <Frac num="2τxy" den="σx−σy" />
+            </div>
+            <div className="step-row">
+              σave = <Frac num="σx+σy" den="2" /> = {fmt(disp(r.avg, stressF))} {units.stress}
+            </div>
+            <div className="step-row">
+              R = √[(<Frac num="σx−σy" den="2" />)² + τxy²] = {fmt(disp(r.R, stressF))} {units.stress}
+            </div>
             <div className="step-final">
               θp = {r.thetaPdeg.toFixed(1)}° &nbsp; σ1,2 = σave ± R = {fmt(disp(r.sigma1, stressF))}, {fmt(disp(r.sigma2, stressF))} {units.stress}
             </div>

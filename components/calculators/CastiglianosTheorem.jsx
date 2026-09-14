@@ -8,6 +8,7 @@ import DeflectionCurveSVG from './DeflectionCurveSVG';
 import { ssUDL } from '@/lib/calc/deflection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 캔틸레버(P, M0)는 Castigliano 정리(U를 P, M0로 편미분)로,
 // 단순보(등분포하중 q)는 단위하중법(가상의 단위하중을 준 뒤 M·m1을 적분)으로 처짐을 구함.
@@ -148,13 +149,13 @@ export default function CastiglianosTheorem() {
             view === 'castigliano' ? (
               <FormulaSection title="Castigliano 정리로 δB, θB 구하기">
                 <div className="step-formula">
-                  U = P²L³/6EI + PM0L²/2EI + M0²L/2EI
+                  U = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> + <Frac num="M0²L" den="2EI" />
                 </div>
                 <div className="step-row">
-                  <Tip title="P로 편미분 → P가 작용하는 방향의 처짐">δB</Tip> = ∂U/∂P = PL³/3EI + M0L²/2EI
+                  <Tip title="P로 편미분 → P가 작용하는 방향의 처짐">δB</Tip> = ∂U/∂P = <Frac num="PL³" den="3EI" /> + <Frac num="M0L²" den="2EI" />
                 </div>
                 <div className="step-row">
-                  <Tip title="M0로 편미분 → M0가 작용하는 방향의 처짐각">θB</Tip> = ∂U/∂M0 = PL²/2EI + M0L/EI
+                  <Tip title="M0로 편미분 → M0가 작용하는 방향의 처짐각">θB</Tip> = ∂U/∂M0 = <Frac num="PL²" den="2EI" /> + <Frac num="M0L" den="EI" />
                 </div>
                 <div className="step-final">δB = {fmt(cantileverResult.deltaB * 1000)} mm, θB = {cantileverResult.thetaB.toExponential(3)} rad</div>
               </FormulaSection>

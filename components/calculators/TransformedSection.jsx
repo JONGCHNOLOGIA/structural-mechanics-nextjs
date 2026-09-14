@@ -6,6 +6,7 @@ import { computeTransformed } from '@/lib/calc/transformedSection';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입의 renderTransformedSection()을 React로 옮긴 버전 (CompositeBeams.jsx와 같은 방식으로 단순화).
 
@@ -145,7 +146,8 @@ export default function TransformedSection() {
             <div className="steps">
               <FormulaSection title="Transformed Section (환산)">
                 <div className="step-formula">
-                  <Tip title="블록 i의 환산 배율">nᵢ</Tip> = <Tip title="이 블록의 탄성계수">Eᵢ</Tip> / <Tip title="기준 재료의 탄성계수">E_ref</Tip> (폭에만 곱함, 높이는 그대로)
+                  <Tip title="블록 i의 환산 배율">nᵢ</Tip> ={' '}
+                  <Frac num={<Tip title="이 블록의 탄성계수">Eᵢ</Tip>} den={<Tip title="기준 재료의 탄성계수">E_ref</Tip>} /> (폭에만 곱함, 높이는 그대로)
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
                   기준 재료를 제외한 블록들의 폭(상단·하단 모두)에 n을 곱하면, 전체 단면이 기준 재료 하나로 이루어진 것처럼 취급할 수 있어요.

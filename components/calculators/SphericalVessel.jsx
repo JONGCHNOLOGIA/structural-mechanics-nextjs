@@ -6,6 +6,7 @@ import { computeSphericalVessel } from '@/lib/calc/pressureVessels';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
@@ -64,7 +65,7 @@ export default function SphericalVessel() {
             <div className="steps">
               <FormulaSection title="구형 압력용기 응력">
                 <div className="step-formula">
-                  <Tip title="벽면 응력 (모든 방향 동일)">σ</Tip> = pr/2t
+                  <Tip title="벽면 응력 (모든 방향 동일)">σ</Tip> = <Frac num="pr" den="2t" />
                 </div>
                 <div className="step-final">σ1=σ2 = {fmt(disp(result.sigma, stressF))} {units.stress}</div>
                 <div className="step-row" style={{ marginTop: 8 }}>외부 표면: τmax = σ/2 = {fmt(disp(result.tauOuter, stressF))} {units.stress}</div>

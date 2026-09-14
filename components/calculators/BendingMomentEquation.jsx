@@ -7,6 +7,7 @@ import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // Example 9-1 (단순보) / 9-2 (캔틸레버) — 등분포하중 q를 받는 보를
 // (a) 굽힘모멘트식을 두 번 적분하는 방법과 (b) 4차 미분방정식 EIv''''=q를 네 번 적분하는 방법,
@@ -102,14 +103,14 @@ export default function BendingMomentEquation() {
               {isSS ? (
                 <>
                   <div className="step-formula">
-                    <Tip title="단순보의 굽힘모멘트식">M(x)</Tip> = qx(L−x)/2 &nbsp; → &nbsp; EIv&#8221; = M(x)
+                    <Tip title="단순보의 굽힘모멘트식">M(x)</Tip> = <Frac num="qx(L−x)" den="2" /> &nbsp; → &nbsp; EIv&#8221; = M(x)
                   </div>
                   <div className="step-row">v(0)=0, v(L)=0 (양단 처짐 0) — 두 번 적분 후 이 두 조건으로 적분상수 결정</div>
                 </>
               ) : (
                 <>
                   <div className="step-formula">
-                    <Tip title="자유단에서 잰 굽힘모멘트식">M(x)</Tip> = −q(L−x)²/2 &nbsp; → &nbsp; EIv&#8221; = M(x)
+                    <Tip title="자유단에서 잰 굽힘모멘트식">M(x)</Tip> = −<Frac num="q(L−x)²" den="2" /> &nbsp; → &nbsp; EIv&#8221; = M(x)
                   </div>
                   <div className="step-row">v(0)=0, v&#8217;(0)=0 (고정단에서 처짐·처짐각 모두 0)</div>
                 </>

@@ -6,6 +6,7 @@ import { bendingStrainEnergy } from '@/lib/calc/strainEnergy';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 캔틸레버 자유단에 P, M0가 작용할 때 굽힘이 저장하는 변형에너지 U = ∫M²/2EI dx.
 // a) P만  b) M0만  c) P와 M0 동시 — 세 경우를 토글로 비교.
@@ -104,9 +105,13 @@ export default function StrainEnergyOfBending() {
             <div className="step-formula">
               <Tip title="자유단 B로부터 잰 거리 s에서의 굽힘모멘트">M(s)</Tip> = P·s + M0
             </div>
-            <div className="step-row">U = ∫₀ᴸ M(s)²/2EI ds = P²L³/6EI + PM0L²/2EI + M0²L/2EI</div>
+            <div className="step-row">
+              U = ∫₀ᴸ M(s)²/2EI ds = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> + <Frac num="M0²L" den="2EI" />
+            </div>
             {caseType === 'both' && (
-              <div className="step-row">교차항(PM0L²/2EI) = {fmtSci(result.Ucross)} J — P와 M0가 같은 방향이면 에너지가 단순 합보다 커져요.</div>
+              <div className="step-row">
+                교차항(<Frac num="PM0L²" den="2EI" />) = {fmtSci(result.Ucross)} J — P와 M0가 같은 방향이면 에너지가 단순 합보다 커져요.
+              </div>
             )}
             <div className="step-final">U = {fmtSci(result.U)} J</div>
           </FormulaSection>

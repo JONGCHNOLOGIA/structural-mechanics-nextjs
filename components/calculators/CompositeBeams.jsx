@@ -6,6 +6,7 @@ import { computeComposite, isDoublySymmetric } from '@/lib/calc/compositeBeams';
 import { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 /*
   프로토타입의 renderCompositeBeams()/cbBuildVizSVGs()/cbCalcSection() 등을 React로 그대로 옮긴 버전.
@@ -488,7 +489,9 @@ function NaBody({ snapshot }) {
           .join(' + ')}{' '}
         = 0
       </div>
-      <div className="step-eq">→ ȳ = ΣEᵢAᵢyᵢ / ΣEᵢAᵢ</div>
+      <div className="step-eq">
+        → ȳ = <Frac num="ΣEᵢAᵢyᵢ" den="ΣEᵢAᵢ" />
+      </div>
       <div className="step-final">
         ȳ = {fmt(disp(yDisp(result.ybar), lenF))} {units.length} &nbsp;({refLabel})
       </div>
@@ -506,7 +509,11 @@ function IoBody({ snapshot }) {
   return (
     <>
       <div className="step-formula">
-        <Tip title="각 블록의 관성모멘트">Iᵢ</Tip> = <Tip title="블록 자체 중심 기준 관성모멘트">bᵢhᵢ³/12</Tip> +{' '}
+        <Tip title="각 블록의 관성모멘트">Iᵢ</Tip> ={' '}
+        <Tip title="블록 자체 중심 기준 관성모멘트">
+          <Frac num="bᵢhᵢ³" den="12" />
+        </Tip>{' '}
+        +{' '}
         <Tip title="평행축 정리 보정항">Aᵢdᵢ²</Tip> &nbsp;(d = yᵢ − ȳ)
       </div>
       {result.blocks.map((b, i) => {
@@ -553,17 +560,25 @@ function StressBody({ snapshot }) {
   return (
     <>
       <div className="step-formula">
-        <Tip title="이 지점의 굽힘응력">σᵢ</Tip> = −<Tip title="굽힘모멘트">M</Tip>(
-        {yReference === 'top' ? (
-          <>
-            <Tip title="중립축 위치">ȳ</Tip>−<Tip title="이 지점의 y좌표">y</Tip>
-          </>
-        ) : (
-          <>
-            <Tip title="이 지점의 y좌표">y</Tip>−<Tip title="중립축 위치">ȳ</Tip>
-          </>
-        )}
-        )<Tip title="이 재료의 탄성계수">Eᵢ</Tip> / <Tip title="전체 단면의 굽힘강성">ΣEI</Tip>
+        <Tip title="이 지점의 굽힘응력">σᵢ</Tip> = −
+        <Frac
+          num={
+            <>
+              <Tip title="굽힘모멘트">M</Tip>(
+              {yReference === 'top' ? (
+                <>
+                  <Tip title="중립축 위치">ȳ</Tip>−<Tip title="이 지점의 y좌표">y</Tip>
+                </>
+              ) : (
+                <>
+                  <Tip title="이 지점의 y좌표">y</Tip>−<Tip title="중립축 위치">ȳ</Tip>
+                </>
+              )}
+              )<Tip title="이 재료의 탄성계수">Eᵢ</Tip>
+            </>
+          }
+          den={<Tip title="전체 단면의 굽힘강성">ΣEI</Tip>}
+        />
       </div>
       <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
         ※ 아래 식의 E는 블록마다 설정한 단위 그대로, ΣEI는 SI 기본단위로 표시돼요. 실제 계산은 내부적으로 항상 단위를 통일해서 정확히 수행됩니다.
@@ -631,7 +646,9 @@ function ApproxBody({ snapshot }) {
 
   return (
     <>
-      <div className="step-formula">σ_face ≈ −M·(y−ȳ) / I_faces &nbsp;(core 기여 무시)</div>
+      <div className="step-formula">
+        σ_face ≈ −<Frac num="M·(y−ȳ)" den="I_faces" /> &nbsp;(core 기여 무시)
+      </div>
       <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
         코어(core)는 굽힘강성 기여가 작다고 보고 무시한 근사식이에요. 두 face가 같은 재료라 식에서 E가 서로 상쇄돼요.
       </div>

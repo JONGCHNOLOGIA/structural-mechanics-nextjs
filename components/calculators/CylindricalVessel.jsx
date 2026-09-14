@@ -6,6 +6,7 @@ import { computeCylindricalVessel } from '@/lib/calc/pressureVessels';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -59,7 +60,7 @@ export default function CylindricalVessel() {
             <div className="steps">
               <FormulaSection title="원통형 압력용기 응력">
                 <div className="step-formula">
-                  <Tip title="원주(hoop)응력">σ1</Tip> = pr/t &nbsp; <Tip title="길이방향응력">σ2</Tip> = pr/2t
+                  <Tip title="원주(hoop)응력">σ1</Tip> = <Frac num="pr" den="t" /> &nbsp; <Tip title="길이방향응력">σ2</Tip> = <Frac num="pr" den="2t" />
                 </div>
                 <div className="step-final">
                   σ1 = {fmt(disp(result.sigma1, stressF))} {units.stress} &nbsp; σ2 = {fmt(disp(result.sigma2, stressF))} {units.stress} &nbsp; (σ1 = 2σ2)

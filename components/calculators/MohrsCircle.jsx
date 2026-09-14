@@ -6,6 +6,7 @@ import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderMohrCircle() / mcBuildVisuals()를 React로 옮긴 버전.
 
@@ -57,7 +58,9 @@ export default function MohrsCircle() {
         <MohrCircleSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} />
         <div className="steps">
           <FormulaSection title="원 그리는 방법">
-            <div className="step-formula">중심 C = (σave, 0) &nbsp; 반지름 R = √[((σx−σy)/2)² + τxy²]</div>
+            <div className="step-formula">
+              중심 C = (σave, 0) &nbsp; 반지름 R = √[(<Frac num="σx−σy" den="2" />)² + τxy²]
+            </div>
             <div className="step-row">σave = {fmt(disp(r.avg, stressF))} {units.stress} &nbsp; R = {fmt(disp(r.R, stressF))} {units.stress}</div>
             <div className="step-row">x1면 점 = (σx1, τx1y1) = ({fmt(disp(r.sx1, stressF))}, {fmt(disp(r.tx1y1, stressF))}) {units.stress}</div>
             <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 8 }}>

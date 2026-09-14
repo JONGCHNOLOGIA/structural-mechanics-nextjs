@@ -7,6 +7,7 @@ import FormulaSection from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 단순보에 등분포하중 q와 중앙 집중하중 P를 동시에(혹은 하나씩) 작용시켜,
 // 표준 케이스 두 개의 처짐을 그냥 더하면(중첩) 실제 결합하중의 처짐이 된다는 걸 보여줌.
@@ -100,8 +101,12 @@ export default function MethodOfSuperposition() {
         <div className="steps">
           <FormulaSection title="중첩: 각 케이스를 따로 구해서 더하기">
             <div className="step-formula">δ중앙 = δ(q만) + δ(P만)</div>
-            <div className="step-row">등분포하중 q만: δ = 5qL⁴/384EI = {fmt(result.deltaCenterFromUDL * 1000)} mm</div>
-            <div className="step-row">중앙 집중하중 P만: δ = PL³/48EI = {fmt(result.deltaFromPoint * 1000)} mm</div>
+            <div className="step-row">
+              등분포하중 q만: δ = <Frac num="5qL⁴" den="384EI" /> = {fmt(result.deltaCenterFromUDL * 1000)} mm
+            </div>
+            <div className="step-row">
+              중앙 집중하중 P만: δ = <Frac num="PL³" den="48EI" /> = {fmt(result.deltaFromPoint * 1000)} mm
+            </div>
             <div className="step-final">합산 δ중앙 = {fmt(result.deltaCenter * 1000)} mm</div>
           </FormulaSection>
         </div>

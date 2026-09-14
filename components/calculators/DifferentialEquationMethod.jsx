@@ -7,6 +7,7 @@ import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // Example 10-1(돌출 캔틸레버, UDL) / 10-2(양단고정, 중앙집중하중) —
 // 반력 중 하나를 "여분력(redundant)"으로 남겨두고 EIv''=M(x)를 적분,
@@ -117,7 +118,7 @@ export default function DifferentialEquationMethod() {
           {isPropped ? (
             <FormulaSection title="RB를 여분력으로 두고 적분">
               <div className="step-formula">
-                <Tip title="A로부터 잰 굽힘모멘트, RB는 아직 모르는 값">EIv&#8221;</Tip> = RA·x − MA − qx²/2 &nbsp; (단, RA, MA도 RB로 표현됨)
+                <Tip title="A로부터 잰 굽힘모멘트, RB는 아직 모르는 값">EIv&#8221;</Tip> = RA·x − MA − <Frac num="qx²" den="2" /> &nbsp; (단, RA, MA도 RB로 표현됨)
               </div>
               <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단) → 적분상수 2개 결정</div>
               <div className="step-row">남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함</div>
@@ -126,7 +127,7 @@ export default function DifferentialEquationMethod() {
           ) : (
             <FormulaSection title="대칭을 이용해 절반만 풀기">
               <div className="step-formula">
-                <Tip title="중앙에서 대칭이라 절반(0~L/2)만 풀면 됨">EIv&#8221;</Tip> = (P/2)x − MA &nbsp; (0 ≤ x ≤ L/2)
+                <Tip title="중앙에서 대칭이라 절반(0~L/2)만 풀면 됨">EIv&#8221;</Tip> = <Frac num="P" den="2" />x − MA &nbsp; (0 ≤ x ≤ L/2)
               </div>
               <div className="step-row">경계조건: v(0)=0, v&#8217;(0)=0 (A는 고정단)</div>
               <div className="step-row">남은 조건: v&#8217;(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함</div>

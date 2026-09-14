@@ -7,6 +7,7 @@ import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 돌출 캔틸레버(고정단 A, 롤러 B, 등분포하중 q)를 "어느 지점을 놓아주느냐(release)"에 따라
 // 두 가지로 풀 수 있음을 보여줌 — Fig.10-1의 (b)/(c)와 같은 아이디어.
@@ -96,7 +97,9 @@ export default function IndeterminateSuperposition() {
               <div className="step-formula">
                 적합조건: 실제 B의 처짐 = 0 → <Tip title="q만 작용했을 때 B의 처짐(아래로)">δB</Tip> − RB·<Tip title="B에 단위하중 1이 작용했을 때 B의 처짐">δBB</Tip> = 0
               </div>
-              <div className="step-row">δB = qL⁴/8EI = {fmt(result.rb.deltaB * 1000)} mm (released 캔틸레버가 q만으로 처지는 양)</div>
+              <div className="step-row">
+                δB = <Frac num="qL⁴" den="8EI" /> = {fmt(result.rb.deltaB * 1000)} mm (released 캔틸레버가 q만으로 처지는 양)
+              </div>
               <div className="step-row">δBB = L³/3EI = {fmt(result.rb.deltaBB * 1000)} mm (B에 단위하중 1을 줬을 때 처지는 양)</div>
               <div className="step-final">RB = δB / δBB = {fmt(result.rb.RB / 1000)} kN</div>
             </FormulaSection>
@@ -105,7 +108,9 @@ export default function IndeterminateSuperposition() {
               <div className="step-formula">
                 적합조건: 실제 A의 처짐각 = 0 → <Tip title="q만 작용했을 때 A의 처짐각">θA</Tip> − MA·<Tip title="A에 단위모멘트 1이 작용했을 때 A의 처짐각">θAA</Tip> = 0
               </div>
-              <div className="step-row">θA = qL³/24EI = {result.ra.thetaA.toExponential(3)} rad (released 단순보가 q만으로 회전하는 각)</div>
+              <div className="step-row">
+                θA = <Frac num="qL³" den="24EI" /> = {result.ra.thetaA.toExponential(3)} rad (released 단순보가 q만으로 회전하는 각)
+              </div>
               <div className="step-row">θAA = L/3EI = {result.ra.thetaAA.toExponential(3)} rad (A에 단위모멘트 1을 줬을 때 회전각)</div>
               <div className="step-final">MA = θA / θAA = {fmt(result.ra.MA / 1000)} kN·m</div>
             </FormulaSection>

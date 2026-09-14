@@ -7,6 +7,7 @@ import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // Example 9-3 — Macaulay 괄호(단위함수) <x-a>를 이용해 집중하중 P가 임의 위치 a에 있는
 // 단순보의 처짐을, 전단력식을 적분해서 구함. 괄호는 x<a일 땐 0, x≥a일 때만 값을 가짐.
@@ -92,7 +93,7 @@ export default function ShearForceEquation() {
               &lt;x&gt; = {'{'} x (x≥0), 0 (x&lt;0) {'}'}
             </div>
             <div className="step-row">
-              반력 R<sub>A</sub> = Pb/L, R<sub>B</sub> = Pa/L
+              반력 R<sub>A</sub> = <Frac num="Pb" den="L" />, R<sub>B</sub> = <Frac num="Pa" den="L" />
             </div>
             <div className="step-row">V(x) = R_A − P&lt;x−a&gt;⁰ &nbsp; (한 식으로 전 구간 표현)</div>
             <div className="step-row">M(x) = R_A x − P&lt;x−a&gt;</div>

@@ -6,6 +6,7 @@ import { computeMaxBeamStress } from '@/lib/calc/maxBeamStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
@@ -76,7 +77,7 @@ export default function MaxBeamStress() {
             <div className="steps">
               <FormulaSection title="위치별 응력·주응력">
                 <div className="step-formula">
-                  <Tip title="굽힘응력">σx</Tip> = −My/I &nbsp; <Tip title="전단응력">τ</Tip> = VQ/(Ib) &nbsp; Q=(b/2)(h²/4−y²)
+                  <Tip title="굽힘응력">σx</Tip> = −<Frac num="My" den="I" /> &nbsp; <Tip title="전단응력">τ</Tip> = <Frac num="VQ" den="Ib" /> &nbsp; Q=<Frac num="b" den="2" />(<Frac num="h²" den="4" />−y²)
                 </div>
                 <div className="step-final">
                   σx = {fmt(disp(r.sigmaX, stressF))} {units.stress} &nbsp; τ = {fmt(disp(r.tau, stressF))} {units.stress}

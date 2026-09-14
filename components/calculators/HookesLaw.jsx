@@ -6,6 +6,7 @@ import { computeHookesLaw } from '@/lib/calc/hookesLaw';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
@@ -106,15 +107,21 @@ export default function HookesLaw() {
             <div className="steps" style={{ marginTop: 12 }}>
               {mode === 'stressToStrain' ? (
                 <FormulaSection title="응력 → 변형률">
-                  <div className="step-formula">εx = (σx − ν·σy)/E &nbsp; εy = (σy − ν·σx)/E &nbsp; γxy = τxy/G</div>
-                  <div className="step-row">G = E/(2(1+ν)) = {fmtSci(r.G)} Pa</div>
+                  <div className="step-formula">
+                    εx = <Frac num="σx − ν·σy" den="E" /> &nbsp; εy = <Frac num="σy − ν·σx" den="E" /> &nbsp; γxy = <Frac num="τxy" den="G" />
+                  </div>
+                  <div className="step-row">
+                    G = <Frac num="E" den="2(1+ν)" /> = {fmtSci(r.G)} Pa
+                  </div>
                   <div className="step-final">
                     εx={r.ex.toExponential(3)} &nbsp; εy={r.ey.toExponential(3)} &nbsp; γxy={r.gxy.toExponential(3)}
                   </div>
                 </FormulaSection>
               ) : (
                 <FormulaSection title="변형률 → 응력">
-                  <div className="step-formula">σx = E/(1−ν²)·(εx + ν·εy) &nbsp; σy = E/(1−ν²)·(εy + ν·εx) &nbsp; τxy = G·γxy</div>
+                  <div className="step-formula">
+                    σx = <Frac num="E" den="1−ν²" />·(εx + ν·εy) &nbsp; σy = <Frac num="E" den="1−ν²" />·(εy + ν·εx) &nbsp; τxy = G·γxy
+                  </div>
                   <div className="step-final">
                     σx={fmt(disp(r.sx, stressF))} {units.stress} &nbsp; σy={fmt(disp(r.sy, stressF))} {units.stress} &nbsp; τxy={fmt(disp(r.txy, stressF))} {units.stress}
                   </div>
