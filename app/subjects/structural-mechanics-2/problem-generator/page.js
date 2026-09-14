@@ -29,6 +29,7 @@ export default function ProblemGeneratorPage() {
   const [generating, setGenerating] = useState(false);
   const [problems, setProblems] = useState(null);
   const [revealed, setRevealed] = useState(new Set());
+  const [solutionImages, setSolutionImages] = useState({});
 
   function toggleChapter(ch) {
     const willSelect = !selectedChapters.has(ch.num);
@@ -85,6 +86,11 @@ export default function ProblemGeneratorPage() {
       else next.add(i);
       return next;
     });
+  }
+
+  function handleUploadSolution(i, file) {
+    const url = URL.createObjectURL(file);
+    setSolutionImages((prev) => ({ ...prev, [i]: url }));
   }
 
   const activeChapters = SUPPORTED_CHAPTERS.filter((ch) => selectedChapters.has(ch.num));
@@ -217,65 +223,135 @@ export default function ProblemGeneratorPage() {
                 {generating ? '생성 중...' : '문제 생성하기'}
               </button>
             </div>
-
-            {problems && (
-              <div style={{ marginTop: 20 }}>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--gray-soft)',
-                    background: 'var(--bg)',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                    marginBottom: 14,
-                  }}
-                >
-                  📐 선택한 소주제의 공식으로 매번 새로운 숫자를 뽑아 만든 문제예요. 정답은 계산기와 동일한 공식으로 계산돼요. (교재 문제를 그대로 가져오지 않고 새로 작성한 지문입니다)
-                </div>
-                <div className="steps">
-                  {problems.map((p, i) => (
-                    <div className="step-card" key={i}>
-                      <div className="step-header static">
-                        문제 {i + 1} · {p.ch.num} {p.st.name}
-                      </div>
-                      <div className="step-body">
-                        <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
-                          {p.prompt}
-                        </div>
-                        {p.diagram && (
-                          <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 10px', marginBottom: 12 }}>
-                            <ProblemDiagram diagram={p.diagram} />
-                          </div>
-                        )}
-                        <button className="add-block" onClick={() => toggleReveal(i)} style={{ margin: 0 }}>
-                          {revealed.has(i) ? '정답 숨기기' : '정답 확인'}
-                        </button>
-                        {revealed.has(i) && (
-                          <div
-                            style={{
-                              marginTop: 12,
-                              fontSize: 13,
-                              color: 'var(--teal)',
-                              background: 'var(--teal-soft)',
-                              borderRadius: 10,
-                              padding: '10px 14px',
-                              lineHeight: 1.8,
-                            }}
-                          >
-                            {p.answers.map((a, k) => (
-                              <div key={k}>{a}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {problems && (
+        <div style={{ maxWidth: 1600, margin: '0 auto 40px', padding: '0 40px' }}>
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--gray-soft)',
+              background: 'var(--card)',
+              border: '1px solid var(--line)',
+              borderRadius: 8,
+              padding: '8px 12px',
+              marginBottom: 14,
+            }}
+          >
+            📐 선택한 소주제의 공식으로 매번 새로운 숫자를 뽑아 만든 문제예요. 정답은 계산기와 동일한 공식으로 계산돼요. (교재 문제를 그대로 가져오지 않고 새로 작성한 지문입니다)
+          </div>
+          <div className="steps">
+            {problems.map((p, i) => (
+              <div className="step-card" key={i}>
+                <div className="step-header static">
+                  문제 {i + 1} · {p.ch.num} {p.st.name}
+                </div>
+                <div className="step-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* 왼쪽: 문제 */}
+                  <div>
+                    <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
+                      {p.prompt}
+                    </div>
+                    {p.diagram && (
+                      <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 10px', marginBottom: 12 }}>
+                        <ProblemDiagram diagram={p.diagram} />
+                      </div>
+                    )}
+                    <button className="add-block" onClick={() => toggleReveal(i)} style={{ margin: 0 }}>
+                      {revealed.has(i) ? '정답 숨기기' : '정답 확인'}
+                    </button>
+                    {revealed.has(i) && (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          fontSize: 13,
+                          color: 'var(--teal)',
+                          background: 'var(--teal-soft)',
+                          borderRadius: 10,
+                          padding: '10px 14px',
+                          lineHeight: 1.8,
+                        }}
+                      >
+                        {p.answers.map((a, k) => (
+                          <div key={k}>{a}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 오른쪽: 내 풀이 첨부 */}
+                  <div
+                    style={{
+                      border: '1.5px dashed var(--line)',
+                      borderRadius: 12,
+                      padding: 14,
+                      minHeight: 220,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--gray)', marginBottom: 10 }}>내 풀이 (사진 첨부)</div>
+                    {solutionImages[i] ? (
+                      <>
+                        <img
+                          src={solutionImages[i]}
+                          alt="첨부한 풀이"
+                          style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 8, marginBottom: 10, background: 'var(--bg)' }}
+                        />
+                        <label className="add-block" style={{ textAlign: 'center', cursor: 'pointer', margin: 0 }}>
+                          다시 첨부하기
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => e.target.files[0] && handleUploadSolution(i, e.target.files[0])}
+                          />
+                        </label>
+                      </>
+                    ) : (
+                      <label
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          cursor: 'pointer',
+                          color: 'var(--gray-soft)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="3" y="5" width="18" height="15" rx="2" />
+                          <circle cx="9" cy="11" r="2" />
+                          <path d="M21 16l-5.5-5.5L3 20" />
+                        </svg>
+                        <span style={{ fontSize: 12.5 }}>
+                          풀이를 촬영·캡처해서
+                          <br />
+                          올려주세요
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => e.target.files[0] && handleUploadSolution(i, e.target.files[0])}
+                        />
+                      </label>
+                    )}
+                    <button className="add-block" disabled style={{ marginTop: 10, opacity: 0.5, margin: '10px 0 0' }} title="준비중">
+                      AI 튜터에게 검토 요청 (준비중)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
