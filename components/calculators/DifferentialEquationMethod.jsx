@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { proppedCantileverUDL, proppedCantileverUDLCurve, fixedFixedCenterLoad, fixedFixedCenterLoadCurve } from '@/lib/calc/indeterminateBeams';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
@@ -15,15 +15,24 @@ import Frac from '@/components/Frac';
 
 export default function DifferentialEquationMethod() {
   const [beamType, setBeamType] = useState('propped'); // 'propped' | 'fixed-fixed'
+  const [units, setUnits] = useState({ length: 'm', force: 'kN', distLoad: 'kN/m', moment: 'kN·m', E: 'GPa', inertia: 'mm⁴' });
   const [L, setL] = useState(4);
-  const [q, setQ] = useState(10);
-  const [P, setP] = useState(20);
-  const [E, setE] = useState(200);
-  const [I, setI] = useState(60);
+  const [q, setQ] = useState(10 * 1000);
+  const [P, setP] = useState(20 * 1000);
+  const [E, setE] = useState(200 * 1e9);
+  const [I, setI] = useState(60e6 * 1e-12);
 
-  const EI = E * 1e9 * (I * 1e-6);
-  const qSI = q * 1000;
-  const PSI = P * 1000;
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const forceF = UNIT_OPTIONS.force[units.force];
+  const distF = UNIT_OPTIONS.distLoad[units.distLoad];
+  const momF = UNIT_OPTIONS.moment[units.moment];
+  const EF = UNIT_OPTIONS.E[units.E];
+  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
+  const disp = (b, f) => b / f;
+
+  const EI = E * I;
+  const qSI = q;
+  const PSI = P;
   const isPropped = beamType === 'propped';
 
   const result = useMemo(() => {
@@ -57,27 +66,62 @@ export default function DifferentialEquationMethod() {
           </button>
         </div>
         <div className="field">
-          <label>스팬 길이 L (m)</label>
-          <input type="number" defaultValue={fmtInput(L)} onBlur={(e) => setL(parseFloat(e.target.value))} />
+          <label>단위 (길이 / 하중 / 모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={isPropped ? units.distLoad : units.force} onChange={(e) => setUnits((p) => (isPropped ? { ...p, distLoad: e.target.value } : { ...p, force: e.target.value }))}>
+              {Object.keys(isPropped ? UNIT_OPTIONS.distLoad : UNIT_OPTIONS.force).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.E).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
+              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
+          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
         </div>
         {isPropped ? (
           <div className="field">
-            <label>등분포하중 q (kN/m)</label>
-            <input type="number" defaultValue={fmtInput(q)} onBlur={(e) => setQ(parseFloat(e.target.value))} />
+            <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
+            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
           </div>
         ) : (
           <div className="field">
-            <label>중앙 집중하중 P (kN)</label>
-            <input type="number" defaultValue={fmtInput(P)} onBlur={(e) => setP(parseFloat(e.target.value))} />
+            <label>중앙 집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
+            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
           </div>
         )}
         <div className="field">
-          <label>탄성계수 E (GPa)</label>
-          <input type="number" defaultValue={fmtInput(E)} onBlur={(e) => setE(parseFloat(e.target.value))} />
+          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
+          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
         </div>
         <div className="field">
-          <label>단면 2차모멘트 I (×10⁶ mm⁴)</label>
-          <input type="number" defaultValue={fmtInput(I)} onBlur={(e) => setI(parseFloat(e.target.value))} />
+          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
+          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 
@@ -92,26 +136,26 @@ export default function DifferentialEquationMethod() {
           <div className="result-grid">
             <div className="result-card">
               <div className="l">RA</div>
-              <div className="v">{fmt(result.reactions.RA / 1000)} kN</div>
+              <div className="v">{fmt(disp(result.reactions.RA, forceF))} {units.force}</div>
             </div>
             <div className="result-card">
               <div className="l">RB (여분력)</div>
-              <div className="v">{fmt(result.reactions.RB / 1000)} kN</div>
+              <div className="v">{fmt(disp(result.reactions.RB, forceF))} {units.force}</div>
             </div>
             <div className="result-card">
               <div className="l">MA (고정단 모멘트)</div>
-              <div className="v">{fmt(result.reactions.MA / 1000)} kN·m</div>
+              <div className="v">{fmt(disp(result.reactions.MA, momF))} {units.moment}</div>
             </div>
           </div>
         ) : (
           <div className="result-grid">
             <div className="result-card">
               <div className="l">MA = MB (고정단 모멘트)</div>
-              <div className="v">{fmt(result.reactions.MA / 1000)} kN·m</div>
+              <div className="v">{fmt(disp(result.reactions.MA, momF))} {units.moment}</div>
             </div>
             <div className="result-card">
               <div className="l">RA = RB</div>
-              <div className="v">{fmt(result.reactions.RA / 1000)} kN</div>
+              <div className="v">{fmt(disp(result.reactions.RA, forceF))} {units.force}</div>
             </div>
           </div>
         )}
@@ -135,8 +179,8 @@ export default function DifferentialEquationMethod() {
                 defaultText="남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함"
               />
               <div className="step-final">
-                RB = <Frac num="3qL" den="8" /> = {fmt(result.reactions.RB / 1000)} kN, MA = <Frac num="qL²" den="8" /> ={' '}
-                {fmt(result.reactions.MA / 1000)} kN·m
+                RB = <Frac num="3qL" den="8" /> = {fmt(disp(result.reactions.RB, forceF))} {units.force}, MA = <Frac num="qL²" den="8" /> ={' '}
+                {fmt(disp(result.reactions.MA, momF))} {units.moment}
               </div>
             </FormulaSection>
           ) : (
@@ -157,7 +201,7 @@ export default function DifferentialEquationMethod() {
                 defaultText="남은 조건: v'(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함"
               />
               <div className="step-final">
-                MA = <Frac num="PL" den="8" /> = {fmt(result.reactions.MA / 1000)} kN·m (양쪽 고정단 모두 동일)
+                MA = <Frac num="PL" den="8" /> = {fmt(disp(result.reactions.MA, momF))} {units.moment} (양쪽 고정단 모두 동일)
               </div>
             </FormulaSection>
           )}
