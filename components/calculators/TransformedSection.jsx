@@ -7,6 +7,8 @@ import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import BeamElevationSVG from './BeamElevationSVG';
+import BeamElevation3D from './BeamElevation3D';
 
 // 프로토타입의 renderTransformedSection()을 React로 옮긴 버전. 블록 편집 UI(슬라이더+3분할 타일,
 // 드래그 순서변경)는 CompositeBeams.jsx와 동일한 패턴으로 맞춤.
@@ -21,10 +23,12 @@ function makeInitialBlocks() {
 }
 
 export default function TransformedSection() {
-  const [units] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
+  const [units, setUnits] = useState({ length: 'in', stress: 'psi', moment: 'kip·in' });
   const [blocks, setBlocks] = useState(makeInitialBlocks);
   const [refIndex, setRefIndex] = useState(0);
   const [moment, setMoment] = useState(60 * 112.9848);
+  const [momentRangeOverrideBase, setMomentRangeOverrideBase] = useState(null);
+  const [elevation3D, setElevation3D] = useState(false);
   const dragIndexRef = useRef(null);
 
   const lenF = UNIT_OPTIONS.length[units.length];
@@ -33,6 +37,47 @@ export default function TransformedSection() {
 
   const result = useMemo(() => (blocks.length ? computeTransformed(blocks, moment) : null), [blocks, moment]);
   const refBlock = result ? result.blocks[Math.min(refIndex, result.blocks.length - 1)] : null;
+
+  function changeLengthUnit(v) {
+    setUnits((p) => ({ ...p, length: v }));
+  }
+  function changeStressUnit(v) {
+    setUnits((p) => ({ ...p, stress: v }));
+  }
+  function changeMomentUnit(v) {
+    setUnits((p) => ({ ...p, moment: v }));
+  }
+
+  function momentEffectiveRange() {
+    const momR = cbSliderRangeFor('moment', units.moment);
+    if (!momentRangeOverrideBase) return momR;
+    return [momentRangeOverrideBase.min / momF, momentRangeOverrideBase.max / momF, momR[2]];
+  }
+
+  function updateMoment(value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    const newMoment = val * momF;
+    const momR = cbSliderRangeFor('moment', units.moment);
+    const baseMin = momR[0] * momF;
+    const baseMax = momR[1] * momF;
+    const curMin = momentRangeOverrideBase ? momentRangeOverrideBase.min : baseMin;
+    const curMax = momentRangeOverrideBase ? momentRangeOverrideBase.max : baseMax;
+    if (newMoment > curMax || newMoment < curMin) {
+      setMomentRangeOverrideBase({
+        min: Math.min(curMin, newMoment, baseMin),
+        max: Math.max(curMax, newMoment, baseMax),
+      });
+    }
+    setMoment(newMoment);
+  }
+
+  const momRange = momentEffectiveRange();
+  const momentLabelForElevation = `${fmt(disp(moment, momF))} ${units.moment}`;
+  const momRForBend = cbSliderRangeFor('moment', units.moment);
+  const momentMaxForBend = Math.max(Math.abs(momRForBend[0]), Math.abs(momRForBend[1])) * momF;
+  const maxBendPx = 24;
+  const bendPx = momentMaxForBend > 0 ? Math.max(-maxBendPx, Math.min(maxBendPx, (moment / momentMaxForBend) * maxBendPx)) : 0;
 
   function updateBlockField(index, field, value) {
     const factor = field === 'E' ? UNIT_OPTIONS.E[blocks[index].EUnit] : lenF;
@@ -109,6 +154,7 @@ export default function TransformedSection() {
               canRemove={blocks.length > 1}
               onFieldChange={(field, value) => updateBlockField(i, field, value)}
               onEUnitChange={(v) => changeBlockEUnit(i, v)}
+              onLengthUnitChange={changeLengthUnit}
               onRemove={() => removeBlock(i)}
               onSetRef={() => setRefIndex(i)}
               onDragStart={() => handleDragStart(i)}
@@ -120,11 +166,6 @@ export default function TransformedSection() {
         <button className="add-block" onClick={addBlock}>
           + 블록 추가
         </button>
-
-        <div className="field">
-          <label>Moment M</label>
-          <input type="number" defaultValue={fmtInput(disp(moment, momF))} onBlur={(e) => setMoment(parseFloat(e.target.value) * momF)} />
-        </div>
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
@@ -136,6 +177,50 @@ export default function TransformedSection() {
         {result ? (
           <>
             <TransformedSVG result={result} refBlock={refBlock} />
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', margin: '12px 0 16px' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--gray-soft)' }}>
+                응력 단위{' '}
+                <select className="unit-inline" value={units.stress} onChange={(e) => changeStressUnit(e.target.value)}>
+                  {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ width: 260, flex: '0 0 auto' }}>
+                <label style={{ fontSize: 11.5, color: 'var(--gray-soft)', fontWeight: 700, display: 'block', marginBottom: 4 }}>Moment M</label>
+                <div className="field-with-slider">
+                  <div className="input-unit-group">
+                    <input
+                      key={`moment-${moment}-${units.moment}`}
+                      type="number"
+                      step="any"
+                      defaultValue={fmtInput(disp(moment, momF))}
+                      onBlur={(e) => updateMoment(e.target.value)}
+                    />
+                    <select className="unit-inline" value={units.moment} onChange={(e) => changeMomentUnit(e.target.value)}>
+                      {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <input
+                    className="mini-slider"
+                    type="range"
+                    min={momRange[0]}
+                    max={momRange[1]}
+                    step={momRange[2]}
+                    value={disp(moment, momF)}
+                    onChange={(e) => updateMoment(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="result-grid">
               <div className="result-card">
                 <div className="l">중립축 위치 (하단 기준)</div>
@@ -173,6 +258,25 @@ export default function TransformedSection() {
               </FormulaSection>
             </div>
             <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.</p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14 }}>
+              <span style={{ fontSize: 13, color: 'var(--gray-soft)', fontWeight: 700 }}>
+                ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
+              </span>
+              <button
+                className="add-block calc-trigger"
+                style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
+                onClick={() => setElevation3D((v) => !v)}
+              >
+                {elevation3D ? '2D로 보기' : '3D로 보기'}
+              </button>
+            </div>
+            {elevation3D ? (
+              <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} />
+            ) : (
+              <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
+            )}
+
             <EditableText as="div" className="ai-hint" contentKey="calc.TransformedSection.aiHint" defaultText="💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
@@ -196,7 +300,7 @@ export default function TransformedSection() {
 // Width/Height/E 필드를 각자 label+input로 통째로 늘어놓던 걸 CompositeBeams.jsx와 동일한
 // "활성 필드 슬라이더 1줄 + 타일 그리드" 패턴으로 압축한 버전. 이 계산기는 상단폭/하단폭이
 // 따로 있어서 타일이 4개(Top/Bottom/Height/E).
-function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove, onFieldChange, onEUnitChange, onRemove, onSetRef, onDragStart, onDragOver, onDrop }) {
+function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onSetRef, onDragStart, onDragOver, onDrop }) {
   const c = blockColor(block);
   const lenF = UNIT_OPTIONS.length[units.length];
   const disp = (base, factor) => base / factor;
@@ -255,9 +359,13 @@ function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove,
               ))}
             </select>
           ) : (
-            <span className="unit-inline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {active.unit}
-            </span>
+            <select className="unit-inline" value={active.unit} onChange={(e) => onLengthUnitChange(e.target.value)}>
+              {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
           )}
         </div>
       </div>
