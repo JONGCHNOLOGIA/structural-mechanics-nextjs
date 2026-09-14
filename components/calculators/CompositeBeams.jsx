@@ -317,12 +317,11 @@ export default function CompositeBeams() {
                 <div className="step-card" key={name}>
                   <div className="step-header static">{sectionTitle(name)}</div>
                   <div className="step-body">
-                    {calcState[name] === 'idle' ? (
-                      <button className="add-block calc-trigger" onClick={() => calcSection(name)}>
-                        계산하기
-                      </button>
-                    ) : (
-                      <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
+                      <div className="step-formula" style={{ flex: '1 1 240px', margin: 0 }}>
+                        <SectionFormulaPreview name={name} yReference={yReference} />
+                      </div>
+                      <div style={{ flexShrink: 0, textAlign: 'right' }}>
                         {calcState[name] === 'stale' && (
                           <div
                             style={{
@@ -331,18 +330,19 @@ export default function CompositeBeams() {
                               background: 'var(--crimson-soft)',
                               borderRadius: 8,
                               padding: '8px 12px',
-                              marginBottom: 10,
+                              marginBottom: 8,
+                              maxWidth: 180,
                             }}
                           >
                             ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
                           </div>
                         )}
-                        <button className="add-block calc-trigger" onClick={() => calcSection(name)} style={{ marginBottom: 10 }}>
-                          다시 계산하기
+                        <button className="add-block calc-trigger" onClick={() => calcSection(name)} style={{ margin: 0 }}>
+                          {calcState[name] === 'idle' ? '계산하기' : '다시 계산하기'}
                         </button>
-                        <CalcBody name={name} snapshot={calcSnapshot[name]} />
-                      </>
-                    )}
+                      </div>
+                    </div>
+                    {calcState[name] !== 'idle' && <CalcBody name={name} snapshot={calcSnapshot[name]} />}
                   </div>
                 </div>
               ))}
@@ -447,6 +447,63 @@ function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange
   );
 }
 
+// 섹션별 "기본 공식" — 스냅샷 없이도(계산 전에도) 보여줄 수 있는 순수 기호식이라, 계산하기/
+// 다시 계산하기 버튼 옆(왼쪽)에 항상 떠 있게 따로 뺌. stress만 y 기준점에 따라 부호 순서가 바뀜.
+function SectionFormulaPreview({ name, yReference }) {
+  if (name === 'na') {
+    return (
+      <>
+        Σ <Tip title="각 블록의 탄성계수 (Elastic Modulus)">Eᵢ</Tip> <Tip title="각 블록의 단면적">Aᵢ</Tip> (
+        <Tip title="각 블록 중심의 y좌표">yᵢ</Tip> − <Tip title="전체 단면의 중립축(Neutral Axis) 위치">ȳ</Tip>) = 0
+      </>
+    );
+  }
+  if (name === 'io') {
+    return (
+      <>
+        <Tip title="각 블록의 관성모멘트">Iᵢ</Tip> ={' '}
+        <Tip title="블록 자체 중심 기준 관성모멘트">
+          <Frac num="bᵢhᵢ³" den="12" />
+        </Tip>{' '}
+        + <Tip title="평행축 정리 보정항">Aᵢdᵢ²</Tip> &nbsp;(d = yᵢ − ȳ)
+      </>
+    );
+  }
+  if (name === 'stress') {
+    return (
+      <>
+        <Tip title="이 지점의 굽힘응력">σᵢ</Tip> = −
+        <Frac
+          num={
+            <>
+              <Tip title="굽힘모멘트">M</Tip>(
+              {yReference === 'top' ? (
+                <>
+                  <Tip title="중립축 위치">ȳ</Tip>−<Tip title="이 지점의 y좌표">y</Tip>
+                </>
+              ) : (
+                <>
+                  <Tip title="이 지점의 y좌표">y</Tip>−<Tip title="중립축 위치">ȳ</Tip>
+                </>
+              )}
+              )<Tip title="이 재료의 탄성계수">Eᵢ</Tip>
+            </>
+          }
+          den={<Tip title="전체 단면의 굽힘강성">ΣEI</Tip>}
+        />
+      </>
+    );
+  }
+  if (name === 'approx') {
+    return (
+      <>
+        σ_face ≈ −<Frac num="M·(y−ȳ)" den="I_faces" /> &nbsp;(core 기여 무시)
+      </>
+    );
+  }
+  return null;
+}
+
 // 섹션별(na/io/stress/approx) 계산 결과 — calcSection()에서 찍어둔 스냅샷 기준으로만 렌더링됨
 function CalcBody({ name, snapshot }) {
   if (!snapshot) return null;
@@ -467,10 +524,6 @@ function NaBody({ snapshot }) {
 
   return (
     <>
-      <div className="step-formula">
-        Σ <Tip title="각 블록의 탄성계수 (Elastic Modulus)">Eᵢ</Tip> <Tip title="각 블록의 단면적">Aᵢ</Tip> (
-        <Tip title="각 블록 중심의 y좌표">yᵢ</Tip> − <Tip title="전체 단면의 중립축(Neutral Axis) 위치">ȳ</Tip>) = 0
-      </div>
       <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
         각 재료가 중립축 위/아래로 미는 "1차모멘트"의 합이 0이 되는 지점이 중립축이에요.
       </div>
@@ -510,14 +563,6 @@ function IoBody({ snapshot }) {
 
   return (
     <>
-      <div className="step-formula">
-        <Tip title="각 블록의 관성모멘트">Iᵢ</Tip> ={' '}
-        <Tip title="블록 자체 중심 기준 관성모멘트">
-          <Frac num="bᵢhᵢ³" den="12" />
-        </Tip>{' '}
-        +{' '}
-        <Tip title="평행축 정리 보정항">Aᵢdᵢ²</Tip> &nbsp;(d = yᵢ − ȳ)
-      </div>
       {result.blocks.map((b, i) => {
         const c = blockColor(b);
         const I0 = (b.width * Math.pow(b.height, 3)) / 12;
@@ -569,30 +614,12 @@ function StressBody({ snapshot }) {
 
   return (
     <>
-      <div className="step-formula">
-        <Tip title="이 지점의 굽힘응력">σᵢ</Tip> = −
-        <Frac
-          num={
-            <>
-              <Tip title="굽힘모멘트">M</Tip>(
-              {yReference === 'top' ? (
-                <>
-                  <Tip title="중립축 위치">ȳ</Tip>−<Tip title="이 지점의 y좌표">y</Tip>
-                </>
-              ) : (
-                <>
-                  <Tip title="이 지점의 y좌표">y</Tip>−<Tip title="중립축 위치">ȳ</Tip>
-                </>
-              )}
-              )<Tip title="이 재료의 탄성계수">Eᵢ</Tip>
-            </>
-          }
-          den={<Tip title="전체 단면의 굽힘강성">ΣEI</Tip>}
-        />
-      </div>
-      <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
-        ※ 아래 식의 E는 블록마다 설정한 단위 그대로, ΣEI는 SI 기본단위로 표시돼요. 실제 계산은 내부적으로 항상 단위를 통일해서 정확히 수행됩니다.
-      </div>
+      <EditableText
+        as="div"
+        contentKey="calc.CompositeBeams.stressNote"
+        defaultText="※ 아래 식의 E, ΣEI는 화면에 설정된 단위 기준으로 표시돼요. 실제 계산은 내부적으로 항상 단위를 통일해서 정확히 수행됩니다."
+        style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginBottom: 8 }}
+      />
       {result.blocks.map((b, k) => {
         const c = blockColor(b);
         const sBottom = result.stressAt(b.yBottom, b.E);
@@ -656,12 +683,12 @@ function ApproxBody({ snapshot }) {
 
   return (
     <>
-      <div className="step-formula">
-        σ_face ≈ −<Frac num="M·(y−ȳ)" den="I_faces" /> &nbsp;(core 기여 무시)
-      </div>
-      <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
-        코어(core)는 굽힘강성 기여가 작다고 보고 무시한 근사식이에요. 두 face가 같은 재료라 식에서 E가 서로 상쇄돼요.
-      </div>
+      <EditableText
+        as="div"
+        contentKey="calc.CompositeBeams.approxNote"
+        defaultText="코어(core)는 굽힘강성 기여가 작다고 보고 무시한 근사식이에요. 두 face가 같은 재료라 식에서 E가 서로 상쇄돼요."
+        style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}
+      />
       <div className="step-eq">
         I_faces = I(하단 face) + I(상단 face) = {fmt(disp(faceI, I4F))} {units.length}⁴
       </div>
