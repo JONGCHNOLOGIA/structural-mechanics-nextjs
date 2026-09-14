@@ -103,6 +103,13 @@ alter table site_content enable row level security;
 alter table topic_visits enable row level security;
 alter table problem_attempts enable row level security;
 
+-- subjects/chapters/topics/topic_reports는 앱에서 실제로 쓰지 않는 테이블(예전 설계 흔적)이라
+-- 정책 없이 RLS만 켜서 anon/authenticated 키로 아무도 접근 못 하게 막아둠.
+alter table subjects enable row level security;
+alter table chapters enable row level security;
+alter table topics enable row level security;
+alter table topic_reports enable row level security;
+
 create policy "본인 방문기록만 조회/작성" on topic_visits
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
