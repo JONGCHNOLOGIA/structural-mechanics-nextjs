@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { checkDeterminacy, solveBeam } from '@/lib/calc/beamBuilder';
 import FormulaSection from './FormulaSection';
@@ -30,6 +30,8 @@ export default function BendingMomentEquation() {
   const [loads, setLoads] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [showDeflection, setShowDeflection] = useState(false);
+  const [calcState, setCalcState] = useState({ method1: 'idle', method2: 'idle' }); // idle | done | stale
+  const [calcSnapshot, setCalcSnapshot] = useState({ method1: null, method2: null });
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const distF = UNIT_OPTIONS.distLoad[units.distLoad];
@@ -41,10 +43,27 @@ export default function BendingMomentEquation() {
 
   const EI = E * I;
 
+  // 기존 지지단들 사이에서 가장 넓은 빈 구간의 중앙에 새 지지단을 놓는다 — 겹치는 위치에
+  // 반복해서 쌓이던 문제(예: 0, L, 그다음도 계속 L/2)를 막고 항상 비어있는 자리에 배치된다.
+  function nextFreeSupportX() {
+    if (supports.length === 0) return { x: 0, size: L }; // 첫 지지단은 보 왼쪽 끝에서 시작
+    const used = supports.map((s) => s.x).sort((a, b) => a - b);
+    const bounds = [0, ...used, L];
+    let bestStart = 0, bestEnd = L, bestSize = -1;
+    for (let i = 0; i < bounds.length - 1; i++) {
+      const size = bounds[i + 1] - bounds[i];
+      if (size > bestSize) {
+        bestSize = size;
+        bestStart = bounds[i];
+        bestEnd = bounds[i + 1];
+      }
+    }
+    return { x: (bestStart + bestEnd) / 2, size: bestSize };
+  }
+
   function addSupport(type) {
-    const usedX = supports.map((s) => s.x);
-    let x = 0;
-    if (usedX.includes(0)) x = usedX.includes(L) ? L / 2 : L;
+    const { x, size } = nextFreeSupportX();
+    if (size < Math.max(L * 0.01, 1e-6)) return; // 더 이상 겹치지 않게 놓을 자리가 없음
     const id = genId();
     setSupports((prev) => [...prev, { id, x, type }]);
     setSelectedId(id);
@@ -59,6 +78,14 @@ export default function BendingMomentEquation() {
     else if (kind === 'moment') item = { id, kind, x: L / 2, M0: 5 * momF };
     setLoads((prev) => [...prev, item]);
     setSelectedId(id);
+  }
+
+  function clearBeam() {
+    setSupports([]);
+    setLoads([]);
+    setSelectedId(null);
+    setShowDeflection(false);
+    setCalcState({ method1: 'idle', method2: 'idle' });
   }
 
   function removeItem(id) {
@@ -77,8 +104,17 @@ export default function BendingMomentEquation() {
 
   function moveX(id, newX) {
     const clamped = Math.min(L, Math.max(0, newX));
-    if (supports.some((s) => s.id === id)) updateSupport(id, { x: clamped });
-    else {
+    if (supports.some((s) => s.id === id)) {
+      // 다른 지지단과 정확히 같은 위치로 겹치지 않도록 아주 살짝 밀어낸다.
+      const minGap = Math.max(L * 0.01, 1e-6);
+      const others = supports.filter((s) => s.id !== id).map((s) => s.x);
+      let x = clamped;
+      while (others.some((ox) => Math.abs(ox - x) < minGap)) {
+        x = Math.min(L, x + minGap);
+        if (x >= L) { x = Math.max(0, clamped - minGap); break; }
+      }
+      updateSupport(id, { x });
+    } else {
       const load = loads.find((l) => l.id === id);
       if (!load) return;
       if (load.kind === 'udl' || load.kind === 'triangle') {
@@ -154,6 +190,34 @@ export default function BendingMomentEquation() {
 
   const maxAbsM = solved ? Math.max(1e-9, ...solved.pts.map((p) => Math.abs(p.M))) : 0;
   const maxAbsV = solved ? Math.max(1e-9, ...solved.pts.map((p) => Math.abs(p.v))) : 0;
+
+  // 입력(보 조건·지지단·하중)이 바뀌면, 이미 "계산하기"를 눌러 스냅샷을 떠놓은 방법들은
+  // "다시 계산하기 전 값" 표시로 바꿔준다 (CompositeBeams의 stale 패턴과 동일).
+  useEffect(() => {
+    setCalcState((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const k of Object.keys(next)) {
+        if (next[k] === 'done') { next[k] = 'stale'; changed = true; }
+      }
+      return changed ? next : prev;
+    });
+  }, [L, EI, supports, loads]);
+
+  function calcSection(name) {
+    if (!solved) return;
+    setCalcSnapshot((prev) => ({
+      ...prev,
+      [name]: {
+        L, EI, loads,
+        supports: solved.supports,
+        pts: solved.pts,
+        units: { ...units },
+        lenF, forceF, momF, distF,
+      },
+    }));
+    setCalcState((prev) => ({ ...prev, [name]: 'done' }));
+  }
 
   return (
     <>
@@ -246,14 +310,25 @@ export default function BendingMomentEquation() {
           <h3 style={{ margin: 0 }}>
             VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
           </h3>
-          <button
-            className={'add-block calc-trigger' + (showDeflection ? ' active' : '')}
-            style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
-            disabled={!solved}
-            onClick={() => setShowDeflection((v) => !v)}
-          >
-            {showDeflection ? '처짐곡선 숨기기' : '예상 처짐곡선 보기'}
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              className="add-block"
+              style={{ margin: 0, padding: '4px 12px', fontSize: 12.5, color: 'var(--gray-soft)' }}
+              disabled={!supports.length && !loads.length}
+              onClick={clearBeam}
+              title="지지단·하중을 모두 지우고 처음부터 다시 만들어요"
+            >
+              CLEAR
+            </button>
+            <button
+              className={'add-block calc-trigger' + (showDeflection ? ' active' : '')}
+              style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
+              disabled={!solved}
+              onClick={() => setShowDeflection((v) => !v)}
+            >
+              {showDeflection ? '처짐곡선 숨기기' : '예상 처짐곡선 보기'}
+            </button>
+          </div>
         </div>
         <BeamBuilderSVG
           L={L}
@@ -322,6 +397,8 @@ export default function BendingMomentEquation() {
                 <div className="step-final">
                   이 보는 미지수 2개(반력)와 경계조건 2개가 정확히 맞아떨어지는 정정보라서, 이 방법으로 유일하게 풀려요.
                 </div>
+                <CalcTrigger name="method1" calcState={calcState} onCalc={calcSection} />
+                {calcState.method1 !== 'idle' && <Method1Body snapshot={calcSnapshot.method1} />}
               </FormulaSection>
               <FormulaSection title="② 4차 미분방정식 (EIv⁗ = q(x))">
                 <div className="step-formula">EIv&#8221;&#8221; = q(x) — 하중강도를 직접 네 번 적분</div>
@@ -329,6 +406,8 @@ export default function BendingMomentEquation() {
                   집중하중·모멘트는 q(x)의 특이함수(디랙 델타·모멘트항)로 표현돼요. 경계조건 4개(양 끝에서 v 또는 v',
                   M 또는 V 중 아는 것)로 적분상수 4개를 구하면, ①과 <b>완전히 같은</b> v(x)가 나와요.
                 </div>
+                <CalcTrigger name="method2" calcState={calcState} onCalc={calcSection} />
+                {calcState.method2 !== 'idle' && <Method2Body snapshot={calcSnapshot.method2} />}
               </FormulaSection>
             </div>
           </>
@@ -481,5 +560,167 @@ function LoadRow({ l, L, lenF, lenUnit, forceF, forceUnit, distF, distUnit, momF
         )}
       </div>
     </RowShell>
+  );
+}
+
+// "계산하기"/"다시 계산하기" 버튼 — CompositeBeams의 calc-trigger 패턴과 동일.
+function CalcTrigger({ name, calcState, onCalc }) {
+  return (
+    <div style={{ marginTop: 10 }}>
+      {calcState[name] === 'stale' && (
+        <div
+          style={{
+            fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)',
+            borderRadius: 8, padding: '7px 11px', marginBottom: 8, display: 'inline-block',
+          }}
+        >
+          ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
+        </div>
+      )}
+      <div>
+        <button className="add-block calc-trigger" onClick={() => onCalc(name)} style={{ margin: 0 }}>
+          {calcState[name] === 'idle' ? '계산하기' : '다시 계산하기'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const LETTERS = 'ABCDEFGH';
+
+// mmch9 Example 9-1(단순보+등분포하중, Macaulay 적분 vs 4차 미분방정식 두 방법으로 각각 풀어서
+// 같은 답이 나오는 걸 보여줌)을 레퍼런스 삼아, 자유 배치 보에서도 같은 패턴으로 숫자를 대입해
+// 실제 계산 과정을 보여준다.
+function buildMTerms(snap) {
+  const { supports, loads, lenF, forceF, momF, distF, L } = snap;
+  const terms = [];
+  supports.forEach((s, i) => {
+    const letter = LETTERS[i] || `S${i}`;
+    terms.push({ coeff: s.reactionFy / forceF, bracket: `⟨x − ${fmt(s.x / lenF)}⟩`, label: `R_${letter}` });
+    if (s.type === 'fixed') {
+      terms.push({ coeff: s.reactionM / momF, bracket: `⟨x − ${fmt(s.x / lenF)}⟩⁰`, label: `M_${letter}` });
+    }
+  });
+  const notes = [];
+  loads.forEach((l) => {
+    if (l.kind === 'point') {
+      terms.push({ coeff: -l.P / forceF, bracket: `⟨x − ${fmt(l.x / lenF)}⟩`, label: 'P' });
+    } else if (l.kind === 'moment') {
+      terms.push({ coeff: -l.M0 / momF, bracket: `⟨x − ${fmt(l.x / lenF)}⟩⁰`, label: 'M₀' });
+    } else if (l.kind === 'udl') {
+      const q = l.q / distF;
+      terms.push({ coeff: -q / 2, bracket: `⟨x − ${fmt(l.xStart / lenF)}⟩²`, label: 'q/2' });
+      if (l.xEnd < L - 1e-6) {
+        terms.push({ coeff: q / 2, bracket: `⟨x − ${fmt(l.xEnd / lenF)}⟩²`, label: 'q/2' });
+      }
+    } else if (l.kind === 'triangle') {
+      notes.push(
+        `삼각형분포하중(${fmt(l.qStart / distF)} → ${fmt(l.qEnd / distF)} ${snap.units.distLoad}, x=${fmt(l.xStart / lenF)}~${fmt(l.xEnd / lenF)} ${snap.units.length})은 닫힌 Macaulay 항 대신 수치적분으로 M(x)에 반영돼요.`
+      );
+    }
+  });
+  return { terms, notes };
+}
+
+function renderMExpr(terms) {
+  return terms
+    .map((t, i) => {
+      const neg = t.coeff < 0;
+      const sign = neg ? '−' : i === 0 ? '' : '+';
+      return `${i > 0 ? ' ' : ''}${sign} ${fmt(Math.abs(t.coeff))}${t.bracket}`;
+    })
+    .join('');
+}
+
+function buildBCs(snap) {
+  return snap.supports.map((s, i) => {
+    const letter = LETTERS[i] || `S${i}`;
+    const xDisp = fmt(s.x / snap.lenF);
+    const lines = [`v(${xDisp}) = 0`];
+    if (s.type === 'fixed') lines.push(`v'(${xDisp}) = 0`);
+    return { letter, type: s.type, lines };
+  });
+}
+
+function extremes(snap) {
+  const pts = snap.pts;
+  const theta0 = pts[0].slope;
+  const thetaL = pts[pts.length - 1].slope;
+  let maxAbs = -1, atX = 0, vAtMax = 0;
+  pts.forEach((p) => {
+    if (Math.abs(p.v) > maxAbs) { maxAbs = Math.abs(p.v); atX = p.x; vAtMax = p.v; }
+  });
+  return { theta0, thetaL, vAtMax, atX };
+}
+
+function Method1Body({ snapshot }) {
+  if (!snapshot) return null;
+  const { units, lenF } = snapshot;
+  const { terms, notes } = buildMTerms(snapshot);
+  const bcs = buildBCs(snapshot);
+  const { theta0, thetaL, vAtMax, atX } = extremes(snapshot);
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="step-formula" style={{ display: 'block', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+        M(x) = {renderMExpr(terms)}
+      </div>
+      {notes.map((n, i) => (
+        <div key={i} className="step-row" style={{ color: 'var(--gray-soft)', fontSize: 11.5 }}>※ {n}</div>
+      ))}
+      <div className="step-row">
+        경계조건: {bcs.map((b) => b.lines.join(', ')).join('  ·  ')}
+      </div>
+      <div className="step-final">
+        θ(0) = {fmt(theta0)} rad &nbsp;&nbsp; θ(L) = {fmt(thetaL)} rad
+        <br />
+        v<sub>max</sub> = {fmt(vAtMax / lenF)} {units.length} &nbsp;(x = {fmt(atX / lenF)} {units.length}에서)
+      </div>
+    </div>
+  );
+}
+
+function Method2Body({ snapshot }) {
+  if (!snapshot) return null;
+  const { loads, lenF, forceF, momF, distF, units } = snapshot;
+  const bcs = buildBCs(snapshot);
+  const { theta0, thetaL, vAtMax, atX } = extremes(snapshot);
+  const distLoads = loads.filter((l) => l.kind === 'udl' || l.kind === 'triangle');
+  const pointish = loads.filter((l) => l.kind === 'point' || l.kind === 'moment');
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="step-formula" style={{ display: 'block' }}>EIv&#8221;&#8221; = q(x)</div>
+      <div className="step-row">
+        {distLoads.length > 0 ? (
+          distLoads.map((l, i) => (
+            <div key={i}>
+              q(x) = {l.kind === 'udl' ? fmt(l.q / distF) : `${fmt(l.qStart / distF)} → ${fmt(l.qEnd / distF)}`} {units.distLoad}
+              &nbsp;({fmt(l.xStart / lenF)} ≤ x ≤ {fmt(l.xEnd / lenF)} {units.length})
+            </div>
+          ))
+        ) : (
+          <div>분포하중 없음 — q(x) = 0</div>
+        )}
+        {pointish.map((l, i) => (
+          <div key={i}>
+            {l.kind === 'point' ? `P = ${fmt(l.P / forceF)} ${units.force}` : `M₀ = ${fmt(l.M0 / momF)} ${units.moment}`}
+            &nbsp;은 x = {fmt(l.x / lenF)} {units.length} 위치의 특이함수(디랙 델타·모멘트항)로 등가 처리돼요.
+          </div>
+        ))}
+      </div>
+      <div className="step-row">
+        경계조건(적분상수 4개 결정): {bcs.map((b) => b.lines.join(', ')).join('  ·  ')}
+        {bcs.some((b) => b.type !== 'fixed') && (
+          <> &nbsp;· 나머지는 자유단/절단점의 전단력·모멘트 연속조건에서 결정돼요.</>
+        )}
+      </div>
+      <div className="step-final">
+        θ(0) = {fmt(theta0)} rad &nbsp;&nbsp; θ(L) = {fmt(thetaL)} rad
+        <br />
+        v<sub>max</sub> = {fmt(vAtMax / lenF)} {units.length} &nbsp;(x = {fmt(atX / lenF)} {units.length}에서)
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-soft)', marginTop: 4 }}>
+          → ①과 완전히 같은 값이에요. 두 방법 모두 같은 EIv&#8221; = M(x) 관계에서 출발하기 때문이에요.
+        </div>
+      </div>
+    </div>
   );
 }
