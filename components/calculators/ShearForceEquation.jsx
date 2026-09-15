@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflection';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // Example 9-3 — Macaulay 괄호(단위함수) <x-a>를 이용해 집중하중 P가 임의 위치 a에 있는
 // 단순보의 처짐을, 전단력식을 적분해서 구함. 괄호는 x<a일 땐 0, x≥a일 때만 값을 가짐.
@@ -19,6 +20,7 @@ export default function ShearForceEquation() {
   const [P, setP] = useState(20 * 1000);
   const [E, setE] = useState(200 * 1e9);
   const [I, setI] = useState(60e6 * 1e-12);
+  const [activeField, setActiveField] = useState('L');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const forceF = UNIT_OPTIONS.force[units.force];
@@ -52,56 +54,30 @@ export default function ShearForceEquation() {
           defaultText="집중하중 P가 지점 A에서 a만큼 떨어진 위치에 있어요. **Macaulay 괄호** &lt;x−a&gt;를 쓰면 x&lt;a와 x≥a 구간을 나눠 적분할 필요 없이 **식 하나**로 전체 구간을 표현할 수 있어요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>단위 (길이 / 하중)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.force).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.E).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
-        </div>
+        <FieldBlockCard
+          title="보 조건 (L, P, E, I)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
+            { key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force },
+            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
+            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'L') setL(val * lenF);
+            else if (key === 'P') setP(val * forceF);
+            else if (key === 'E') setE(val * EF);
+            else if (key === 'I') setI(val * inertiaF);
+          }}
+        />
         <div className="field">
           <label>하중 위치 a (A로부터) — {fmt(disp(aClamped, lenF))} {units.length}</label>
           <input type="range" min="0.1" max={Math.max(0.2, L - 0.1)} step="0.05" value={aClamped} onChange={(e) => setA(parseFloat(e.target.value))} style={{ width: '100%' }} />
           <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4 }}>a = {fmt(disp(aClamped, lenF))} {units.length}, b = {fmt(disp(b, lenF))} {units.length}</div>
-        </div>
-        <div className="field">
-          <label>집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
-          <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
-        </div>
-        <div className="field">
-          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
-        </div>
-        <div className="field">
-          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
-          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 

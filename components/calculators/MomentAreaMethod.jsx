@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 캔틸레버 보(고정단 A, 자유단 B)의 M/EI 다이어그램을 그려서,
 // 1st 정리(면적=처짐각), 2nd 정리(면적의 1차모멘트=처짐)를 눈으로 확인.
@@ -19,6 +20,7 @@ export default function MomentAreaMethod() {
   const [q, setQ] = useState(10 * 1000);
   const [E, setE] = useState(200 * 1e9);
   const [I, setI] = useState(60e6 * 1e-12);
+  const [activeField, setActiveField] = useState('L');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const forceF = UNIT_OPTIONS.force[units.force];
@@ -70,59 +72,29 @@ export default function MomentAreaMethod() {
             등분포하중 q
           </button>
         </div>
-        <div className="field">
-          <label>단위 (길이 / 하중)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={loadType === 'point' ? units.force : units.distLoad} onChange={(e) => setUnits((p) => (loadType === 'point' ? { ...p, force: e.target.value } : { ...p, distLoad: e.target.value }))}>
-              {Object.keys(loadType === 'point' ? UNIT_OPTIONS.force : UNIT_OPTIONS.distLoad).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.E).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
-        </div>
-        {loadType === 'point' ? (
-          <div className="field">
-            <label>집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
-            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
-          </div>
-        ) : (
-          <div className="field">
-            <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
-            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
-          </div>
-        )}
-        <div className="field">
-          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
-        </div>
-        <div className="field">
-          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
-          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
-        </div>
+        <FieldBlockCard
+          title={`보 조건 (L, ${loadType === 'point' ? 'P' : 'q'}, E, I)`}
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
+            loadType === 'point'
+              ? { key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force }
+              : { key: 'q', label: '등분포하중 q', value: disp(q, distF), unitType: 'distLoad', unit: units.distLoad },
+            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
+            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'L') setL(val * lenF);
+            else if (key === 'P') setP(val * forceF);
+            else if (key === 'q') setQ(val * distF);
+            else if (key === 'E') setE(val * EF);
+            else if (key === 'I') setI(val * inertiaF);
+          }}
+        />
       </div>
 
       {/* ---------------- Visualizer ---------------- */}

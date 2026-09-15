@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computeElastoplastic } from '@/lib/calc/elastoplastic';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
 
@@ -16,6 +17,7 @@ export default function ElastoplasticBending() {
   const [height, setHeight] = useState(6 * 0.0254);
   const [sigmaY, setSigmaY] = useState(36 * 6894.757);
   const [moment, setMoment] = useState(0);
+  const [activeField, setActiveField] = useState('width');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
@@ -37,37 +39,31 @@ export default function ElastoplasticBending() {
           defaultText="직사각형 단면에 모멘트를 점점 키우면, 처음엔 **탄성**이다가 표면부터 **항복**하기 시작하고, 계속 키우면 단면 전체가 **완전소성** 상태가 돼요. 아래 슬라이더로 모멘트를 올려보세요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
+        <FieldBlockCard
+          title="단면 · 항복응력 (b, h, σY)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'width', label: 'Width', value: disp(width, lenF), unitType: 'length', unit: units.length },
+            { key: 'height', label: 'Height', value: disp(height, lenF), unitType: 'length', unit: units.length },
+            { key: 'sigmaY', label: '항복응력 σY', value: disp(sigmaY, stressF), unitType: 'stress', unit: units.stress },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'width') setWidth(val * lenF);
+            else if (key === 'height') setHeight(val * lenF);
+            else if (key === 'sigmaY') setSigmaY(val * stressF);
+          }}
+        />
         <div className="field">
-          <label>단위 (길이 / 응력 / 모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>Width (b) — {fmt(disp(width, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>Height (h) — {fmt(disp(height, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>항복응력 σY — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
+          <label>모멘트 표시 단위</label>
+          <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+            {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
         </div>
         {r0 && (
           <div className="field">

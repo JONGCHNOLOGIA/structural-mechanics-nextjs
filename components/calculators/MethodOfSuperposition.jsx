@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { ssUDL, ssUDLmax, ssPointLoad, ssPointLoadInfo } from '@/lib/calc/deflection';
 import FormulaSection from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 단순보에 등분포하중 q와 중앙 집중하중 P를 동시에(혹은 하나씩) 작용시켜,
 // 표준 케이스 두 개의 처짐을 그냥 더하면(중첩) 실제 결합하중의 처짐이 된다는 걸 보여줌.
@@ -21,6 +22,7 @@ export default function MethodOfSuperposition() {
   const [P, setP] = useState(20 * 1000);
   const [E, setE] = useState(200 * 1e9);
   const [I, setI] = useState(60e6 * 1e-12);
+  const [activeField, setActiveField] = useState('L');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const distF = UNIT_OPTIONS.distLoad[units.distLoad];
@@ -59,71 +61,36 @@ export default function MethodOfSuperposition() {
           defaultText="보가 **선형탄성**이면, 여러 하중을 동시에 받을 때의 처짐은 각 하중을 **따로 작용시켰을 때의 처짐을 그냥 더한 것**과 같아요. 표준 공식표에 있는 케이스들을 조합해서 복잡한 하중도 빠르게 풀 수 있어요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>단위 (길이 / 분포하중 / 집중하중)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.distLoad} onChange={(e) => setUnits((p) => ({ ...p, distLoad: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.distLoad).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.force).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+          <button className={'add-block' + (useUDL ? ' active' : '')} style={{ margin: 0 }} onClick={() => setUseUDL((v) => !v)}>
+            {useUDL ? '✓ ' : ''}등분포하중 q 포함
+          </button>
+          <button className={'add-block' + (usePoint ? ' active' : '')} style={{ margin: 0 }} onClick={() => setUsePoint((v) => !v)}>
+            {usePoint ? '✓ ' : ''}중앙 집중하중 P 포함
+          </button>
         </div>
-        <div className="field">
-          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.E).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <button className={'add-block' + (useUDL ? ' active' : '')} onClick={() => setUseUDL((v) => !v)}>
-          {useUDL ? '✓ ' : ''}등분포하중 q 포함
-        </button>
-        {useUDL && (
-          <div className="field">
-            <label>q — {fmt(disp(q, distF))} {units.distLoad}</label>
-            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
-          </div>
-        )}
-        <button className={'add-block' + (usePoint ? ' active' : '')} onClick={() => setUsePoint((v) => !v)}>
-          {usePoint ? '✓ ' : ''}중앙 집중하중 P 포함
-        </button>
-        {usePoint && (
-          <div className="field">
-            <label>P (중앙 작용) — {fmt(disp(P, forceF))} {units.force}</label>
-            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
-          </div>
-        )}
-        <div className="field">
-          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
-        </div>
-        <div className="field">
-          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
-          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
-        </div>
+        <FieldBlockCard
+          title="보 조건 (L, q, P, E, I)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
+            ...(useUDL ? [{ key: 'q', label: '등분포하중 q', value: disp(q, distF), unitType: 'distLoad', unit: units.distLoad }] : []),
+            ...(usePoint ? [{ key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force }] : []),
+            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
+            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'L') setL(val * lenF);
+            else if (key === 'q') setQ(val * distF);
+            else if (key === 'P') setP(val * forceF);
+            else if (key === 'E') setE(val * EF);
+            else if (key === 'I') setI(val * inertiaF);
+          }}
+        />
       </div>
 
       {/* ---------------- Visualizer ---------------- */}

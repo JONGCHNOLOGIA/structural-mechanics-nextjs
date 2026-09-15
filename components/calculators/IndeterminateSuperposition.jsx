@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { releaseAtB, releaseAtA, proppedCantileverUDLCurve } from '@/lib/calc/indeterminateBeams';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 돌출 캔틸레버(고정단 A, 롤러 B, 등분포하중 q)를 "어느 지점을 놓아주느냐(release)"에 따라
 // 두 가지로 풀 수 있음을 보여줌 — Fig.10-1의 (b)/(c)와 같은 아이디어.
@@ -22,6 +23,7 @@ export default function IndeterminateSuperposition() {
   const [q, setQ] = useState(10 * 1000);
   const [E, setE] = useState(200 * 1e9);
   const [I, setI] = useState(60e6 * 1e-12);
+  const [activeField, setActiveField] = useState('L');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const distF = UNIT_OPTIONS.distLoad[units.distLoad];
@@ -66,21 +68,26 @@ export default function IndeterminateSuperposition() {
             A의 모멘트 → 단순보
           </button>
         </div>
-        <div className="field">
-          <label>단위 (길이 / 분포하중)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.distLoad} onChange={(e) => setUnits((p) => ({ ...p, distLoad: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.distLoad).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <FieldBlockCard
+          title="보 조건 (L, q, E, I)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
+            { key: 'q', label: '등분포하중 q', value: disp(q, distF), unitType: 'distLoad', unit: units.distLoad },
+            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
+            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'L') setL(val * lenF);
+            else if (key === 'q') setQ(val * distF);
+            else if (key === 'E') setE(val * EF);
+            else if (key === 'I') setI(val * inertiaF);
+          }}
+        />
         <div className="field">
           <label>단위 (여분력 표시: 힘 / 모멘트)</label>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -95,37 +102,6 @@ export default function IndeterminateSuperposition() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="field">
-          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.E).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
-          <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
-        </div>
-        <div className="field">
-          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
-        </div>
-        <div className="field">
-          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
-          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
         </div>
       </div>
 

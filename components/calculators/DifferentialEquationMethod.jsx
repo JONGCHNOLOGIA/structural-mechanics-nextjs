@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { proppedCantileverUDL, proppedCantileverUDLCurve, fixedFixedCenterLoad, fixedFixedCenterLoadCurve } from '@/lib/calc/indeterminateBeams';
 import FormulaSection, { Tip } from './FormulaSection';
 import DeflectionCurveSVG from './DeflectionCurveSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // Example 10-1(돌출 캔틸레버, UDL) / 10-2(양단고정, 중앙집중하중) —
 // 반력 중 하나를 "여분력(redundant)"으로 남겨두고 EIv''=M(x)를 적분,
@@ -21,6 +22,7 @@ export default function DifferentialEquationMethod() {
   const [P, setP] = useState(20 * 1000);
   const [E, setE] = useState(200 * 1e9);
   const [I, setI] = useState(60e6 * 1e-12);
+  const [activeField, setActiveField] = useState('L');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const forceF = UNIT_OPTIONS.force[units.force];
@@ -65,63 +67,36 @@ export default function DifferentialEquationMethod() {
             양단고정 (중앙 집중하중)
           </button>
         </div>
+        <FieldBlockCard
+          title={isPropped ? '보 조건 (L, q, E, I)' : '보 조건 (L, P, E, I)'}
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
+            isPropped
+              ? { key: 'q', label: '등분포하중 q', value: disp(q, distF), unitType: 'distLoad', unit: units.distLoad }
+              : { key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force },
+            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
+            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'L') setL(val * lenF);
+            else if (key === 'q') setQ(val * distF);
+            else if (key === 'P') setP(val * forceF);
+            else if (key === 'E') setE(val * EF);
+            else if (key === 'I') setI(val * inertiaF);
+          }}
+        />
         <div className="field">
-          <label>단위 (길이 / 하중 / 모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={isPropped ? units.distLoad : units.force} onChange={(e) => setUnits((p) => (isPropped ? { ...p, distLoad: e.target.value } : { ...p, force: e.target.value }))}>
-              {Object.keys(isPropped ? UNIT_OPTIONS.distLoad : UNIT_OPTIONS.force).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>단위 (탄성계수 / 단면 2차모멘트)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.E} onChange={(e) => setUnits((p) => ({ ...p, E: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.E).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.inertia} onChange={(e) => setUnits((p) => ({ ...p, inertia: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.inertia).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => setL(parseFloat(e.target.value) * lenF)} />
-        </div>
-        {isPropped ? (
-          <div className="field">
-            <label>등분포하중 q — {fmt(disp(q, distF))} {units.distLoad}</label>
-            <input type="number" defaultValue={fmtInput(disp(q, distF))} onBlur={(e) => setQ(parseFloat(e.target.value) * distF)} />
-          </div>
-        ) : (
-          <div className="field">
-            <label>중앙 집중하중 P — {fmt(disp(P, forceF))} {units.force}</label>
-            <input type="number" defaultValue={fmtInput(disp(P, forceF))} onBlur={(e) => setP(parseFloat(e.target.value) * forceF)} />
-          </div>
-        )}
-        <div className="field">
-          <label>탄성계수 E — {fmt(disp(E, EF))} {units.E}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, EF))} onBlur={(e) => setE(parseFloat(e.target.value) * EF)} />
-        </div>
-        <div className="field">
-          <label>단면 2차모멘트 I — {fmt(disp(I, inertiaF))} {units.inertia}</label>
-          <input type="number" defaultValue={fmtInput(disp(I, inertiaF))} onBlur={(e) => setI(parseFloat(e.target.value) * inertiaF)} />
+          <label>반력모멘트 표시 단위</label>
+          <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
+            {Object.keys(UNIT_OPTIONS.moment).map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
         </div>
       </div>
 
