@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, cbSliderRangeFor, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
@@ -22,6 +22,15 @@ export default function PlaneStress() {
 
   const r = useMemo(() => computePlaneStress(sigmaX, sigmaY, tauXY, theta), [sigmaX, sigmaY, tauXY, theta]);
 
+  function updateStressField(field, value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    const newVal = val * stressF;
+    if (field === 'sigmaX') setSigmaX(newVal);
+    else if (field === 'sigmaY') setSigmaY(newVal);
+    else if (field === 'tauXY') setTauXY(newVal);
+  }
+
   return (
     <>
       {/* ---------------- Setting Menu ---------------- */}
@@ -32,28 +41,14 @@ export default function PlaneStress() {
           defaultText="임의의 응력 상태(σx, σy, τxy)에서, 요소를 θ만큼 돌렸을 때 새로운 면에 나타나는 응력(σx1, σy1, τx1y1)을 구해요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>응력 단위</label>
-          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-        </div>
+        <StressStateCard
+          sigmaX={sigmaX}
+          sigmaY={sigmaY}
+          tauXY={tauXY}
+          units={units}
+          onFieldChange={updateStressField}
+          onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
+        />
         <div className="field">
           <label>회전각 θ — {theta.toFixed(0)}°</label>
           <input type="range" min="-90" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} style={{ width: '100%' }} />
@@ -107,6 +102,80 @@ export default function PlaneStress() {
 
       <AiTutorPanel />
     </>
+  );
+}
+
+// σx/σy/τxy를 Composite Beams·Inclined Loads의 블록 카드(활성 필드 슬라이더 1줄 + 3분할 타일)와
+// 같은 패턴으로 묶은 카드. 활성 필드를 클릭해서 바꾸면 슬라이더가 그 값을 가리킴.
+function StressStateCard({ sigmaX, sigmaY, tauXY, units, onFieldChange, onUnitChange }) {
+  const stressF = UNIT_OPTIONS.stress[units.stress];
+  const disp = (base, factor) => base / factor;
+  const stressR = cbSliderRangeFor('stress', units.stress);
+  const [activeField, setActiveField] = useState('sigmaX');
+  const color = { fill: '#F7E3E6', stroke: '#C3002F' };
+
+  const FIELD_META = {
+    sigmaX: { label: 'σx', value: disp(sigmaX, stressF) },
+    sigmaY: { label: 'σy', value: disp(sigmaY, stressF) },
+    tauXY: { label: 'τxy', value: disp(tauXY, stressF) },
+  };
+  const active = FIELD_META[activeField];
+
+  return (
+    <div className="block-card">
+      <div className="block-title">
+        <span className="color-dot" style={{ background: color.stroke }} />
+        응력 상태 (σx, σy, τxy)
+      </div>
+
+      <div className="block-active-field" style={{ background: color.fill, borderColor: color.stroke }}>
+        <div className="block-active-field-label" style={{ color: color.stroke }}>
+          응력 · {active.label}
+        </div>
+        <div className="block-active-field-row">
+          <input
+            type="range"
+            min={stressR[0]}
+            max={stressR[1]}
+            step={stressR[2]}
+            value={active.value}
+            onChange={(e) => onFieldChange(activeField, e.target.value)}
+            style={{ flex: 1, accentColor: color.stroke }}
+          />
+          <select className="unit-inline" value={units.stress} onChange={(e) => onUnitChange(e.target.value)}>
+            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="block-field-tiles">
+        {['sigmaX', 'sigmaY', 'tauXY'].map((key) => {
+          const meta = FIELD_META[key];
+          const isActive = key === activeField;
+          return (
+            <div
+              key={key}
+              className={'block-field-tile' + (isActive ? ' active' : '')}
+              style={isActive ? { background: color.fill, borderColor: color.stroke } : undefined}
+              onClick={() => setActiveField(key)}
+            >
+              <div className="block-field-tile-label">{meta.label}</div>
+              <input
+                key={`${key}-${meta.value}-${units.stress}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(meta.value)}
+                onFocus={() => setActiveField(key)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => onFieldChange(key, e.target.value)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
