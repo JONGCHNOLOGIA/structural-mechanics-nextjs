@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computeMaxBeamStress } from '@/lib/calc/maxBeamStress';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
@@ -17,6 +18,7 @@ export default function MaxBeamStress() {
   const [M, setM] = useState(60 * 112.9848);
   const [V, setV] = useState(2000 * 4.448222);
   const [y, setY] = useState(0);
+  const [activeField, setActiveField] = useState('width');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
@@ -36,52 +38,26 @@ export default function MaxBeamStress() {
           defaultText="보 단면의 높이 방향 위치(y)에 따라 굽힘응력과 전단응력의 비율이 달라져요. 표면(y=±h/2)에선 전단이 0, 중립축(y=0)에선 굽힘응력이 0이에요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>단위 (길이 / 응력)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>단위 (모멘트 / 전단력)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.moment).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.force} onChange={(e) => setUnits((p) => ({ ...p, force: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.force).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>Width (b) — {fmt(disp(width, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(width, lenF))} onBlur={(e) => setWidth(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>Height (h) — {fmt(disp(height, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(height, lenF))} onBlur={(e) => setHeight(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>Moment M — {fmt(disp(M, momF))} {units.moment}</label>
-          <input type="number" defaultValue={fmtInput(disp(M, momF))} onBlur={(e) => setM(parseFloat(e.target.value) * momF)} />
-        </div>
-        <div className="field">
-          <label>Shear V — {fmt(disp(V, forceF))} {units.force}</label>
-          <input type="number" defaultValue={fmtInput(disp(V, forceF))} onBlur={(e) => setV(parseFloat(e.target.value) * forceF)} />
-        </div>
+        <FieldBlockCard
+          title="단면 · 하중 (Width, Height, M, V)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'width', label: 'Width', value: disp(width, lenF), unitType: 'length', unit: units.length },
+            { key: 'height', label: 'Height', value: disp(height, lenF), unitType: 'length', unit: units.length },
+            { key: 'M', label: 'Moment M', value: disp(M, momF), unitType: 'moment', unit: units.moment },
+            { key: 'V', label: 'Shear V', value: disp(V, forceF), unitType: 'force', unit: units.force },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'width') setWidth(val * lenF);
+            else if (key === 'height') setHeight(val * lenF);
+            else if (key === 'M') setM(val * momF);
+            else if (key === 'V') setV(val * forceF);
+          }}
+        />
         {width && height && (
           <div className="field">
             <label>단면 내 위치 y — {fmt(disp(y, lenF))} {units.length}</label>

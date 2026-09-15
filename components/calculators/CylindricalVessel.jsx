@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computeCylindricalVessel } from '@/lib/calc/pressureVessels';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import FieldBlockCard from './FieldBlockCard';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -16,6 +17,7 @@ export default function CylindricalVessel() {
   const [t, setT] = useState(0.5 * 0.0254);
   const [p, setP] = useState(200 * 6894.757);
   const [theta, setTheta] = useState(0);
+  const [activeField, setActiveField] = useState('r');
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
@@ -33,33 +35,24 @@ export default function CylindricalVessel() {
           defaultText="원통형 압력용기는 **원주방향(hoop) 응력이 길이방향의 2배**예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>단위 (길이 / 응력)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>내부 반지름 r — {fmt(disp(r, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(r, lenF))} onBlur={(e) => setR(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>두께 t — {fmt(disp(t, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(t, lenF))} onBlur={(e) => setT(parseFloat(e.target.value) * lenF)} />
-        </div>
-        <div className="field">
-          <label>내부압력 p — {fmt(disp(p, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(p, stressF))} onBlur={(e) => setP(parseFloat(e.target.value) * stressF)} />
-        </div>
+        <FieldBlockCard
+          title="용기 치수 · 압력 (r, t, p)"
+          activeKey={activeField}
+          onActiveChange={setActiveField}
+          fields={[
+            { key: 'r', label: '반지름 r', value: disp(r, lenF), unitType: 'length', unit: units.length },
+            { key: 't', label: '두께 t', value: disp(t, lenF), unitType: 'length', unit: units.length },
+            { key: 'p', label: '압력 p', value: disp(p, stressF), unitType: 'stress', unit: units.stress },
+          ]}
+          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType === 'stress' ? 'stress' : 'length']: v }))}
+          onFieldChange={(key, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            if (key === 'r') setR(val * lenF);
+            else if (key === 't') setT(val * lenF);
+            else if (key === 'p') setP(val * stressF);
+          }}
+        />
         <div className="field">
           <label>용접선 각도 θ (축 기준) — {theta.toFixed(0)}°</label>
           <input type="range" min="0" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} style={{ width: '100%' }} />

@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { principalFromState } from '@/lib/calc/principalStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import StressStateCard from './StressStateCard';
 
 // 프로토타입 renderCombinedLoadings()를 React로 옮긴 버전.
 
@@ -47,26 +48,22 @@ export default function CombinedLoadings() {
           · 압력용기: σ1=<Frac num="pr" den="t" /> (원통 hoop), σ=<Frac num="pr" den="2t" /> (구/원통 길이방향)
         </div>
         <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 10 }}>아래에 그 점에서 <b>합쳐진 최종값</b>을 입력하세요.</div>
-        <div className="field">
-          <label>응력 단위</label>
-          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label>σx (합산값) — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>σy (합산값) — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>τxy (합산값) — {fmt(disp(tauXY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-        </div>
+        <StressStateCard
+          title="응력 상태 (σx, σy, τxy — 합산값)"
+          sigmaX={sigmaX}
+          sigmaY={sigmaY}
+          tauXY={tauXY}
+          units={units}
+          onFieldChange={(field, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            const newVal = val * stressF;
+            if (field === 'sigmaX') setSigmaX(newVal);
+            else if (field === 'sigmaY') setSigmaY(newVal);
+            else if (field === 'tauXY') setTauXY(newVal);
+          }}
+          onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
+        />
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
