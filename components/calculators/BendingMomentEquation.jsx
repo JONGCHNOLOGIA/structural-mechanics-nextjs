@@ -291,16 +291,25 @@ export default function BendingMomentEquation() {
 
         {solved && (
           <>
-            <div className="result-grid">
-              {solved.supports.map((s) => (
-                <div className="result-card" key={s.id}>
-                  <div className="l">{SUPPORT_LABEL[s.type]} 반력 (x={fmt(disp(s.x, lenF))}{units.length})</div>
-                  <div className="v">
-                    R={fmt(disp(s.reactionFy, forceF))} {units.force}
-                    {s.type === 'fixed' && <>, M={fmt(disp(s.reactionM, momF))} {units.moment}</>}
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {solved.supports.map((s, i) => {
+                const letter = String.fromCharCode(65 + i); // A, B, C ...
+                return (
+                  <div key={s.id} className="step-formula" style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}>
+                    <div>
+                      R<sub>{letter}</sub> = {fmt(disp(s.reactionFy, forceF))} {units.force}
+                      {s.type === 'fixed' && (
+                        <>
+                          &nbsp;&nbsp;&nbsp;M<sub>{letter}</sub> = {fmt(disp(s.reactionM, momF))} {units.moment}
+                        </>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--gray-soft)', marginTop: 2, letterSpacing: 0 }}>
+                      {SUPPORT_LABEL[s.type]} 지지단 · x = {fmt(disp(s.x, lenF))} {units.length}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="steps">
@@ -402,6 +411,9 @@ function NumField({ label, value, onCommit, width = 74 }) {
     <label style={{ fontSize: 11, color: 'var(--gray-soft)', display: 'flex', alignItems: 'center', gap: 4 }}>
       {label}
       <input
+        // 드래그/리사이즈처럼 외부에서 값이 바뀔 때도 반영되도록, 값이 바뀌면 key를 바꿔서
+        // uncontrolled input을 새 defaultValue로 다시 마운트시킨다 (포커스 중엔 안 바뀜).
+        key={fmtInput(value)}
         type="number"
         step="any"
         defaultValue={fmtInput(value)}

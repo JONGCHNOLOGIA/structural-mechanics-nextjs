@@ -337,6 +337,18 @@ export default function BeamBuilderSVG({
                 onCommit={(v) => { onEditValue(l.id, v); setEditingId(null); }}
                 onCancel={() => setEditingId(null)}
               />
+              {/* 선택되어 있을 때(또는 끝을 리사이즈하는 중일 때) 현재 span 길이를 치수선으로 표시 —
+                  양 끝을 끌어서 줄이거나 늘리는 만큼 실시간으로 갱신된다. */}
+              {isSel && (
+                <g>
+                  <line x1={xS} y1={spanY - 22} x2={xE} y2={spanY - 22} stroke={stroke} strokeWidth="1" strokeDasharray="3 2" />
+                  <line x1={xS} y1={spanY - 26} x2={xS} y2={spanY - 18} stroke={stroke} strokeWidth="1" />
+                  <line x1={xE} y1={spanY - 26} x2={xE} y2={spanY - 18} stroke={stroke} strokeWidth="1" />
+                  <text x={(xS + xE) / 2} y={spanY - 30} fontSize="11" fill={stroke} textAnchor="middle" fontWeight="700">
+                    {formatX ? formatX(l.xEnd - l.xStart) : ''}
+                  </text>
+                </g>
+              )}
             </g>
           );
         }
