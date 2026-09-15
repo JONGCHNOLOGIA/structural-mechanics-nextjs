@@ -14,12 +14,6 @@ import InclinedLoads3D from './InclinedLoads3D';
 // SETTING MENU는 Composite Beams의 블록 카드(슬라이더 1줄 + 타일 그리드)를 그대로 가져와서
 // Width/Height/α 세 칸으로 씀 — 다른 점은 하중 q, 스팬 길이 L을 추가로 설정한다는 것뿐.
 
-const Q_UNITS = {
-  'kN/m': 1000,
-  'N/mm': 1000,
-  'lb/ft': 14.5939,
-};
-
 const SECTION_NAMES = ['loads', 'inertia', 'stress', 'na'];
 
 function sectionTitle(name) {
@@ -37,6 +31,8 @@ export default function InclinedLoads() {
   const [alphaDeg, setAlphaDeg] = useState(0);
   const [q, setQ] = useState(2 * 1000);
   const [L, setL] = useState(4);
+  const [qRangeOverrideBase, setQRangeOverrideBase] = useState(null);
+  const [lRangeOverrideBase, setLRangeOverrideBase] = useState(null);
   const [elevation3D, setElevation3D] = useState(false);
   const [editingField, setEditingField] = useState(null); // 'width' | 'height' | null — VISUALIZER 클릭 수정용
   const [calcState, setCalcState] = useState({ loads: 'idle', inertia: 'idle', stress: 'idle', na: 'idle' });
@@ -44,8 +40,45 @@ export default function InclinedLoads() {
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
-  const qF = Q_UNITS[units.qUnit];
+  const qF = UNIT_OPTIONS.distLoad[units.qUnit];
   const disp = (base, factor) => base / factor;
+
+  function qEffectiveRange() {
+    const r0 = cbSliderRangeFor('distLoad', units.qUnit);
+    if (!qRangeOverrideBase) return r0;
+    return [qRangeOverrideBase.min / qF, qRangeOverrideBase.max / qF, r0[2]];
+  }
+  function lEffectiveRange() {
+    const r0 = cbSliderRangeFor('span', units.length);
+    if (!lRangeOverrideBase) return r0;
+    return [lRangeOverrideBase.min / lenF, lRangeOverrideBase.max / lenF, r0[2]];
+  }
+  function updateQ(value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    const newQ = val * qF;
+    const r0 = cbSliderRangeFor('distLoad', units.qUnit);
+    const baseMin = r0[0] * qF, baseMax = r0[1] * qF;
+    const curMin = qRangeOverrideBase ? qRangeOverrideBase.min : baseMin;
+    const curMax = qRangeOverrideBase ? qRangeOverrideBase.max : baseMax;
+    if (newQ > curMax || newQ < curMin) {
+      setQRangeOverrideBase({ min: Math.min(curMin, newQ, baseMin), max: Math.max(curMax, newQ, baseMax) });
+    }
+    updateAndStale(setQ)(newQ);
+  }
+  function updateL(value) {
+    const val = parseFloat(value);
+    if (isNaN(val)) return;
+    const newL = val * lenF;
+    const r0 = cbSliderRangeFor('span', units.length);
+    const baseMin = r0[0] * lenF, baseMax = r0[1] * lenF;
+    const curMin = lRangeOverrideBase ? lRangeOverrideBase.min : baseMin;
+    const curMax = lRangeOverrideBase ? lRangeOverrideBase.max : baseMax;
+    if (newL > curMax || newL < curMin) {
+      setLRangeOverrideBase({ min: Math.min(curMin, newL, baseMin), max: Math.max(curMax, newL, baseMax) });
+    }
+    updateAndStale(setL)(newL);
+  }
 
   const alphaRad = (alphaDeg * Math.PI) / 180;
   const r = useMemo(() => (b && h && L ? computeInclinedLoads(b, h, q, L, alphaRad) : null), [b, h, q, L, alphaRad]);
@@ -111,7 +144,7 @@ export default function InclinedLoads() {
               ))}
             </select>
             <select className="unit-inline" style={{ width: '100%' }} value={units.qUnit} onChange={(e) => setUnits((p) => ({ ...p, qUnit: e.target.value }))}>
-              {Object.keys(Q_UNITS).map((u) => (
+              {Object.keys(UNIT_OPTIONS.distLoad).map((u) => (
                 <option key={u} value={u}>{u}</option>
               ))}
             </select>
@@ -125,11 +158,59 @@ export default function InclinedLoads() {
 
         <div className="field">
           <label>등분포하중 q — {fmt(disp(q, qF))} {units.qUnit}</label>
-          <input type="number" defaultValue={fmtInput(disp(q, qF))} onBlur={(e) => updateAndStale(setQ)(parseFloat(e.target.value) * qF)} />
+          <div className="field-with-slider">
+            <div className="input-unit-group">
+              <input
+                key={`q-${q}-${units.qUnit}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(disp(q, qF))}
+                onBlur={(e) => updateQ(e.target.value)}
+              />
+              <select className="unit-inline" value={units.qUnit} onChange={(e) => setUnits((p) => ({ ...p, qUnit: e.target.value }))}>
+                {Object.keys(UNIT_OPTIONS.distLoad).map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              className="mini-slider"
+              type="range"
+              min={qEffectiveRange()[0]}
+              max={qEffectiveRange()[1]}
+              step={qEffectiveRange()[2]}
+              value={disp(q, qF)}
+              onChange={(e) => updateQ(e.target.value)}
+            />
+          </div>
         </div>
         <div className="field">
           <label>스팬 길이 L — {fmt(disp(L, lenF))} {units.length}</label>
-          <input type="number" defaultValue={fmtInput(disp(L, lenF))} onBlur={(e) => updateAndStale(setL)(parseFloat(e.target.value) * lenF)} />
+          <div className="field-with-slider">
+            <div className="input-unit-group">
+              <input
+                key={`L-${L}-${units.length}`}
+                type="number"
+                step="any"
+                defaultValue={fmtInput(disp(L, lenF))}
+                onBlur={(e) => updateL(e.target.value)}
+              />
+              <select className="unit-inline" value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
+                {Object.keys(UNIT_OPTIONS.length).map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              className="mini-slider"
+              type="range"
+              min={lEffectiveRange()[0]}
+              max={lEffectiveRange()[1]}
+              step={lEffectiveRange()[2]}
+              value={disp(L, lenF)}
+              onChange={(e) => updateL(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
