@@ -37,6 +37,11 @@ export default function TransformedSection() {
 
   const result = useMemo(() => (blocks.length ? computeTransformed(blocks, moment) : null), [blocks, moment]);
   const refBlock = result ? result.blocks[Math.min(refIndex, result.blocks.length - 1)] : null;
+  // BeamElevation3D는 블록마다 {colorId, width, height}를 기대함 — 상단/하단 폭이 다른 사다리꼴
+  // 블록은 평균 폭으로 근사해서 3D 모델 두께 비율에 반영.
+  const elevationBlocks = result
+    ? result.blocks.map((b) => ({ colorId: b.colorId, height: b.height, width: (b.topWidth + b.bottomWidth) / 2 }))
+    : null;
 
   function changeLengthUnit(v) {
     setUnits((p) => ({ ...p, length: v }));
@@ -178,7 +183,25 @@ export default function TransformedSection() {
           <>
             <TransformedSVG result={result} refBlock={refBlock} />
 
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', margin: '12px 0 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '14px 0' }}>
+              <span style={{ fontSize: 13, color: 'var(--gray-soft)', fontWeight: 700 }}>
+                ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
+              </span>
+              <button
+                className="add-block calc-trigger"
+                style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
+                onClick={() => setElevation3D((v) => !v)}
+              >
+                {elevation3D ? '2D로 보기' : '3D로 보기'}
+              </button>
+            </div>
+            {elevation3D ? (
+              <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} blocks={elevationBlocks} />
+            ) : (
+              <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', margin: '20px 0 16px' }}>
               <div style={{ fontSize: 11.5, color: 'var(--gray-soft)' }}>
                 응력 단위{' '}
                 <select className="unit-inline" value={units.stress} onChange={(e) => changeStressUnit(e.target.value)}>
@@ -258,24 +281,6 @@ export default function TransformedSection() {
               </FormulaSection>
             </div>
             <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.</p>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14 }}>
-              <span style={{ fontSize: 13, color: 'var(--gray-soft)', fontWeight: 700 }}>
-                ↓ 이 단면이 보의 어느 위치, 어떤 하중 상태에 있는지 (X-Y 측면도)
-              </span>
-              <button
-                className="add-block calc-trigger"
-                style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
-                onClick={() => setElevation3D((v) => !v)}
-              >
-                {elevation3D ? '2D로 보기' : '3D로 보기'}
-              </button>
-            </div>
-            {elevation3D ? (
-              <BeamElevation3D momentLabel={momentLabelForElevation} bend={bendPx} />
-            ) : (
-              <BeamElevationSVG momentLabel={momentLabelForElevation} bend={bendPx} />
-            )}
 
             <EditableText as="div" className="ai-hint" contentKey="calc.TransformedSection.aiHint" defaultText="💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
