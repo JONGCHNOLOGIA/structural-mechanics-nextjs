@@ -75,6 +75,45 @@ export default function BendingMomentEquation() {
     setLoads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   }
 
+  function moveX(id, newX) {
+    const clamped = Math.min(L, Math.max(0, newX));
+    if (supports.some((s) => s.id === id)) updateSupport(id, { x: clamped });
+    else {
+      const load = loads.find((l) => l.id === id);
+      if (!load) return;
+      if (load.kind === 'udl' || load.kind === 'triangle') {
+        const span = load.xEnd - load.xStart;
+        const xStart = Math.min(L - span, Math.max(0, clamped - span / 2));
+        updateLoad(id, { xStart, xEnd: xStart + span });
+      } else {
+        updateLoad(id, { x: clamped });
+      }
+    }
+  }
+
+  function labelForLoad(l) {
+    if (l.kind === 'point') return `P = ${fmt(disp(l.P, forceF))} ${units.force}`;
+    if (l.kind === 'udl') return `q = ${fmt(disp(l.q, distF))} ${units.distLoad}`;
+    if (l.kind === 'triangle') return `q: ${fmt(disp(l.qStart, distF))}→${fmt(disp(l.qEnd, distF))} ${units.distLoad}`;
+    if (l.kind === 'moment') return `M₀ = ${fmt(disp(l.M0, momF))} ${units.moment}`;
+    return '';
+  }
+
+  function editValueForLoad(l) {
+    if (l.kind === 'point') return disp(l.P, forceF);
+    if (l.kind === 'udl') return disp(l.q, distF);
+    if (l.kind === 'moment') return disp(l.M0, momF);
+    return null; // 삼각형분포는 값이 2개라 인라인 편집 대신 아래 목록에서 조정
+  }
+
+  function commitLoadEdit(id, newDisplayValue) {
+    const load = loads.find((l) => l.id === id);
+    if (!load) return;
+    if (load.kind === 'point') updateLoad(id, { P: newDisplayValue * forceF });
+    else if (load.kind === 'udl') updateLoad(id, { q: newDisplayValue * distF });
+    else if (load.kind === 'moment') updateLoad(id, { M0: newDisplayValue * momF });
+  }
+
   const determinacy = useMemo(() => checkDeterminacy(supports), [supports]);
   const solved = useMemo(
     () => (determinacy === 'determinate' ? solveBeam(L, supports, loads, EI) : null),
@@ -195,6 +234,11 @@ export default function BendingMomentEquation() {
           momentPts={solved?.pts}
           maxAbsV={maxAbsV}
           showDeflection={showDeflection && !!solved}
+          labelFor={labelForLoad}
+          getEditValue={editValueForLoad}
+          onEditValue={commitLoadEdit}
+          onMoveX={moveX}
+          onRemoveItem={removeItem}
         />
 
         {determinacy === 'unstable' && (
