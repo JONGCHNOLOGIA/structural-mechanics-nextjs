@@ -1,6 +1,6 @@
 'use client';
 
-import { UNIT_OPTIONS, cbSliderRangeFor, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, cbSliderRangeFor, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 
 // Composite Beams/Inclined Loads/Transformed Section의 블록 카드(활성 필드 슬라이더 1줄 +
 // N분할 타일)를 임의의 필드 묶음에 쓸 수 있게 일반화한 버전. 서로 다른 단위 카테고리(길이,
@@ -24,6 +24,9 @@ export default function FieldBlockCard({ title, fields, activeKey, onActiveChang
       <div className="block-active-field" style={{ background: color.fill, borderColor: color.stroke }}>
         <div className="block-active-field-label" style={{ color: color.stroke }}>
           {shortTitle} · {active.label}
+          {active.unitType === 'inertia' && active.value > 0 && (
+            <span style={{ fontWeight: 600, opacity: 0.75 }}> ({fmtSci(active.value)} {active.unit})</span>
+          )}
         </div>
         <div className="block-active-field-row">
           <input
@@ -65,6 +68,11 @@ export default function FieldBlockCard({ title, fields, activeKey, onActiveChang
                 onClick={(e) => e.stopPropagation()}
                 onBlur={(e) => onFieldChange(f.key, e.target.value)}
               />
+              {f.unitType === 'inertia' && f.value > 0 && (
+                <div style={{ fontSize: 9.5, color: 'var(--gray-soft)', marginTop: 2, fontWeight: 600 }}>
+                  {fmtSci(f.value)} {f.unit}
+                </div>
+              )}
             </div>
           );
         })}

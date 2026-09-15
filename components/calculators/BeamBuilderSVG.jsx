@@ -10,6 +10,7 @@ import { useRef, useState } from 'react';
 const GRAY = '#51626F';
 const CRIMSON = '#C3002F';
 const TEAL = '#1E7F72';
+const BLUE = '#2D6CDF';
 
 const SUPPORT_GHOST_LABEL = { fixed: '고정', pin: '힌지', roller: '롤러' };
 
@@ -346,6 +347,27 @@ export default function BeamBuilderSVG({
                   <line x1={xE} y1={spanY - 26} x2={xE} y2={spanY - 18} stroke={stroke} strokeWidth="1" />
                   <text x={(xS + xE) / 2} y={spanY - 30} fontSize="11" fill={stroke} textAnchor="middle" fontWeight="700">
                     {formatX ? formatX(l.xEnd - l.xStart) : ''}
+                  </text>
+                </g>
+              )}
+              {/* 하중이 보 전체를 덮지 않을 때, 남는 구간(하중이 없는 부분) 길이를 파란색으로 별도 표시 */}
+              {isSel && l.xEnd < L - 1e-6 && (
+                <g>
+                  <line x1={xE} y1={spanY - 22} x2={padL + drawW} y2={spanY - 22} stroke={BLUE} strokeWidth="1" strokeDasharray="3 2" />
+                  <line x1={xE} y1={spanY - 26} x2={xE} y2={spanY - 18} stroke={BLUE} strokeWidth="1" />
+                  <line x1={padL + drawW} y1={spanY - 26} x2={padL + drawW} y2={spanY - 18} stroke={BLUE} strokeWidth="1" />
+                  <text x={(xE + padL + drawW) / 2} y={spanY - 30} fontSize="11" fill={BLUE} textAnchor="middle" fontWeight="700">
+                    {formatX ? formatX(L - l.xEnd) : ''}
+                  </text>
+                </g>
+              )}
+              {isSel && l.xStart > 1e-6 && (
+                <g>
+                  <line x1={padL} y1={spanY - 22} x2={xS} y2={spanY - 22} stroke={BLUE} strokeWidth="1" strokeDasharray="3 2" />
+                  <line x1={padL} y1={spanY - 26} x2={padL} y2={spanY - 18} stroke={BLUE} strokeWidth="1" />
+                  <line x1={xS} y1={spanY - 26} x2={xS} y2={spanY - 18} stroke={BLUE} strokeWidth="1" />
+                  <text x={(padL + xS) / 2} y={spanY - 30} fontSize="11" fill={BLUE} textAnchor="middle" fontWeight="700">
+                    {formatX ? formatX(l.xStart) : ''}
                   </text>
                 </g>
               )}
