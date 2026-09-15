@@ -37,10 +37,10 @@ export default function TransformedSection() {
 
   const result = useMemo(() => (blocks.length ? computeTransformed(blocks, moment) : null), [blocks, moment]);
   const refBlock = result ? result.blocks[Math.min(refIndex, result.blocks.length - 1)] : null;
-  // BeamElevation3D는 블록마다 {colorId, width, height}를 기대함 — 상단/하단 폭이 다른 사다리꼴
-  // 블록은 평균 폭으로 근사해서 3D 모델 두께 비율에 반영.
+  // BeamElevation3D는 블록마다 {colorId, height, widthBottom, widthTop}를 받으면 실제 사다리꼴
+  // 단면(옆면이 기울어진 각기둥)으로 그려줌 — 2D 단면도(원래 단면)와 같은 모양.
   const elevationBlocks = result
-    ? result.blocks.map((b) => ({ colorId: b.colorId, height: b.height, width: (b.topWidth + b.bottomWidth) / 2 }))
+    ? result.blocks.map((b) => ({ colorId: b.colorId, height: b.height, widthBottom: b.bottomWidth, widthTop: b.topWidth }))
     : null;
 
   function changeLengthUnit(v) {

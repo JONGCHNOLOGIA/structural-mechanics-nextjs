@@ -40,10 +40,48 @@ export default function BeamElevation3D({ momentLabel, bend, blocks }) {
     scene.add(dirLight);
 
     // ---- 휘어진 보 ----
-    // blocks가 있으면: 블록마다 높이 비율(H 안에서) · 폭 비율(D 안에서, 중앙정렬)을 반영한
-    // 색깔 있는 슬라브를 아래에서부터 쌓아올림. 없으면: 예전처럼 균질한 단일 박스.
+    // blocks가 있으면: 블록마다 높이 비율(H 안에서) · 상단/하단 폭 비율(D 안에서, 중앙정렬)을
+    // 반영한 색깔 있는 슬라브를 아래에서부터 쌓아올림 — 상단폭≠하단폭이면 (Transformed Section의
+    // 사다리꼴 블록처럼) 옆면이 실제로 기울어진 각기둥으로 만듦. blocks가 없으면 예전처럼
+    // 균질한 단일 박스.
     const segs = 32;
-    const layerMeshes = []; // { mesh, geo, edges, baseY }
+    const layerMeshes = []; // { mesh, geo, edges, baseY: unused(0) }
+
+    // 사다리꼴 단면(아래 폭 wBottom, 위 폭 wTop, y범위 yBottom~yTop)을 보 길이(L) 방향으로
+    // 압출한 각기둥 지오메트리. x방향으로 segs만큼 잘라둬서 휨(applyBend)이 부드럽게 먹도록 함.
+    function buildTaperedGeometry(yBottom, yTop, wBottom, wTop) {
+      const xs = [];
+      for (let i = 0; i <= segs; i++) xs.push(-L / 2 + (L * i) / segs);
+      const positions = [];
+      const tri = (a, b, c) => positions.push(...a, ...b, ...c);
+      const quad = (a, b, c, d) => {
+        tri(a, b, c);
+        tri(a, c, d);
+      };
+      const corners = (x) => ({
+        BL: [x, yBottom, -wBottom / 2],
+        BR: [x, yBottom, wBottom / 2],
+        TR: [x, yTop, wTop / 2],
+        TL: [x, yTop, -wTop / 2],
+      });
+      for (let i = 0; i < segs; i++) {
+        const c0 = corners(xs[i]);
+        const c1 = corners(xs[i + 1]);
+        quad(c0.BL, c0.BR, c1.BR, c1.BL); // 아래면
+        quad(c0.BR, c0.TR, c1.TR, c1.BR); // 옆면(+Z)
+        quad(c0.TR, c0.TL, c1.TL, c1.TR); // 윗면
+        quad(c0.TL, c0.BL, c1.BL, c1.TL); // 옆면(-Z)
+      }
+      const cs = corners(xs[0]);
+      quad(cs.TL, cs.TR, cs.BR, cs.BL); // 시작 마구리
+      const ce = corners(xs[segs]);
+      quad(ce.BL, ce.BR, ce.TR, ce.TL); // 끝 마구리
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+      return geo;
+    }
 
     function buildLayers() {
       layerMeshes.forEach(({ mesh, geo, edges: e, mat: m }) => {
@@ -59,22 +97,25 @@ export default function BeamElevation3D({ momentLabel, bend, blocks }) {
       if (hasBlocks) {
         const bs = blocksRef.current;
         const totalH = bs.reduce((s, b) => s + b.height, 0) || 1;
-        const maxW = Math.max(...bs.map((b) => b.width)) || 1;
+        const maxW = Math.max(...bs.map((b) => Math.max(b.widthBottom ?? b.width, b.widthTop ?? b.width))) || 1;
         let cum = 0;
         bs.forEach((b) => {
           const hFrac = (b.height / totalH) * H;
-          const dFrac = Math.max(0.06, (b.width / maxW) * D);
-          const centerY = -H / 2 + cum + hFrac / 2;
+          const wBottomRaw = b.widthBottom ?? b.width;
+          const wTopRaw = b.widthTop ?? b.width;
+          const dBottomFrac = Math.max(0.06, (wBottomRaw / maxW) * D);
+          const dTopFrac = Math.max(0.06, (wTopRaw / maxW) * D);
+          const yBottom = -H / 2 + cum;
+          const yTop = yBottom + hFrac;
           cum += hFrac;
           const c = blockColor(b);
-          const geo = new THREE.BoxGeometry(L, hFrac, dFrac, segs, 1, 1);
-          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(c.stroke), roughness: 0.75, metalness: 0.05 });
+          const geo = buildTaperedGeometry(yBottom, yTop, dBottomFrac, dTopFrac);
+          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(c.stroke), roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide });
           const mesh = new THREE.Mesh(geo, mat);
-          mesh.position.y = centerY;
           scene.add(mesh);
           const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), new THREE.LineBasicMaterial({ color: GRAY }));
           mesh.add(edges);
-          layerMeshes.push({ mesh, geo, mat, edges, baseY: centerY });
+          layerMeshes.push({ mesh, geo, mat, edges, baseY: 0 });
         });
       } else {
         const geo = new THREE.BoxGeometry(L, H, D, segs, 1, 1);
