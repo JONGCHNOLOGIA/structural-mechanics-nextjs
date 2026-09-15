@@ -11,9 +11,12 @@ const GRAY = '#51626F';
 const CRIMSON = '#C3002F';
 const TEAL = '#1E7F72';
 
+const SUPPORT_GHOST_LABEL = { fixed: '고정', pin: '힌지', roller: '롤러' };
+
 export default function BeamBuilderSVG({
   L,
   spanLabel,
+  spanValue, // spanLabel의 숫자 부분(표시 단위 기준) — L 라벨 인라인 편집용
   supports,
   loads,
   selectedId,
@@ -27,9 +30,12 @@ export default function BeamBuilderSVG({
   onEditValue, // (id, newDisplayValue) => void
   onMoveX, // (id, newXInMeters) => void — 드래그로 위치 이동
   onRemoveItem, // (id) => void — 드래그해서 쓰레기통에 놓거나 삭제
+  onResizeLoad, // (id, edge:'start'|'end', newXInMeters) => void — 분포하중 양 끝 리사이즈
+  onEditL, // (newDisplayValue) => void — 스팬 L 라벨 클릭 편집
+  formatX, // (xInMeters) => string — 집중하중 위치 치수선 라벨 포맷터
 }) {
   const svgRef = useRef(null);
-  const [drag, setDrag] = useState(null); // { id, x, overTrash }
+  const [drag, setDrag] = useState(null); // { id, overTrash, px, py, ghostLabel }
   const [editingId, setEditingId] = useState(null);
 
   const w = 680;
@@ -43,7 +49,7 @@ export default function BeamBuilderSVG({
 
   const hasDiagram = Array.isArray(momentPts) && momentPts.length > 1;
   const diagH = 80;
-  const diagTop = 220;
+  const diagTop = 260;
   const mToPx = (m) => diagTop + diagH / 2 - (maxAbsM > 0 ? (m / maxAbsM) * (diagH / 2 - 6) : 0);
   const h = hasDiagram ? diagTop + diagH + 30 : beamY + 110;
 
@@ -68,19 +74,22 @@ export default function BeamBuilderSVG({
     const p = svgPoint(clientX, clientY);
     const dx = p.x - trashCx, dy = p.y - trashCy;
     const overTrash = Math.sqrt(dx * dx + dy * dy) < trashR + 6;
-    return { x: pxToX(p.x), overTrash };
+    return { x: pxToX(p.x), px: p.x, py: p.y, overTrash };
   }
 
-  function startDrag(e, id, currentX) {
+  // 항목을 집어드는 것처럼 보이도록, 실제 아이콘은 원래 자리에 흐리게 남겨두고 커서를 따라다니는
+  // "고스트"(그림자 달린 작은 배지)만 이동시킨다. 마우스를 떼면 그제서야 실제 위치가 갱신된다.
+  function startDrag(e, id, currentX, ghostLabel) {
     e.stopPropagation();
     e.preventDefault();
-    let current = { id, x: currentX, overTrash: false };
+    const start = computeFromClient(e.clientX, e.clientY);
+    let current = { id, overTrash: false, px: start.px, py: start.py, ghostLabel };
     setDrag(current);
     onSelect(id);
 
     function handleMove(ev) {
-      const { x, overTrash } = computeFromClient(ev.clientX, ev.clientY);
-      current = { ...current, x, overTrash };
+      const { px, py, overTrash } = computeFromClient(ev.clientX, ev.clientY);
+      current = { ...current, px, py, overTrash };
       setDrag(current);
     }
     function handleUp(ev) {
@@ -95,7 +104,24 @@ export default function BeamBuilderSVG({
     window.addEventListener('mouseup', handleUp);
   }
 
-  const effectiveX = (id, fallback) => (drag && drag.id === id ? drag.x : fallback);
+  // 분포하중(UDL/삼각형)의 양 끝을 잡아 span을 늘리거나 줄이는 리사이즈 드래그.
+  function startResizeDrag(e, id, edge) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    function handleMove(ev) {
+      const { x } = computeFromClient(ev.clientX, ev.clientY);
+      onResizeLoad(id, edge, x);
+    }
+    function handleUp() {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    }
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }
+
+  const isDraggingId = (id) => !!(drag && drag.id === id);
 
   return (
     <svg
@@ -107,9 +133,17 @@ export default function BeamBuilderSVG({
       <line x1={padL} y1={spanY} x2={padL + drawW} y2={spanY} stroke="#8A97A2" strokeWidth="1" />
       <line x1={padL} y1={spanY - 4} x2={padL} y2={spanY + 4} stroke="#8A97A2" strokeWidth="1" />
       <line x1={padL + drawW} y1={spanY - 4} x2={padL + drawW} y2={spanY + 4} stroke="#8A97A2" strokeWidth="1" />
-      <text x={padL + drawW / 2} y={spanY + 16} fontSize="12.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
-        L = {spanLabel}
-      </text>
+      <EditableLabel
+        x={padL + drawW / 2}
+        y={spanY + 16}
+        text={`L = ${spanLabel}`}
+        color="#8A97A2"
+        editing={editingId === '__L__'}
+        editValue={onEditL ? spanValue : null}
+        onStartEdit={() => (onEditL ? setEditingId('__L__') : null)}
+        onCommit={(v) => { onEditL(v); setEditingId(null); }}
+        onCancel={() => setEditingId(null)}
+      />
 
       {/* 보 본체 */}
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke={GRAY} strokeWidth="4" />
@@ -135,16 +169,31 @@ export default function BeamBuilderSVG({
         </g>
       )}
 
+      {/* 드래그 "고스트" — 실제 아이콘은 원래 자리에 흐리게 남기고, 그림자 달린 배지가 커서를 따라다녀서
+          손으로 집어 든 느낌을 준다. 놓으면(mouseup) 그제서야 실제 위치가 갱신된다. */}
+      {drag && (
+        <g
+          transform={`translate(${drag.px}, ${drag.py - 22})`}
+          style={{ pointerEvents: 'none', filter: 'drop-shadow(0px 5px 6px rgba(20,20,30,0.35))', transition: 'opacity 120ms' }}
+          opacity={drag.overTrash ? 0.5 : 1}
+        >
+          <rect x="-24" y="-14" width="48" height="28" rx="8" fill="#fff" stroke={drag.overTrash ? CRIMSON : GRAY} strokeWidth="1.6" />
+          <text x="0" y="5" fontSize="12.5" fontWeight="800" fill={drag.overTrash ? CRIMSON : GRAY} textAnchor="middle">
+            {drag.ghostLabel}
+          </text>
+        </g>
+      )}
+
       {/* 지지단 */}
       {supports.map((s) => {
-        const x = xToPx(effectiveX(s.id, s.x));
+        const x = xToPx(s.x);
         const isSel = s.id === selectedId;
-        const isDragging = drag && drag.id === s.id;
+        const isDragging = isDraggingId(s.id);
         const ring = isSel ? <circle cx={x} cy={beamY} r="18" fill="none" stroke={CRIMSON} strokeWidth="1.5" strokeDasharray="3 2" /> : null;
-        const opacity = isDragging && drag.overTrash ? 0.3 : 1;
+        const opacity = isDragging ? 0.3 : 1;
         if (s.type === 'fixed') {
           return (
-            <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x)} style={{ cursor: 'grab' }}>
+            <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL.fixed)} style={{ cursor: 'grab' }}>
               {ring}
               <rect x={x - 5} y={beamY - 22} width="10" height="44" fill={GRAY} />
               {Array.from({ length: 6 }).map((_, i) => (
@@ -154,7 +203,7 @@ export default function BeamBuilderSVG({
           );
         }
         return (
-          <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x)} style={{ cursor: 'grab' }}>
+          <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL[s.type])} style={{ cursor: 'grab' }}>
             {ring}
             <polygon points={`${x},${beamY} ${x - 10},${beamY + 17} ${x + 10},${beamY + 17}`} fill="none" stroke={GRAY} strokeWidth="1.6" />
             {s.type === 'roller' && (
@@ -171,21 +220,21 @@ export default function BeamBuilderSVG({
       {loads.map((l) => {
         const isSel = l.id === selectedId;
         const stroke = isSel ? CRIMSON : TEAL;
-        const isDragging = drag && drag.id === l.id;
-        const opacity = isDragging && drag.overTrash ? 0.3 : 1;
+        const isDragging = isDraggingId(l.id);
+        const opacity = isDragging ? 0.3 : 1;
         const label = labelFor ? labelFor(l) : '';
         const editVal = getEditValue ? getEditValue(l) : null;
         const isEditing = editingId === l.id;
 
         if (l.kind === 'point') {
-          const x = xToPx(effectiveX(l.id, l.x));
+          const x = xToPx(l.x);
           const down = l.P >= 0;
           const y1 = down ? beamY - 40 : beamY + 40;
           const y2 = down ? beamY - 4 : beamY + 4;
           const labelY = down ? y1 - 20 : y1 + 30;
           return (
             <g key={l.id} opacity={opacity}>
-              <g onMouseDown={(e) => startDrag(e, l.id, l.x)} style={{ cursor: 'grab' }}>
+              <g onMouseDown={(e) => startDrag(e, l.id, l.x, 'P')} style={{ cursor: 'grab' }}>
                 <line x1={x} y1={y1} x2={x} y2={y2} stroke={stroke} strokeWidth="2" />
                 <polygon
                   points={
@@ -207,6 +256,17 @@ export default function BeamBuilderSVG({
                 onCommit={(v) => { onEditValue(l.id, v); setEditingId(null); }}
                 onCancel={() => setEditingId(null)}
               />
+              {/* 선택되어 있을 때만, 왼쪽 끝에서 하중 위치까지 치수선 표시 (분포하중 스팬 표시와 같은 느낌) */}
+              {isSel && x > padL + 6 && (
+                <g>
+                  <line x1={padL} y1={spanY - 22} x2={x} y2={spanY - 22} stroke={stroke} strokeWidth="1" strokeDasharray="3 2" />
+                  <line x1={padL} y1={spanY - 26} x2={padL} y2={spanY - 18} stroke={stroke} strokeWidth="1" />
+                  <line x1={x} y1={spanY - 26} x2={x} y2={spanY - 18} stroke={stroke} strokeWidth="1" />
+                  <text x={(padL + x) / 2} y={spanY - 30} fontSize="11" fill={stroke} textAnchor="middle" fontWeight="700">
+                    {formatX ? `x = ${formatX(l.x)}` : ''}
+                  </text>
+                </g>
+              )}
             </g>
           );
         }
@@ -249,10 +309,23 @@ export default function BeamBuilderSVG({
             const y = down ? beamY - 6 - len : beamY + 6 + len;
             return `${x},${y}`;
           });
+          const handleY = Math.min(
+            qStart >= 0 ? beamY - 6 - Math.max(6, Math.abs(qStart) * scale) : beamY + 6 + Math.max(6, Math.abs(qStart) * scale),
+            qEnd >= 0 ? beamY - 6 - Math.max(6, Math.abs(qEnd) * scale) : beamY + 6 + Math.max(6, Math.abs(qEnd) * scale)
+          );
           return (
             <g key={l.id} opacity={opacity} onClick={() => onSelect(l.id)}>
               <polyline points={topPts.join(' ')} fill="none" stroke={stroke} strokeWidth="1.4" style={{ cursor: 'pointer' }} />
               {arrows}
+              {/* 양 끝 리사이즈 핸들 — PPT 사각형처럼 잡고 끌면 xStart/xEnd가 바뀐다 (보 길이 안에서만) */}
+              {onResizeLoad && (
+                <>
+                  <circle cx={xS} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ cursor: 'ew-resize' }}
+                    onMouseDown={(e) => startResizeDrag(e, l.id, 'start')} />
+                  <circle cx={xE} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ cursor: 'ew-resize' }}
+                    onMouseDown={(e) => startResizeDrag(e, l.id, 'end')} />
+                </>
+              )}
               <EditableLabel
                 x={(xS + xE) / 2}
                 y={beamY - 6 - 34 - 10}
@@ -268,7 +341,7 @@ export default function BeamBuilderSVG({
           );
         }
         if (l.kind === 'moment') {
-          const x = xToPx(effectiveX(l.id, l.x));
+          const x = xToPx(l.x);
           const ccw = l.M0 >= 0;
           const r = 16;
           const cy = beamY - 34;
@@ -280,7 +353,7 @@ export default function BeamBuilderSVG({
           const tipAng = end + (ccw ? -0.5 : 0.5);
           return (
             <g key={l.id} opacity={opacity}>
-              <g onMouseDown={(e) => startDrag(e, l.id, l.x)} style={{ cursor: 'grab' }}>
+              <g onMouseDown={(e) => startDrag(e, l.id, l.x, 'M₀')} style={{ cursor: 'grab' }}>
                 <path d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 0 ${sweep} ${p2.x} ${p2.y}`} fill="none" stroke={stroke} strokeWidth="2" />
                 <polygon
                   points={`${p2.x},${p2.y} ${p2.x - 6 * Math.cos(tipAng - 0.4)},${p2.y - 6 * Math.sin(tipAng - 0.4)} ${p2.x - 6 * Math.cos(tipAng + 0.4)},${p2.y - 6 * Math.sin(tipAng + 0.4)}`}

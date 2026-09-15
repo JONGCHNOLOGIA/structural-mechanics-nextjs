@@ -91,6 +91,38 @@ export default function BendingMomentEquation() {
     }
   }
 
+  function resizeLoad(id, edge, xMeters) {
+    const load = loads.find((l) => l.id === id);
+    if (!load) return;
+    const minGap = Math.max(L * 0.02, 1e-6);
+    if (edge === 'start') {
+      const xStart = Math.min(load.xEnd - minGap, Math.max(0, xMeters));
+      updateLoad(id, { xStart });
+    } else {
+      const xEnd = Math.max(load.xStart + minGap, Math.min(L, xMeters));
+      updateLoad(id, { xEnd });
+    }
+  }
+
+  function commitL(newDisplayValue) {
+    const newL = Math.max(0.01, newDisplayValue * lenF);
+    const oldL = L;
+    setL(newL);
+    setSupports((prev) => prev.map((s) => ({ ...s, x: Math.min(newL, s.x) })));
+    setLoads((prev) =>
+      prev.map((l) => {
+        if (l.kind === 'udl' || l.kind === 'triangle') {
+          // 원래 하중이 보 끝까지(0~L 전체) 덮고 있었다면, 새 길이에도 그대로 전체를 덮도록 늘려준다.
+          const touchedEnd = Math.abs(l.xEnd - oldL) < 1e-9;
+          const xStart = Math.min(newL, l.xStart);
+          const xEnd = touchedEnd ? newL : Math.min(newL, Math.max(xStart, l.xEnd));
+          return { ...l, xStart, xEnd };
+        }
+        return { ...l, x: Math.min(newL, l.x) };
+      })
+    );
+  }
+
   function labelForLoad(l) {
     if (l.kind === 'point') return `P = ${fmt(disp(l.P, forceF))} ${units.force}`;
     if (l.kind === 'udl') return `q = ${fmt(disp(l.q, distF))} ${units.distLoad}`;
@@ -226,6 +258,7 @@ export default function BendingMomentEquation() {
         <BeamBuilderSVG
           L={L}
           spanLabel={`${fmt(disp(L, lenF))} ${units.length}`}
+          spanValue={disp(L, lenF)}
           supports={supports}
           loads={loads}
           selectedId={selectedId}
@@ -239,6 +272,9 @@ export default function BendingMomentEquation() {
           onEditValue={commitLoadEdit}
           onMoveX={moveX}
           onRemoveItem={removeItem}
+          onResizeLoad={resizeLoad}
+          onEditL={commitL}
+          formatX={(xMeters) => `${fmt(disp(xMeters, lenF))} ${units.length}`}
         />
 
         {determinacy === 'unstable' && (
