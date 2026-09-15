@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import StressStateCard from './StressStateCard';
 
 // 프로토타입 renderMohrCircle() / mcBuildVisuals()를 React로 옮긴 버전.
 
@@ -32,28 +33,21 @@ export default function MohrsCircle() {
           defaultText="Plane Stress와 **같은 입력**이에요 — 같은 계산을 숫자 대신 **원(circle)**으로 표현하는 방법입니다."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
         />
-        <div className="field">
-          <label>응력 단위</label>
-          <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-        </div>
-        <div className="field">
-          <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-        </div>
+        <StressStateCard
+          sigmaX={sigmaX}
+          sigmaY={sigmaY}
+          tauXY={tauXY}
+          units={units}
+          onFieldChange={(field, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            const newVal = val * stressF;
+            if (field === 'sigmaX') setSigmaX(newVal);
+            else if (field === 'sigmaY') setSigmaY(newVal);
+            else if (field === 'tauXY') setTauXY(newVal);
+          }}
+          onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
+        />
         <div className="field">
           <label>회전각 θ — {theta.toFixed(0)}°</label>
           <input type="range" min="-90" max="90" step="1" value={theta} onChange={(e) => setTheta(parseFloat(e.target.value))} style={{ width: '100%' }} />

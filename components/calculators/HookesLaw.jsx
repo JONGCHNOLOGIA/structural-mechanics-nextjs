@@ -7,6 +7,7 @@ import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
+import StressStateCard from './StressStateCard';
 
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
@@ -78,35 +79,34 @@ export default function HookesLaw() {
           <input type="number" placeholder="0~0.5" defaultValue={nu} onBlur={(e) => setNu(parseFloat(e.target.value))} />
         </div>
         {mode === 'stressToStrain' ? (
-          <>
-            <div className="field">
-              <label>σx — {fmt(disp(sigmaX, stressF))} {units.stress}</label>
-              <input type="number" defaultValue={fmtInput(disp(sigmaX, stressF))} onBlur={(e) => setSigmaX(parseFloat(e.target.value) * stressF)} />
-            </div>
-            <div className="field">
-              <label>σy — {fmt(disp(sigmaY, stressF))} {units.stress}</label>
-              <input type="number" defaultValue={fmtInput(disp(sigmaY, stressF))} onBlur={(e) => setSigmaY(parseFloat(e.target.value) * stressF)} />
-            </div>
-            <div className="field">
-              <label>τxy — {fmt(disp(tauXY, stressF))} {units.stress}</label>
-              <input type="number" defaultValue={fmtInput(disp(tauXY, stressF))} onBlur={(e) => setTauXY(parseFloat(e.target.value) * stressF)} />
-            </div>
-          </>
+          <StressStateCard
+            sigmaX={sigmaX}
+            sigmaY={sigmaY}
+            tauXY={tauXY}
+            units={units}
+            onFieldChange={(field, value) => {
+              const val = parseFloat(value);
+              if (isNaN(val)) return;
+              const newVal = val * stressF;
+              if (field === 'sigmaX') setSigmaX(newVal);
+              else if (field === 'sigmaY') setSigmaY(newVal);
+              else if (field === 'tauXY') setTauXY(newVal);
+            }}
+            onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
+          />
         ) : (
-          <>
-            <div className="field">
-              <label>εx — {fmt(epsX)}</label>
-              <input type="number" defaultValue={epsX} onBlur={(e) => setEpsX(parseFloat(e.target.value))} />
-            </div>
-            <div className="field">
-              <label>εy — {fmt(epsY)}</label>
-              <input type="number" defaultValue={epsY} onBlur={(e) => setEpsY(parseFloat(e.target.value))} />
-            </div>
-            <div className="field">
-              <label>γxy — {fmt(gammaXY)}</label>
-              <input type="number" defaultValue={gammaXY} onBlur={(e) => setGammaXY(parseFloat(e.target.value))} />
-            </div>
-          </>
+          <StrainStateCard
+            epsX={epsX}
+            epsY={epsY}
+            gammaXY={gammaXY}
+            onFieldChange={(field, value) => {
+              const val = parseFloat(value);
+              if (isNaN(val)) return;
+              if (field === 'epsX') setEpsX(val);
+              else if (field === 'epsY') setEpsY(val);
+              else if (field === 'gammaXY') setGammaXY(val);
+            }}
+          />
         )}
         <div className="field">
           <label>두께 t (선택, Δt 계산용){thickness !== null ? ` — ${fmt(disp(thickness, lenF))} ${units.length}` : ''}</label>
@@ -170,6 +170,72 @@ export default function HookesLaw() {
 
       <AiTutorPanel />
     </>
+  );
+}
+
+// StressStateCard와 같은 패턴이지만, εx/εy/γxy는 무차원(단위 없음)이라 단위 선택기가 없음.
+function StrainStateCard({ epsX, epsY, gammaXY, onFieldChange }) {
+  const [activeField, setActiveField] = useState('epsX');
+  const color = { fill: '#F7E3E6', stroke: '#C3002F' };
+  const range = [-0.01, 0.01, 0.0001];
+
+  const FIELD_META = {
+    epsX: { label: 'εx', value: epsX },
+    epsY: { label: 'εy', value: epsY },
+    gammaXY: { label: 'γxy', value: gammaXY },
+  };
+  const active = FIELD_META[activeField];
+
+  return (
+    <div className="block-card">
+      <div className="block-title">
+        <span className="color-dot" style={{ background: color.stroke }} />
+        변형률 상태 (εx, εy, γxy)
+      </div>
+
+      <div className="block-active-field" style={{ background: color.fill, borderColor: color.stroke }}>
+        <div className="block-active-field-label" style={{ color: color.stroke }}>
+          변형률 · {active.label}
+        </div>
+        <div className="block-active-field-row">
+          <input
+            type="range"
+            min={range[0]}
+            max={range[1]}
+            step={range[2]}
+            value={active.value}
+            onChange={(e) => onFieldChange(activeField, e.target.value)}
+            style={{ flex: 1, accentColor: color.stroke }}
+          />
+        </div>
+      </div>
+
+      <div className="block-field-tiles">
+        {['epsX', 'epsY', 'gammaXY'].map((key) => {
+          const meta = FIELD_META[key];
+          const isActive = key === activeField;
+          return (
+            <div
+              key={key}
+              className={'block-field-tile' + (isActive ? ' active' : '')}
+              style={isActive ? { background: color.fill, borderColor: color.stroke } : undefined}
+              onClick={() => setActiveField(key)}
+            >
+              <div className="block-field-tile-label">{meta.label}</div>
+              <input
+                key={`${key}-${meta.value}`}
+                type="number"
+                step="any"
+                defaultValue={meta.value}
+                onFocus={() => setActiveField(key)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => onFieldChange(key, e.target.value)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
