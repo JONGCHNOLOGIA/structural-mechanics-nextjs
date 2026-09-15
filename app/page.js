@@ -31,7 +31,12 @@ export default function HomePage() {
   return (
     <div>
       <header>
-        <div className="subject-title">구조역학 2</div>
+        <div className="subject-title">
+          <Link href="/subjects" className="back-link">
+            ← 과목 선택
+          </Link>
+          <span>구조역학 2</span>
+        </div>
         <div className="header-right">
           <SettingsButton />
           <LogoutButton />
