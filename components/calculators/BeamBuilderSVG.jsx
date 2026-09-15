@@ -8,7 +8,7 @@ const GRAY = '#51626F';
 const CRIMSON = '#C3002F';
 const TEAL = '#1E7F72';
 
-export default function BeamBuilderSVG({ L, supports, loads, selectedId, onSelect, maxAbsM, momentPts, maxAbsV, deflectionPts }) {
+export default function BeamBuilderSVG({ L, spanLabel, supports, loads, selectedId, onSelect, maxAbsM, momentPts, maxAbsV, showDeflection }) {
   const w = 680;
   const beamY = 140;
   const padL = 40, padR = 40;
@@ -16,18 +16,38 @@ export default function BeamBuilderSVG({ L, supports, loads, selectedId, onSelec
   const xToPx = (x) => padL + (x / L) * drawW;
 
   const hasDiagram = Array.isArray(momentPts) && momentPts.length > 1;
-  const hasDeflection = Array.isArray(deflectionPts) && deflectionPts.length > 1;
   const diagH = 80;
-  const diagTop = 200;
+  const diagTop = 220;
   const mToPx = (m) => diagTop + diagH / 2 - (maxAbsM > 0 ? (m / maxAbsM) * (diagH / 2 - 6) : 0);
-  const defTop = diagTop + (hasDiagram ? diagH + 40 : 0);
-  const vToPx = (v) => defTop + diagH / 2 + (maxAbsV > 0 ? (v / maxAbsV) * (diagH / 2 - 6) : 0);
-  const h = (hasDiagram ? diagTop + diagH + 30 : beamY + 90) + (hasDeflection ? diagH + 40 : 0);
+  const h = hasDiagram ? diagTop + diagH + 30 : beamY + 110;
+
+  const spanY = beamY + 60;
+  const maxBendPx = 26;
+  const bendScale = showDeflection && maxAbsV > 0 ? maxBendPx / maxAbsV : 0;
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 720, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+      {/* 스팬 치수선 */}
+      <line x1={padL} y1={spanY} x2={padL + drawW} y2={spanY} stroke="#8A97A2" strokeWidth="1" />
+      <line x1={padL} y1={spanY - 4} x2={padL} y2={spanY + 4} stroke="#8A97A2" strokeWidth="1" />
+      <line x1={padL + drawW} y1={spanY - 4} x2={padL + drawW} y2={spanY + 4} stroke="#8A97A2" strokeWidth="1" />
+      <text x={padL + drawW / 2} y={spanY + 16} fontSize="12.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+        L = {spanLabel}
+      </text>
+
       {/* 보 본체 */}
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke={GRAY} strokeWidth="4" />
+
+      {/* 예상 처짐곡선 (점선, 실제 위치에 겹쳐서) */}
+      {showDeflection && Array.isArray(momentPts) && momentPts.length > 1 && (
+        <polyline
+          points={momentPts.map((p) => `${xToPx(p.x)},${beamY + p.v * bendScale}`).join(' ')}
+          fill="none"
+          stroke={CRIMSON}
+          strokeWidth="2"
+          strokeDasharray="6 4"
+        />
+      )}
 
       {/* 지지단 */}
       {supports.map((s) => {
@@ -175,22 +195,6 @@ export default function BeamBuilderSVG({ L, supports, loads, selectedId, onSelec
           />
           <text x={padL} y={diagTop - 8} fontSize="12.5" fill="#8A97A2" fontWeight="700">
             M(x) 다이어그램
-          </text>
-        </g>
-      )}
-
-      {/* v(x) 처짐곡선 */}
-      {hasDeflection && (
-        <g>
-          <line x1={padL} y1={defTop + diagH / 2} x2={padL + drawW} y2={defTop + diagH / 2} stroke="#8A97A2" strokeWidth="1" />
-          <polyline
-            points={deflectionPts.map((p) => `${xToPx(p.x)},${vToPx(p.v)}`).join(' ')}
-            fill="none"
-            stroke="#4A5FBF"
-            strokeWidth="1.8"
-          />
-          <text x={padL} y={defTop - 8} fontSize="12.5" fill="#8A97A2" fontWeight="700">
-            v(x) 처짐곡선 (아래로 + , 과장됨)
           </text>
         </g>
       )}

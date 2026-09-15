@@ -29,6 +29,7 @@ export default function BendingMomentEquation() {
   const [supports, setSupports] = useState([]);
   const [loads, setLoads] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [showDeflection, setShowDeflection] = useState(false);
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const distF = UNIT_OPTIONS.distLoad[units.distLoad];
@@ -114,10 +115,10 @@ export default function BendingMomentEquation() {
 
         <div style={{ marginTop: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--gray-soft)', marginBottom: 6 }}>지지단 추가</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button className="add-block" style={{ margin: 0 }} onClick={() => addSupport('fixed')}>+ 고정</button>
-            <button className="add-block" style={{ margin: 0 }} onClick={() => addSupport('pin')}>+ 힌지</button>
-            <button className="add-block" style={{ margin: 0 }} onClick={() => addSupport('roller')}>+ 롤러</button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <SupportIconButton type="fixed" title="Fixed" onClick={() => addSupport('fixed')} />
+            <SupportIconButton type="pin" title="Hinged" onClick={() => addSupport('pin')} />
+            <SupportIconButton type="roller" title="Roller" onClick={() => addSupport('roller')} />
           </div>
         </div>
         <div style={{ marginTop: 10 }}>
@@ -170,11 +171,22 @@ export default function BendingMomentEquation() {
 
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
-        <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <h3 style={{ margin: 0 }}>
+            VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          </h3>
+          <button
+            className={'add-block calc-trigger' + (showDeflection ? ' active' : '')}
+            style={{ margin: 0, padding: '4px 12px', fontSize: 12.5 }}
+            disabled={!solved}
+            onClick={() => setShowDeflection((v) => !v)}
+          >
+            {showDeflection ? '처짐곡선 숨기기' : '예상 처짐곡선 보기'}
+          </button>
+        </div>
         <BeamBuilderSVG
           L={L}
+          spanLabel={`${fmt(disp(L, lenF))} ${units.length}`}
           supports={supports}
           loads={loads}
           selectedId={selectedId}
@@ -182,7 +194,7 @@ export default function BendingMomentEquation() {
           maxAbsM={maxAbsM}
           momentPts={solved?.pts}
           maxAbsV={maxAbsV}
-          deflectionPts={solved?.pts}
+          showDeflection={showDeflection && !!solved}
         />
 
         {determinacy === 'unstable' && (
@@ -238,6 +250,45 @@ export default function BendingMomentEquation() {
 
       <AiTutorPanel />
     </>
+  );
+}
+
+// 지지단 추가 버튼 — 실제 지지단 기호와 같은 모양의 미니 아이콘 + 마우스오버 시 title 툴팁(Fixed/Hinged/Roller).
+function SupportIconButton({ type, title, onClick }) {
+  return (
+    <button
+      className="add-block"
+      title={title}
+      onClick={onClick}
+      style={{ margin: 0, padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+    >
+      <svg width="32" height="28" viewBox="0 0 32 28">
+        {type === 'fixed' && (
+          <>
+            <rect x="13" y="2" width="6" height="18" fill="#51626F" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <line key={i} x1="13" y1={5 + i * 4.5} x2="6" y2={9 + i * 4.5} stroke="#51626F" strokeWidth="1.2" />
+            ))}
+            <line x1="4" y1="22" x2="28" y2="22" stroke="#51626F" strokeWidth="1.4" />
+          </>
+        )}
+        {type === 'pin' && (
+          <>
+            <polygon points="16,4 6,20 26,20" fill="none" stroke="#51626F" strokeWidth="1.6" />
+            <line x1="4" y1="22" x2="28" y2="22" stroke="#51626F" strokeWidth="1.4" />
+          </>
+        )}
+        {type === 'roller' && (
+          <>
+            <polygon points="16,4 6,18 26,18" fill="none" stroke="#51626F" strokeWidth="1.6" />
+            <circle cx="10" cy="21.5" r="2.5" fill="#51626F" />
+            <circle cx="22" cy="21.5" r="2.5" fill="#51626F" />
+            <line x1="4" y1="25" x2="28" y2="25" stroke="#51626F" strokeWidth="1.4" />
+          </>
+        )}
+      </svg>
+      <span style={{ fontSize: 10.5 }}>{SUPPORT_LABEL[type]}</span>
+    </button>
   );
 }
 
