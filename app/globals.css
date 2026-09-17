@@ -110,11 +110,6 @@ header{
   align-items:start;
 }
 .col-label{ font-size:22px; font-weight:700; color:var(--navy); margin-bottom:18px; }
-/* 로비(app/page.js)의 "챕터"/"소주제" 라벨만 영문(Chapters/Sections)으로 바꾸면서 세종대학교
-   지정서체 중 영문 명조체인 Times New Roman을 입힘 — 라이선스가 필요한 Minion Pro 대신,
-   가이드라인에도 실제로 쓰이는 무료 시스템 폰트라 안전하게 쓸 수 있다. 다른 페이지의
-   .col-label(CHAPTERS/SUB-TOPICS, 학습 현황 등)은 이 클래스가 없어서 영향받지 않는다. */
-.col-label-eng{ font-family:'Times New Roman',Georgia,serif; letter-spacing:0.01em; }
 /* 이어서 학습하기 가로 스크롤 카드 — 스크롤바는 숨기고 대신 자체 진행바(진행바 색은 crimson)로 보여줌 */
 .hide-scrollbar{ scrollbar-width:none; -ms-overflow-style:none; }
 .hide-scrollbar::-webkit-scrollbar{ display:none; }

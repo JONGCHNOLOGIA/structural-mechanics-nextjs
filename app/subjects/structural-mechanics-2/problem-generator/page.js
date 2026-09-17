@@ -178,7 +178,7 @@ function ProblemGeneratorContent() {
         </div>
 
         <div>
-          <div className="col-label">SUB-TOPICS</div>
+          <div className="col-label">SECTIONS</div>
           <div className="subtopics">
             {activeChapters.length === 0 ? (
               <div className="empty">

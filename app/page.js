@@ -38,7 +38,7 @@ export default function HomePage() {
 
       <div className="board">
         <div>
-          <div className="col-label col-label-eng">Chapters</div>
+          <div className="col-label">Chapters</div>
           <div className="chapter-list">
             {chapters.map((ch, idx) => (
               <div
@@ -60,7 +60,7 @@ export default function HomePage() {
           </div>
         </div>
         <div>
-          <div className="col-label col-label-eng">Sections</div>
+          <div className="col-label">Sections</div>
           <div className="subtopics">
             <div className="subtopics-group-label">{activeCh.num} · {activeCh.title}</div>
             {activeCh.subtopics.length === 0 ? (
