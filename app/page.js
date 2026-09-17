@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
 import LogoutButton from '@/components/LogoutButton';
-import SettingsButton from '@/components/SettingsButton';
 import EditableText from '@/components/EditableText';
 import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
 import LearningStatus from '@/components/LearningStatus';
+import FloatingActions from '@/components/FloatingActions';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
@@ -24,7 +24,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!userId) return;
-    fetchRecentVisits(3).then(setRecentVisits);
+    fetchRecentVisits(5).then(setRecentVisits);
     fetchProgressSummary().then(setProgressSummary);
   }, [userId]);
 
@@ -40,7 +40,6 @@ export default function HomePage() {
         <div className="header-right">
           {userId ? (
             <>
-              <SettingsButton />
               <LogoutButton />
               <div className="user-tag">
                 {studentId} {displayName}
@@ -163,6 +162,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <FloatingActions />
     </div>
   );
 }

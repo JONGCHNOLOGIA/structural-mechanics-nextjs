@@ -1,12 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* 프로토타입(demo_vol.1.html)의 <style> 블록을 그대로 옮긴 것. 클래스명/값 1:1 동일. */
+/* 폰트는 세종대 e-Campus·건축공학과 홈페이지 레퍼런스와 맞춰 Pretendard로 통일 (Noto Sans KR → Pretendard).
+   --navy는 건축공학과 홈페이지의 "학과 공지사항" 카드 색을 레퍼런스 삼은 다크네이비 — 홈 화면의
+   "이어서 학습하기" 카드·플로팅 버튼 등 포인트에만 쓴다. */
 
 :root{
   --crimson:#C3002F;
   --crimson-soft:#F7E3E6;
   --teal:#1E7F72;
   --teal-soft:#E1F2EF;
+  --navy:#1E3245;
+  --navy-soft:#2C4258;
   --gray:#51626F;
   --gray-soft:#8A97A2;
   --bg:#FAF9F6;
@@ -17,7 +23,7 @@
 *{box-sizing:border-box; margin:0; padding:0;}
 a{ color:inherit; text-decoration:none; }
 body{
-  font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  font-family:'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
   background:var(--bg);
   color:var(--ink);
   min-height:100vh;
@@ -343,7 +349,7 @@ input[type='range']::-moz-range-thumb{
 .chat-input{ display:flex; gap:8px; margin-top:auto; }
 .chat-input input{
   flex:1; background:var(--bg); border:1px solid var(--line); border-radius:20px; color:var(--ink);
-  padding:11px 16px; font-size:13px; font-family:'Noto Sans KR',sans-serif;
+  padding:11px 16px; font-size:13px; font-family:'Pretendard',sans-serif;
 }
 .chat-input button{
   background:var(--crimson); color:#fff; border:none; border-radius:50%; width:38px; height:38px;
@@ -353,4 +359,26 @@ input[type='range']::-moz-range-thumb{
 .footer-bar{
   position:fixed; bottom:0; left:0; right:0; background:var(--gray); color:#fff;
   text-align:center; font-size:12.5px; font-weight:700; padding:14px 0; letter-spacing:0.02em; z-index:20;
+}
+
+/* 홈 화면 우측 하단 플로팅 버튼 (AI 튜터 / 설정) — 건축공학과 홈페이지의 동그란 플로팅
+   아이콘(⊞ / ↑) 자리에서 아이디어를 가져온 것. */
+.floating-actions{
+  position:fixed; right:24px; bottom:68px; z-index:60;
+  display:flex; flex-direction:column; gap:12px; align-items:center;
+}
+.floating-btn{
+  width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--navy); color:#fff; box-shadow:0 6px 18px rgba(30,50,69,0.35);
+  transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+.floating-btn:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(30,50,69,0.45); }
+.floating-btn.crimson{ background:var(--crimson); box-shadow:0 6px 18px rgba(195,0,47,0.35); }
+.floating-btn.crimson:hover{ box-shadow:0 10px 22px rgba(195,0,47,0.45); }
+.floating-panel{
+  position:fixed; right:24px; bottom:130px; z-index:61;
+  width:320px; max-width:calc(100vw - 48px); max-height:70vh; overflow:auto;
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.16); padding:16px;
 }
