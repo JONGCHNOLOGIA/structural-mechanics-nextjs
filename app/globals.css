@@ -30,14 +30,17 @@ body{
 }
 
 /* 사이트 전체가 공유하는 헤더(components/SiteHeader.jsx) 크롬 — home-header가 로비뿐 아니라
-   로그인 화면·챕터 상세·문제 제작 등 모든 페이지의 <header>에 쓰인다. */
-header{ position:sticky; top:0; z-index:10; background:var(--card); border-bottom:1px solid var(--line); }
+   로그인 화면·챕터 상세·문제 제작 등 모든 페이지의 <header>에 쓰인다.
+   로고 | 가운데 네비 | 우측 로그인·바로가기 버튼을 한 줄에 배치하는 flex 컨테이너. */
+header{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  position:sticky; top:0; z-index:10; background:var(--card); border-bottom:1px solid var(--line);
+}
 .header-right{ display:flex; align-items:center; gap:10px; }
 
 /* 건축공학과 홈페이지(dept.sejong.ac.kr/archeng) 헤더 레퍼런스 — 로고 락업 + 가운데 네비 +
-   우측 로그인/바로가기 버튼. 홈 화면(app/page.js)에서만 씀.
-   home-header는 다른 페이지의 공용 header보다 좌우 여백을 넉넉히 줘서(40px→64px) 로고가
-   화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 하고, 전체적으로 "시원시원한" 느낌을 낸다. */
+   우측 로그인/바로가기 버튼. 화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 좌우 여백을 넉넉히
+   줘서(64px) 전체적으로 "시원시원한" 느낌을 낸다. */
 .home-header{ padding:26px 64px; }
 /* 로고 — 건축공학과 공식 로고 원본 파일(design/logo.png)을 그대로 씀.
    배경을 투명 처리해 public/brand/sejong-archeng-logo.png로 저장, 헤더 높이에 맞춰 비율 유지. */
