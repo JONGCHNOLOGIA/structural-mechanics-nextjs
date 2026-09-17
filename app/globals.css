@@ -97,9 +97,14 @@ header{
 .cover-info{ font-size:12px; color:var(--gray); line-height:1.65; max-width:190px; }
 .cover-info .book-title{ font-size:14px; font-weight:800; color:var(--ink); margin-bottom:2px; }
 
-.board{
+/* 좌우 정렬을 푸터와 정확히 맞추기 위해 header/footer와 같은 2단 구조로 바꿈 —
+   화면 전체 폭에서 먼저 64px 패딩을 준 다음, 그 안에서 1600px을 가운데 정렬한다.
+   (예전엔 .board 하나에 max-width와 padding을 같이 줘서, 1600px보다 넓은 화면에서
+   본문이 푸터보다 정확히 64px 더 안쪽으로 밀려 보였음.) */
+.board{ padding:0 64px; margin:56px 0; }
+.board-grid{
   display:grid; grid-template-columns: 300px 1fr;
-  max-width:1600px; margin:56px auto; padding:0 64px; gap:36px;
+  max-width:1600px; margin:0 auto; gap:36px;
   align-items:start;
 }
 .col-label{ font-size:22px; font-weight:700; color:var(--navy); margin-bottom:18px; }
