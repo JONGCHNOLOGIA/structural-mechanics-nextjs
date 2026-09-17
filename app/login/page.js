@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { signUpOrLogin, demoLogin } from '@/lib/auth';
 
@@ -62,8 +63,10 @@ export default function LoginPage() {
 
   return (
     <div>
-      <header>
-        <div className="subject-title">구조역학 튜터</div>
+      <header className="home-header">
+        <Link href="/" className="site-logo">
+          <img src="/brand/sejong-archeng-logo.png" alt="세종대학교 건축공학과" className="site-logo-img" />
+        </Link>
       </header>
       <div style={{ maxWidth: 400, margin: '80px auto 0' }}>
         <div className="panel" style={{ minHeight: 'auto' }}>

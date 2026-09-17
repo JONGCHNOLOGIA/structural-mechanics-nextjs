@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { chapters, CHAPTER_ICONS } from '@/lib/chapters';
 import { PROBLEM_BANK, generateProblem } from '@/lib/problemBank';
-import { useUser } from '@/components/UserProvider';
-import LogoutButton from '@/components/LogoutButton';
-import SettingsButton from '@/components/SettingsButton';
+import SiteHeader from '@/components/SiteHeader';
+import FloatingActions from '@/components/FloatingActions';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 import EditableText from '@/components/EditableText';
 import { recordAttempt } from '@/lib/progress';
@@ -34,7 +33,6 @@ export default function ProblemGeneratorPage() {
 }
 
 function ProblemGeneratorContent() {
-  const { displayName, studentId, userId } = useUser();
   const searchParams = useSearchParams();
   const [selectedChapters, setSelectedChapters] = useState(new Set());
   const [selectedSubtopics, setSelectedSubtopics] = useState(new Set());
@@ -135,23 +133,16 @@ function ProblemGeneratorContent() {
 
   return (
     <div>
-      <div className="detail-header">
-        <div className="subject-title">
-          <Link href="/" className="back-link">
-            ← 목록으로
-          </Link>
-          <span>구조역학 2 — 문제 생성</span>
-        </div>
-        <div className="header-right">
-          <SettingsButton />
-          <LogoutButton />
-          <div className="user-tag">
-            {studentId} {displayName}
-          </div>
-        </div>
+      <SiteHeader active="problem-generator" />
+
+      <div className="page-subheader">
+        <Link href="/" className="back-link">
+          ← 목록으로
+        </Link>
+        <span className="page-subheader-title">문제 생성</span>
       </div>
 
-      <div style={{ maxWidth: 1600, margin: '20px auto 0', padding: '0 40px' }}>
+      <div style={{ maxWidth: 1600, margin: '20px auto 0', padding: '0 64px' }}>
         <EditableText
           as="div"
           contentKey="problemGenerator.intro"
@@ -272,7 +263,7 @@ function ProblemGeneratorContent() {
       </div>
 
       {problems && (
-        <div style={{ maxWidth: 1600, margin: '0 auto 40px', padding: '0 40px' }}>
+        <div style={{ maxWidth: 1600, margin: '0 auto 40px', padding: '0 64px' }}>
           <EditableText
             as="div"
             contentKey="problemGenerator.resultNote"
@@ -428,6 +419,8 @@ function ProblemGeneratorContent() {
           </div>
         </div>
       )}
+
+      <FloatingActions />
     </div>
   );
 }

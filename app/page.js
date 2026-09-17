@@ -1,18 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
-import { supabase } from '@/lib/supabaseClient';
 import EditableText from '@/components/EditableText';
 import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
 import LearningStatus from '@/components/LearningStatus';
 import FloatingActions from '@/components/FloatingActions';
-
-const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
+import SiteHeader from '@/components/SiteHeader';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
@@ -30,48 +27,9 @@ export default function HomePage() {
     fetchProgressSummary().then(setProgressSummary);
   }, [userId]);
 
-  async function handleLogout() {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      // 세션이 이미 만료됐거나 네트워크가 끊겨도, 어쨌든 로그인 화면으로는 보내준다.
-    }
-    router.replace('/login');
-  }
-
   return (
     <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
-      <header className="home-header">
-        <Link href="/" className="site-logo">
-          <img src="/brand/sejong-emblem.png" alt="세종대학교 교표" className="site-logo-emblem" />
-          <div className="site-logo-text">
-            <div className="site-logo-eng">SEJONG UNIVERSITY</div>
-            <div className="site-logo-kr">2026 건축공학과 학술제</div>
-          </div>
-        </Link>
-
-        <nav className="site-nav">
-          <span className="site-nav-item disabled" title="다른 팀원이 만들고 있어요 — 준비중">구조역학 1</span>
-          <span className="site-nav-item active">구조역학 2</span>
-          <span className="site-nav-item" onClick={() => router.push('/subjects/structural-mechanics-2/problem-generator')}>
-            문제 제작
-          </span>
-          <span className="site-nav-item disabled" title="준비중">커뮤니티</span>
-        </nav>
-
-        <div className="header-right">
-          {userId ? (
-            <button className="btn-outline" onClick={handleLogout} aria-label="로그아웃">
-              로그아웃
-            </button>
-          ) : (
-            <Link href="/login" className="btn-outline">로그인</Link>
-          )}
-          <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
-            건축공학과 ↗
-          </a>
-        </div>
-      </header>
+      <SiteHeader active="sm2" />
 
       <ContinueLearning visits={recentVisits} />
       <LearningStatus summary={progressSummary} />

@@ -29,48 +29,20 @@ body{
   min-height:100vh;
 }
 
-header, .detail-header{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:22px 40px;
-  background:var(--card);
-  border-bottom:1px solid var(--line);
-  position:sticky; top:0; z-index:10;
-}
-.subject-title{ font-size:20px; font-weight:800; color:var(--ink); display:flex; align-items:baseline; gap:10px;}
-.user-tag{
-  font-size:13px; color:var(--gray);
-  background:var(--bg); border-radius:20px; padding:7px 16px;
-}
+/* 사이트 전체가 공유하는 헤더(components/SiteHeader.jsx) 크롬 — home-header가 로비뿐 아니라
+   로그인 화면·챕터 상세·문제 제작 등 모든 페이지의 <header>에 쓰인다. */
+header{ position:sticky; top:0; z-index:10; background:var(--card); border-bottom:1px solid var(--line); }
 .header-right{ display:flex; align-items:center; gap:10px; }
-.logout-btn{
-  display:flex; align-items:center; justify-content:center;
-  width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
-  background:var(--card); color:var(--gray-soft); cursor:pointer; flex-shrink:0;
-  transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.logout-btn:hover{ background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
 
 /* 건축공학과 홈페이지(dept.sejong.ac.kr/archeng) 헤더 레퍼런스 — 로고 락업 + 가운데 네비 +
    우측 로그인/바로가기 버튼. 홈 화면(app/page.js)에서만 씀.
    home-header는 다른 페이지의 공용 header보다 좌우 여백을 넉넉히 줘서(40px→64px) 로고가
    화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 하고, 전체적으로 "시원시원한" 느낌을 낸다. */
 .home-header{ padding:26px 64px; }
-/* 로고 — 세종대 공식 브랜드 가이드(design/ 폴더) 기준.
-   - 교표(Authority Mark)는 가이드의 1-1.교표.jpg에서 원형 마크만 깨끗하게 오려내 public/brand에 저장.
-   - 영문 워드마크는 가이드 지정서체(Times New Roman)를 유지 — 실제 시그니춰가 이렇게 생겼고,
-     영문에서는 세리프가 "올드"보다는 정갈한 느낌을 준다.
-   - 국문 워드마크는 가이드의 실제 로고타입처럼 고딕(세리프 아님)이라, Pretendard로 바꿔서
-     "너무 올드해 보인다"던 피드백을 해결 — 명조체(Georgia)를 국문에 쓴 게 원인이었음.
-   - 색상은 가이드 이미지의 워드마크에서 실측한 값(#3A5267, 공식 팔레트엔 별도 네이비가 없어
-     가장 가까운 근사치). */
-.site-logo{ display:flex; align-items:center; gap:13px; }
-.site-logo-emblem{ width:50px; height:50px; flex-shrink:0; }
-.site-logo-text{ display:flex; flex-direction:column; gap:3px; }
-.site-logo-eng{
-  font-family:'Times New Roman',Georgia,serif; font-size:13px; font-weight:700; color:#3A5267;
-  letter-spacing:0.14em;
-}
-.site-logo-kr{ font-family:'Pretendard',sans-serif; font-size:18px; font-weight:600; color:#3A5267; }
+/* 로고 — 건축공학과 공식 로고 원본 파일(design/logo.png)을 그대로 씀.
+   배경을 투명 처리해 public/brand/sejong-archeng-logo.png로 저장, 헤더 높이에 맞춰 비율 유지. */
+.site-logo{ display:flex; align-items:center; }
+.site-logo-img{ height:46px; width:auto; display:block; }
 .site-nav{ display:flex; align-items:center; gap:24px; }
 .site-nav-item{
   font-size:18.5px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
@@ -191,9 +163,17 @@ header, .detail-header{
 }
 .subtopic:hover .subprev{ display:block; }
 
-/* ---------- Detail page ---------- */
+/* ---------- Detail page ----------
+   로비(app/page.js)와 같은 SiteHeader를 챕터 상세/문제 제작/단면 특성 페이지에서도 그대로 쓰고,
+   그 아래에 "← 목록으로 + 챕터명"만 얇게 붙이는 방식으로 바꿈 — 페이지마다 따로 그리던
+   구식 .detail-header(로고 없는 굵은 텍스트 헤더)를 없애고 로비와 같은 크롬을 쓰게 함. */
+.page-subheader{
+  display:flex; align-items:baseline; flex-wrap:wrap;
+  max-width:1600px; margin:28px auto 0; padding:0 64px; box-sizing:border-box;
+}
+.page-subheader-title{ font-size:19px; font-weight:700; color:var(--navy); }
 .back-link{ font-size:12.5px; font-weight:800; color:var(--crimson); cursor:pointer; margin-right:16px; text-decoration:none; }
-.tabs{ display:flex; flex-wrap:wrap; gap:10px; max-width:1600px; padding:0 40px; margin:32px auto 24px; box-sizing:border-box; }
+.tabs{ display:flex; flex-wrap:wrap; gap:10px; max-width:1600px; padding:0 64px; margin:20px auto 24px; box-sizing:border-box; }
 .tab{
   flex:0 0 auto; text-align:center; padding:10px 20px; font-size:13.5px; font-weight:700;
   background:var(--card); border:1px solid var(--line); border-radius:20px;
@@ -202,11 +182,11 @@ header, .detail-header{
 .tab.active{ color:#fff; background:var(--crimson); border-color:var(--crimson); }
 .panels{
   display:grid; grid-template-columns: 360px 1fr 340px; gap:24px; align-items:start;
-  width:100%; max-width:1600px; margin:0 auto 48px; padding:0 40px; box-sizing:border-box;
+  width:100%; max-width:1600px; margin:0 auto 48px; padding:0 64px; box-sizing:border-box;
 }
 .panel{
-  padding:26px; min-height:600px; background:var(--card); border:1px solid var(--line);
-  border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  padding:26px; min-height:600px; background:var(--card); border:1px solid #D8E0E8;
+  border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03);
 }
 .panel-ai{
   position:sticky; top:24px; align-self:start; min-height:auto;

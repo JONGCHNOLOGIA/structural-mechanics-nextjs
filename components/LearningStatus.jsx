@@ -30,7 +30,7 @@ export default function LearningStatus({ summary }) {
     .slice(0, 3);
 
   return (
-    <div style={{ maxWidth: 1600, margin: '28px auto 0', padding: '0 40px' }}>
+    <div style={{ maxWidth: 1600, margin: '28px auto 0', padding: '0 64px' }}>
       <div className="col-label" style={{ marginBottom: 14 }}>
         학습 현황
       </div>

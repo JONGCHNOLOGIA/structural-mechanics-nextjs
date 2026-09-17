@@ -7,7 +7,7 @@ import { useSiteContent } from './SiteContentProvider';
 
 // 사이트 여기저기 흩어진 고정 문구(AI 응답이나 계산 결과처럼 코드로 계산되는 값은 제외)를
 // 코드 수정 없이 직접 고칠 수 있게 해주는 컴포넌트. 편집 권한은 role='instructor' 전체가 아니라
-// UserProvider의 canEditContent(특정 학번 1명)로 한정됨 — "관리자로 시연" 데모 계정은 못 고침.
+// UserProvider의 canEditContent(정해진 학번들: 22011031, demo-admin)로 한정됨.
 // contentKey로 SiteContentProvider가 미리 불러온 site_content 맵에서 커스텀 값을 찾고,
 // 없으면 defaultText를 그대로 보여준다.
 // **굵게** 마크다운 문법을 <b>로 렌더링해서, 원래 <b> 태그로 강조돼 있던 문구도

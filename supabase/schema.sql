@@ -135,18 +135,19 @@ drop policy if exists "본인 이름으로 대화 작성" on chat_logs;
 create policy "본인 이름으로 대화 작성" on chat_logs
   for insert with check (auth.uid() = user_id);
 
--- site_content: 문구는 누구나 읽을 수 있지만, 수정은 특정 학번(22011031) 계정만 가능.
--- role='instructor' 전체로 허용하면 "관리자로 시연" 데모 계정도 실제 문구를 고칠 수 있게 되므로
--- role이 아니라 student_id로 딱 한 명만 지정함.
+-- site_content: 문구는 누구나 읽을 수 있지만, 수정은 정해진 학번(22011031, demo-admin)만 가능.
+-- role='instructor' 전체로 허용하면 관계없는 instructor 계정도 실제 문구를 고칠 수 있게 되므로
+-- role이 아니라 student_id 화이트리스트로 지정함. demo-admin은 로그인 화면의
+-- "관리자로 시연" 데모 버튼 계정 — 발표 중 문구 수정 시연이 가능해야 해서 포함.
 drop policy if exists "누구나 문구 조회 가능" on site_content;
 create policy "누구나 문구 조회 가능" on site_content
   for select using (true);
 drop policy if exists "지정된 학번만 문구 등록" on site_content;
 create policy "지정된 학번만 문구 등록" on site_content
-  for insert with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
+  for insert with check (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')));
 drop policy if exists "지정된 학번만 문구 수정" on site_content;
 create policy "지정된 학번만 문구 수정" on site_content
-  for update using (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'))
-  with check (exists (select 1 from profiles where id = auth.uid() and student_id = '22011031'));
+  for update using (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')))
+  with check (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')));
 
 -- 교수자는 role 컬럼을 보고 별도 정책/뷰로 익명 열람 처리 (필요시 추가)

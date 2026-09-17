@@ -10,10 +10,10 @@ import { supabase } from '@/lib/supabaseClient';
 // 그 페이지에서 다시 이 가드에 걸려 로그인으로 유도됨).
 const PUBLIC_PATHS = ['/login', '/'];
 
-// 사이트 문구(EditableText) 수정 권한은 role='instructor' 전체가 아니라 이 학번 한 명으로 한정함.
-// (공모전 발표용 "관리자로 시연" 데모 계정도 role='instructor'라서, role만으로 구분하면
-// 시연 중 아무나 실제 사이트 문구를 고칠 수 있게 되어버림 — 그래서 studentId로 따로 구분)
-const CONTENT_EDITOR_STUDENT_ID = '22011031';
+// 사이트 문구(EditableText) 수정 권한은 role='instructor' 전체가 아니라 정해진 학번들로 한정함.
+// 22011031(실제 관리자 계정)과 demo-admin(로그인 화면의 "관리자로 시연" 데모 버튼) 둘 다 포함 —
+// 공모전 발표 중 "관리자로 시연"을 눌러 바로 텍스트 수정 시연이 가능해야 하기 때문.
+const CONTENT_EDITOR_STUDENT_IDS = ['22011031', 'demo-admin'];
 
 const UserContext = createContext({ userId: null, studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: false });
 
@@ -48,7 +48,7 @@ export default function UserProvider({ children }) {
           displayName: profile?.display_name ?? null,
           role: profile?.role ?? 'student',
           isAdmin: profile?.role === 'instructor',
-          canEditContent: profile?.student_id === CONTENT_EDITOR_STUDENT_ID,
+          canEditContent: CONTENT_EDITOR_STUDENT_IDS.includes(profile?.student_id),
           ready: true,
         });
       }
