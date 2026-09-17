@@ -458,11 +458,10 @@ input[type='range']::-moz-range-thumb{
 .footer-info{ list-style:none; font-size:14px; color:rgba(255,255,255,0.4); line-height:2; }
 .footer-info b{ color:rgba(255,255,255,0.7); font-weight:600; margin-right:6px; }
 .footer-divider{ border-top:1px solid rgba(255,255,255,0.14); margin:26px 0 20px; }
-.footer-bottom-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
-.footer-policy-list{ list-style:none; display:flex; flex-wrap:wrap; gap:22px; }
-.footer-policy-list a{ font-size:13.5px; color:#C8BDAD; }
+.footer-bottom-row{ display:flex; align-items:center; flex-wrap:wrap; gap:14px; }
+.footer-policy-list{ list-style:none; display:flex; flex-wrap:wrap; gap:22px; font-size:13.5px; color:#C8BDAD; }
+.footer-policy-list a{ color:inherit; }
 .footer-policy-list a:hover{ color:#fff; }
-.footer-copyright{ font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.02em; }
 
 /* 로그인 화면 전용 스타일(app/login/page.js) — 사이트 다른 곳은 각진 카드로 통일했지만,
    로그인 화면은 세종대 통합로그인(SSO) 레퍼런스처럼 둥근 카드 + 언더라인 입력 + 필 버튼을

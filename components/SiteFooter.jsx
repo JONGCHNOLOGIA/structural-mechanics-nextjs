@@ -77,8 +77,10 @@ export default function SiteFooter() {
                   <EditableLink contentKey={p.key} defaultLabel={p.label} defaultHref={p.href} />
                 </li>
               ))}
+              <li>
+                <EditableText as="span" contentKey="footer.copyright" defaultText="COPYRIGHT 2025 SEJONG UNIVERSITY. ALL RIGHTS RESERVED." />
+              </li>
             </ul>
-            <EditableText as="div" className="footer-copyright" contentKey="footer.copyright" defaultText="COPYRIGHT 2025 SEJONG UNIVERSITY. ALL RIGHTS RESERVED." />
           </div>
         </div>
       </div>
