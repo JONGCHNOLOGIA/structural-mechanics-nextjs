@@ -2,6 +2,7 @@ import './globals.css';
 import UserProvider from '@/components/UserProvider';
 import SiteContentProvider from '@/components/SiteContentProvider';
 import SettingsProvider from '@/components/SettingsProvider';
+import SiteFooter from '@/components/SiteFooter';
 
 export const metadata = {
   title: '세종대학교 건축공학과 공모전',
@@ -15,6 +16,7 @@ export default function RootLayout({ children }) {
         <SiteContentProvider>
           <UserProvider>
             <SettingsProvider>{children}</SettingsProvider>
+            <SiteFooter />
           </UserProvider>
         </SiteContentProvider>
       </body>

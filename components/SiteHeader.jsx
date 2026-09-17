@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/UserProvider';
 import { supabase } from '@/lib/supabaseClient';
 
-const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
+const ECAMPUS_URL = 'https://ecampus.sejong.ac.kr/';
 
 // 로비(app/page.js) 헤더와 동일한 로고 락업 + 가운데 네비 + 우측 로그인/바로가기 버튼을
 // 모든 페이지(챕터 상세, 문제 제작, 단면 특성 계산기 등)에서 그대로 재사용하기 위한 공용 컴포넌트.
@@ -57,8 +57,8 @@ export default function SiteHeader({ active = 'sm2' }) {
             로그인
           </Link>
         )}
-        <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
-          건축공학과 ↗
+        <a href={ECAMPUS_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
+          집현캠퍼스 ↗
         </a>
       </div>
     </header>

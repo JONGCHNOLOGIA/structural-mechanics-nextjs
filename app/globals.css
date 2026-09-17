@@ -62,13 +62,13 @@ header{
 .site-nav-item.disabled{ color:var(--line); cursor:default; }
 .site-nav-item.disabled:hover{ color:var(--line); }
 .btn-outline{
-  font-size:13px; font-weight:600; color:var(--gray); border:1px solid var(--line); border-radius:20px;
-  padding:8px 18px; background:var(--card); transition:border-color 0.15s ease, color 0.15s ease;
+  font-size:16px; font-weight:700; color:var(--gray); border:1px solid var(--line); border-radius:20px;
+  padding:10px 20px; background:var(--card); transition:border-color 0.15s ease, color 0.15s ease;
 }
 .btn-outline:hover{ border-color:var(--crimson); color:var(--crimson); }
 .btn-solid{
-  font-size:13px; font-weight:600; color:#fff; background:var(--crimson); border-radius:20px;
-  padding:8px 18px; display:inline-flex; align-items:center; gap:4px;
+  font-size:16px; font-weight:700; color:#fff; background:var(--crimson); border-radius:20px;
+  padding:10px 20px; display:inline-flex; align-items:center; gap:4px;
 }
 
 .hero{
@@ -414,3 +414,39 @@ input[type='range']::-moz-range-thumb{
   background:var(--card); border:1px solid var(--line); border-radius:0;
   box-shadow:0 12px 32px rgba(0,0,0,0.16); padding:16px;
 }
+
+/* 사이트 전체 푸터(components/SiteFooter.jsx) — 건축공학과 홈페이지 푸터 레퍼런스.
+   상단 두 칸(인스타그램/건축공학과 바로가기, 진한 네이비)과 하단 정보란(검정)으로 구성됨. */
+.site-footer{ margin-top:64px; }
+.footer-top{
+  position:relative; display:flex; background:#192E3E;
+}
+.footer-quicklink{
+  flex:1; display:flex; align-items:center; justify-content:space-between;
+  padding:28px 64px; color:#fff; font-size:16px; font-weight:700;
+  transition:background 0.15s ease;
+}
+.footer-quicklink:hover{ background:rgba(255,255,255,0.06); }
+.footer-quicklink + .footer-quicklink{ border-left:1px solid rgba(255,255,255,0.14); }
+.footer-quicklink-icon{ display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
+.footer-quicklink-icon-img{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+.footer-back-top{
+  position:absolute; top:-22px; right:40px; width:44px; height:44px; border-radius:50%;
+  background:var(--ink); color:#fff; border:3px solid var(--bg); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+.footer-bottom{ background:#000; padding:48px 64px 32px; }
+.footer-bottom-inner{ max-width:1600px; margin:0 auto; }
+.footer-logo{ display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+.footer-logo-img{ width:48px; height:48px; object-fit:contain; flex-shrink:0; }
+.footer-logo-kr{ font-size:21px; font-weight:700; color:#fff; }
+.footer-logo-eng{ font-size:11.5px; font-weight:600; letter-spacing:0.12em; color:rgba(255,255,255,0.55); margin-top:2px; }
+.footer-info{ list-style:none; font-size:14px; color:rgba(255,255,255,0.4); line-height:2; }
+.footer-info b{ color:rgba(255,255,255,0.7); font-weight:600; margin-right:6px; }
+.footer-divider{ border-top:1px solid rgba(255,255,255,0.14); margin:26px 0 20px; }
+.footer-bottom-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+.footer-policy-list{ list-style:none; display:flex; flex-wrap:wrap; gap:22px; }
+.footer-policy-list a{ font-size:13.5px; color:#C8BDAD; }
+.footer-policy-list a:hover{ color:#fff; }
+.footer-copyright{ font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.02em; }
