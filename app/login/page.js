@@ -70,9 +70,11 @@ export default function LoginPage() {
       </header>
       <div style={{ maxWidth: 400, margin: '80px auto 0' }}>
         <div className="login-card">
-          <h3>학번과 이름, 비밀번호를 입력해주세요</h3>
-          <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 22 }}>
-            처음이면 자동으로 계정이 만들어지고, 이미 만든 적이 있으면 그대로 로그인돼요.
+          <h3 style={{ textAlign: 'center' }}>로그인/회원가입</h3>
+          <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 22, textAlign: 'center' }}>
+            학번과 이름, 비밀번호는 공식 사이트와 동일할 필요 없습니다.
+            <br />
+            공모전 시연용 계정을 이용할 수 있습니다.
           </p>
           <form onSubmit={handleSubmit}>
             <div className="login-field">

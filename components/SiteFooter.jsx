@@ -38,9 +38,7 @@ export default function SiteFooter() {
         </a>
         <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
           <span>건축공학과 사이트 바로가기</span>
-          <span className="footer-quicklink-icon">
-            <img src="/brand/sejong-emblem.png" alt="" className="footer-quicklink-icon-img" />
-          </span>
+          <img src="/brand/sejong-emblem-white.png" alt="" className="footer-quicklink-icon-plain" />
         </a>
         <button type="button" className="footer-back-top" onClick={scrollToTop} aria-label="맨 위로">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -53,11 +51,7 @@ export default function SiteFooter() {
       <div className="footer-bottom">
         <div className="footer-bottom-inner">
           <div className="footer-logo">
-            <img src="/brand/sejong-emblem.png" alt="세종대학교" className="footer-logo-img" />
-            <div>
-              <div className="footer-logo-kr">세종대학교</div>
-              <div className="footer-logo-eng">SEJONG UNIVERSITY</div>
-            </div>
+            <img src="/brand/sejong-archeng-logo-white.png" alt="세종대학교 건축공학과" className="footer-logo-img-wide" />
           </div>
 
           <ul className="footer-info">
