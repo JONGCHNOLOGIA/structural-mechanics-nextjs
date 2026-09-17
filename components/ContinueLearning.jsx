@@ -81,7 +81,6 @@ export default function ContinueLearning({ visits }) {
           );
         })}
       </div>
-      <div style={{ height: 3, marginTop: 26, borderRadius: 2, background: 'linear-gradient(to right, var(--crimson) 0%, var(--crimson) 30%, var(--line) 30%, var(--line) 100%)' }} />
     </div>
   );
 }
