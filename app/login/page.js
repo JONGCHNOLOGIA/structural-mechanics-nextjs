@@ -69,40 +69,40 @@ export default function LoginPage() {
         </Link>
       </header>
       <div style={{ maxWidth: 400, margin: '80px auto 0' }}>
-        <div className="panel" style={{ minHeight: 'auto' }}>
+        <div className="login-card">
           <h3>학번과 이름, 비밀번호를 입력해주세요</h3>
-          <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 18 }}>
+          <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 22 }}>
             처음이면 자동으로 계정이 만들어지고, 이미 만든 적이 있으면 그대로 로그인돼요.
           </p>
           <form onSubmit={handleSubmit}>
-            <div className="field">
+            <div className="login-field">
               <label>학번</label>
               <input type="text" required value={studentId} onChange={(e) => setStudentId(e.target.value)} />
             </div>
-            <div className="field">
+            <div className="login-field">
               <label>이름</label>
               <input type="text" required value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-            <div className="field">
+            <div className="login-field">
               <label>비밀번호</label>
               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <button type="submit" disabled={loading} className="add-block active" style={{ opacity: loading ? 0.6 : 1 }}>
+            <button type="submit" disabled={loading} className="login-submit" style={{ opacity: loading ? 0.6 : 1 }}>
               {loading ? '처리 중...' : '입장하기'}
             </button>
             {error && <p style={{ color: 'var(--crimson)', fontSize: 12, marginTop: 8 }}>{error}</p>}
           </form>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 16px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
             <span style={{ fontSize: 11, color: 'var(--gray-soft)' }}>시연용 바로가기</span>
             <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" disabled={loading} className="add-block" style={{ margin: 0, flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('student')}>
+            <button type="button" disabled={loading} className="login-demo-btn" style={{ opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('student')}>
               학생으로 시연
             </button>
-            <button type="button" disabled={loading} className="add-block" style={{ margin: 0, flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('admin')}>
+            <button type="button" disabled={loading} className="login-demo-btn" style={{ opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('admin')}>
               관리자로 시연
             </button>
           </div>
