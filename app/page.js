@@ -13,10 +13,9 @@ import SiteHeader from '@/components/SiteHeader';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
-  // 클릭 대신 마우스를 올린 챕터를 바로 오른쪽에 미리보기 — 아무것도 안 올렸을 때는
-  // 첫 챕터(CH.6)를 기본으로 보여줘서 오른쪽 칸이 비어 보이지 않게 한다.
-  const [hoverChapter, setHoverChapter] = useState(null);
-  const previewChapter = hoverChapter !== null ? hoverChapter : 0;
+  // 클릭 대신 마우스를 올린 챕터를 바로 오른쪽에 미리보기 — 처음엔 첫 챕터(CH.6)를 기본으로
+  // 보여주고, 마우스를 올렸다 떼면 그 챕터로 유지된다(마우스가 떠났다고 CH.6으로 되돌아가지 않음).
+  const [previewChapter, setPreviewChapter] = useState(0);
   const activeCh = chapters[previewChapter];
   const { userId } = useUser();
   const router = useRouter();
@@ -45,8 +44,7 @@ export default function HomePage() {
               <div
                 key={ch.num}
                 className={'chapter' + (ch.ready ? '' : ' disabled') + (previewChapter === idx ? ' active' : '')}
-                onMouseEnter={() => ch.ready && setHoverChapter(idx)}
-                onMouseLeave={() => setHoverChapter(null)}
+                onMouseEnter={() => ch.ready && setPreviewChapter(idx)}
               >
                 <div className="icon" dangerouslySetInnerHTML={{ __html: CHAPTER_ICONS[ch.num] || '' }} />
                 <div className="body">
