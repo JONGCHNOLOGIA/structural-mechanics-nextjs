@@ -14,14 +14,14 @@ export default function LoginPage() {
   const [checking, setChecking] = useState(true);
   const router = useRouter();
 
-  // 이미 로그인되어 있으면(세션이 살아있으면) 로그인 화면을 건너뛰고 바로 과목 선택으로
+  // 이미 로그인되어 있으면(세션이 살아있으면) 로그인 화면을 건너뛰고 바로 홈 화면으로
   useEffect(() => {
     (async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        router.replace('/subjects');
+        router.replace('/');
         return;
       }
       setChecking(false);
@@ -41,7 +41,7 @@ export default function LoginPage() {
       setError(err);
       return;
     }
-    router.replace('/subjects');
+    router.replace('/');
   }
 
   async function handleDemoLogin(kind) {
@@ -55,7 +55,7 @@ export default function LoginPage() {
       setError(err);
       return;
     }
-    router.replace('/subjects');
+    router.replace('/');
   }
 
   if (checking) return null;

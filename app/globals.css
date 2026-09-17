@@ -27,7 +27,6 @@ body{
   background:var(--bg);
   color:var(--ink);
   min-height:100vh;
-  padding-bottom:52px;
 }
 
 header, .detail-header{
@@ -378,11 +377,6 @@ input[type='range']::-moz-range-thumb{
 .chat-input button{
   background:var(--crimson); color:#fff; border:none; border-radius:50%; width:38px; height:38px;
   display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;
-}
-
-.footer-bar{
-  position:fixed; bottom:0; left:0; right:0; background:var(--gray); color:#fff;
-  text-align:center; font-size:12.5px; font-weight:700; padding:14px 0; letter-spacing:0.02em; z-index:20;
 }
 
 /* 홈 화면 우측 하단 플로팅 버튼 (AI 튜터 / 설정) — 건축공학과 홈페이지의 동그란 플로팅

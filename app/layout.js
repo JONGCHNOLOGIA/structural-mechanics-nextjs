@@ -17,7 +17,6 @@ export default function RootLayout({ children }) {
             <SettingsProvider>{children}</SettingsProvider>
           </UserProvider>
         </SiteContentProvider>
-        <div className="footer-bar">세종대학교 건축공학과 AI 튜터 사이트</div>
       </body>
     </html>
   );

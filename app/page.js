@@ -33,7 +33,7 @@ export default function HomePage() {
   return (
     <div>
       <header>
-        <Link href="/subjects" className="site-logo">
+        <Link href="/" className="site-logo">
           <div className="site-logo-eng">SEJONG UNIVERSITY</div>
           <div className="site-logo-kr">2026 건축공학과 학술제</div>
         </Link>
