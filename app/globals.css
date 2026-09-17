@@ -62,12 +62,12 @@ header{
 .site-nav-item.disabled{ color:var(--line); cursor:default; }
 .site-nav-item.disabled:hover{ color:var(--line); }
 .btn-outline{
-  font-size:13px; font-weight:600; color:var(--gray); border:1px solid var(--line); border-radius:0;
+  font-size:13px; font-weight:600; color:var(--gray); border:1px solid var(--line); border-radius:20px;
   padding:8px 18px; background:var(--card); transition:border-color 0.15s ease, color 0.15s ease;
 }
 .btn-outline:hover{ border-color:var(--crimson); color:var(--crimson); }
 .btn-solid{
-  font-size:13px; font-weight:600; color:#fff; background:var(--crimson); border-radius:0;
+  font-size:13px; font-weight:600; color:#fff; background:var(--crimson); border-radius:20px;
   padding:8px 18px; display:inline-flex; align-items:center; gap:4px;
 }
 
@@ -185,7 +185,7 @@ header{
 .tabs{ display:flex; flex-wrap:wrap; gap:10px; max-width:1600px; padding:0 64px; margin:20px auto 24px; box-sizing:border-box; }
 .tab{
   flex:0 0 auto; text-align:center; padding:10px 20px; font-size:13.5px; font-weight:700;
-  background:var(--card); border:1px solid var(--line); border-radius:0;
+  background:var(--card); border:1px solid var(--line); border-radius:20px;
   color:var(--gray-soft); cursor:pointer; text-decoration:none;
 }
 .tab.active{ color:#fff; background:var(--crimson); border-color:var(--crimson); }
@@ -380,12 +380,12 @@ input[type='range']::-moz-range-thumb{
 .result-card .v.comp{ color:var(--crimson); }
 
 .chat-log{ display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
-.msg{ font-size:13px; line-height:1.55; padding:11px 14px; border-radius:0; }
-.msg.ai{ background:var(--crimson-soft); color:var(--ink); }
-.msg.user{ background:var(--bg); }
+.msg{ font-size:13px; line-height:1.55; padding:11px 14px; border-radius:14px; }
+.msg.ai{ background:var(--crimson-soft); color:var(--ink); border-bottom-left-radius:4px; }
+.msg.user{ background:var(--bg); border-bottom-right-radius:4px; }
 .chat-input{ display:flex; gap:8px; margin-top:auto; }
 .chat-input input{
-  flex:1; background:var(--bg); border:1px solid var(--line); border-radius:0; color:var(--ink);
+  flex:1; background:var(--bg); border:1px solid var(--line); border-radius:20px; color:var(--ink);
   padding:11px 16px; font-size:13px; font-family:'Pretendard',sans-serif;
 }
 .chat-input button{
