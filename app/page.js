@@ -18,7 +18,7 @@ const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
 export default function HomePage() {
   const [activeChapter, setActiveChapter] = useState(null);
   const activeCh = activeChapter !== null ? chapters[activeChapter] : null;
-  const { displayName, studentId, userId } = useUser();
+  const { userId } = useUser();
   const router = useRouter();
 
   const [recentVisits, setRecentVisits] = useState([]);
@@ -55,7 +55,7 @@ export default function HomePage() {
                 await supabase.auth.signOut();
                 router.replace('/login');
               }}
-              title={`${studentId ?? ''} ${displayName ?? ''}`.trim()}
+              aria-label="로그아웃"
             >
               로그아웃
             </button>
