@@ -55,9 +55,14 @@ header, .detail-header{
    home-header는 다른 페이지의 공용 header보다 좌우 여백을 넉넉히 줘서(40px→64px) 로고가
    화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 하고, 전체적으로 "시원시원한" 느낌을 낸다. */
 .home-header{ padding:26px 64px; }
-.site-logo{ display:flex; flex-direction:column; gap:1px; }
-.site-logo-eng{ font-size:10px; font-weight:700; color:var(--gray-soft); letter-spacing:0.12em; }
-.site-logo-kr{ font-size:17px; font-weight:700; color:var(--ink); }
+/* 로고 워드마크는 세종대 공식 사이트처럼 세리프체 + 네이비 톤으로 — 실제 교표(엠블럼) 이미지는
+   상표권/브랜드 가이드라인 문제로 넣지 않음 (공식 파일을 받으면 .site-logo 안에 <img>만 추가하면 됨). */
+.site-logo{ display:flex; flex-direction:column; gap:2px; }
+.site-logo-eng{
+  font-family:Georgia,'Times New Roman',serif; font-size:11px; font-weight:700; color:var(--navy);
+  letter-spacing:0.14em;
+}
+.site-logo-kr{ font-family:Georgia,'Times New Roman',serif; font-size:18px; font-weight:700; color:var(--ink); }
 .site-nav{ display:flex; align-items:center; gap:12px; }
 .site-nav-item{
   font-size:16px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
