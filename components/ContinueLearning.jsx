@@ -32,14 +32,12 @@ export default function ContinueLearning({ visits }) {
         <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em' }}>이어서 학습하기</div>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-soft)' }}>더보기 +</span>
       </div>
-      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
         {cards.map((c) => (
           <div
             key={`${c.chapter.num}::${c.subtopic.slug}`}
             onClick={() => router.push(c.href)}
             style={{
-              flex: '1 1 220px',
-              maxWidth: 320,
               background: 'var(--navy)',
               border: '1px solid var(--navy)',
               borderRadius: 14,

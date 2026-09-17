@@ -11,7 +11,6 @@ import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
 import LearningStatus from '@/components/LearningStatus';
 import FloatingActions from '@/components/FloatingActions';
-import DeptNotices from '@/components/DeptNotices';
 
 const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
 
@@ -36,7 +35,7 @@ export default function HomePage() {
       <header>
         <Link href="/subjects" className="site-logo">
           <div className="site-logo-eng">SEJONG UNIVERSITY</div>
-          <div className="site-logo-kr">구조역학</div>
+          <div className="site-logo-kr">2026 건축공학과 학술제</div>
         </Link>
 
         <nav className="site-nav">
@@ -69,52 +68,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="hero">
-        <div className="hero-text">
-          <h1>{userId ? `안녕하세요, ${displayName}님 👋` : '구조역학 2, 둘러보는 중이에요 👋'}</h1>
-          {!userId && (
-            <div style={{ fontSize: 12.5, color: 'var(--crimson)', fontWeight: 700, marginBottom: 4 }}>
-              <Link href="/login" style={{ color: 'inherit' }}>로그인</Link>하면 진도가 저장되고 이어서 학습할 수 있어요.
-            </div>
-          )}
-          <EditableText
-            contentKey="home.hero.description"
-            defaultText="구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요."
-          />
-          <div className="hero-stats">
-            <Link href="/subjects/structural-mechanics-2/problem-generator" className="hero-stat hero-stat-link">
-              <div className="n">✎</div>
-              <div className="l">문제 생성</div>
-            </Link>
-            <Link href="/subjects/structural-mechanics-2/section-properties" className="hero-stat hero-stat-link">
-              <div className="n">📐</div>
-              <div className="l">단면 특성 계산기</div>
-            </Link>
-          </div>
-        </div>
-        <div className="hero-art">
-          <img
-            src="/cover.jpg"
-            alt="재료역학 (Mechanics of Materials) 9th Edition 표지"
-            style={{ width: 104, height: 140, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
-          />
-          <div className="cover-info">
-            <div className="book-title">
-              재료역학
-              <br />
-              (Mechanics of Materials)
-            </div>
-            9th Edition
-            <br />
-            James M. Gere · Barry J. Goodno
-            <br />
-            Cengage Learning
-          </div>
-        </div>
-      </div>
-
       <ContinueLearning visits={recentVisits} />
-      <DeptNotices />
       <LearningStatus summary={progressSummary} />
 
       <div className="board">
