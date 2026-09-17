@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { findTopic } from '@/lib/chapters';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const CARD_WIDTH = 260;
 
 // 건축공학과 홈페이지 공지사항 카드처럼 "7월 19일(금)" 형식으로 날짜를 표시.
 function formatVisitedDate(iso) {
@@ -17,9 +18,13 @@ function formatVisitedDate(iso) {
 // 방문 기록(lib/progress.js의 topic_visits)이 하나도 없으면 아무것도 렌더링하지 않는다.
 // 건축공학과 홈페이지의 "학과 공지사항" 카드를 레퍼런스 삼음 — 기본은 흰 배경(제목=CH.n · 챕터명,
 // 본문=소주제명, 하단=날짜)이고, 마우스를 올리면 레퍼런스의 "선택된" 카드처럼 네이비+흰 글씨로 바뀐다.
+// 화면이 좁아지면 카드가 줄바꿈되는 대신, 레퍼런스처럼 가로 스크롤 + 하단 진행바로 넘겨본다.
 export default function ContinueLearning({ visits }) {
   const router = useRouter();
   const [hoveredKey, setHoveredKey] = useState(null);
+  const scrollRef = useRef(null);
+  const [thumb, setThumb] = useState({ widthPct: 100, leftPct: 0 });
+
   const cards = (visits || [])
     .map((v) => {
       const topic = findTopic(v.chapter_num, v.subtopic_slug);
@@ -27,16 +32,37 @@ export default function ContinueLearning({ visits }) {
     })
     .filter(Boolean);
 
+  function updateThumb() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const widthPct = Math.min(100, (el.clientWidth / el.scrollWidth) * 100);
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const leftPct = maxScroll > 0 ? (el.scrollLeft / maxScroll) * (100 - widthPct) : 0;
+    setThumb({ widthPct, leftPct });
+  }
+
+  useEffect(() => {
+    updateThumb();
+    window.addEventListener('resize', updateThumb);
+    return () => window.removeEventListener('resize', updateThumb);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length]);
+
   if (cards.length === 0) return null;
 
   return (
     <div style={{ maxWidth: 1600, margin: '48px auto 0', padding: '0 64px' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 46, fontWeight: 500, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+        <div style={{ fontSize: 56, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           이어서 학습하기
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 22 }}>
+      <div
+        ref={scrollRef}
+        onScroll={updateThumb}
+        className="hide-scrollbar"
+        style={{ display: 'flex', gap: 22, overflowX: 'auto', paddingBottom: 4 }}
+      >
         {cards.map((c) => {
           const key = `${c.chapter.num}::${c.subtopic.slug}`;
           const hovered = hoveredKey === key;
@@ -47,6 +73,8 @@ export default function ContinueLearning({ visits }) {
               onMouseEnter={() => setHoveredKey(key)}
               onMouseLeave={() => setHoveredKey(null)}
               style={{
+                flex: `0 0 ${CARD_WIDTH}px`,
+                width: CARD_WIDTH,
                 background: hovered ? 'var(--navy)' : 'var(--card)',
                 border: `1px solid ${hovered ? 'var(--navy)' : '#D8E0E8'}`,
                 borderRadius: 4,
@@ -63,14 +91,14 @@ export default function ContinueLearning({ visits }) {
                 transform: hovered ? 'translateY(-3px)' : 'none',
               }}
             >
-              <div style={{ fontSize: 17, fontWeight: 700, color: hovered ? '#fff' : 'var(--ink)', lineHeight: 1.4, marginBottom: 10 }}>
+              <div style={{ fontSize: 19, fontWeight: 700, color: hovered ? '#fff' : 'var(--ink)', lineHeight: 1.4, marginBottom: 10 }}>
                 {c.chapter.num} · {c.chapter.title}
               </div>
-              <div style={{ fontSize: 13.5, fontWeight: 500, color: hovered ? 'rgba(255,255,255,0.85)' : 'var(--gray)', lineHeight: 1.5, marginBottom: 16 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 500, color: hovered ? 'rgba(255,255,255,0.85)' : 'var(--gray)', lineHeight: 1.5, marginBottom: 16 }}>
                 {c.subtopic.name}
               </div>
               {c.visitedAt && (
-                <div style={{ fontSize: 12, fontWeight: hovered ? 700 : 600, color: hovered ? 'rgba(255,255,255,0.75)' : 'var(--gray-soft)' }}>
+                <div style={{ fontSize: 12.5, fontWeight: hovered ? 700 : 600, color: hovered ? 'rgba(255,255,255,0.75)' : 'var(--gray-soft)' }}>
                   {formatVisitedDate(c.visitedAt)}
                 </div>
               )}
@@ -78,6 +106,20 @@ export default function ContinueLearning({ visits }) {
           );
         })}
       </div>
+      {thumb.widthPct < 100 && (
+        <div style={{ height: 4, marginTop: 22, borderRadius: 2, background: 'var(--line)', overflow: 'hidden' }}>
+          <div
+            style={{
+              height: '100%',
+              borderRadius: 2,
+              background: 'var(--crimson)',
+              width: `${thumb.widthPct}%`,
+              transform: `translateX(${(thumb.leftPct / thumb.widthPct) * 100}%)`,
+              transition: 'transform 0.1s linear',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

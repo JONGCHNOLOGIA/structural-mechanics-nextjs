@@ -78,7 +78,7 @@ export default function HomePage() {
 
       <div className="board">
         <div>
-          <div className="col-label">CHAPTERS</div>
+          <div className="col-label">챕터</div>
           <div className="chapter-list">
             {chapters.map((ch, idx) => (
               <div
@@ -100,7 +100,7 @@ export default function HomePage() {
           </div>
         </div>
         <div>
-          <div className="col-label">SUB-TOPICS</div>
+          <div className="col-label">소주제</div>
           <div className="subtopics">
             {!activeCh ? (
               <div className="empty">
