@@ -1,23 +1,24 @@
 'use client';
 
 import EditableText from '@/components/EditableText';
+import EditableLink from '@/components/EditableLink';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/sejong_archi_eng/';
 const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
 
 const POLICY_LINKS = [
-  { label: '개인정보처리방침', href: 'https://www.sejong.ac.kr/kor/etc/privacy-policy.do' },
-  { label: '이메일무단수집거부', href: 'https://www.sejong.ac.kr/kor/etc/email-policy.do' },
-  { label: '규정공고', href: 'https://www.sejong.ac.kr/kor/intro/regulation-overview.do' },
-  { label: '예·결산공고', href: 'https://www.sejong.ac.kr/kor/intro/budget-announcement.do' },
-  { label: '대학정보공시', href: 'https://www.academyinfo.go.kr/pubinfo/pubinfo1600/doInit.do?schlId=0000138' },
+  { key: 'footer.policy.0', label: '개인정보처리방침', href: 'https://www.sejong.ac.kr/kor/etc/privacy-policy.do' },
+  { key: 'footer.policy.1', label: '이메일무단수집거부', href: 'https://www.sejong.ac.kr/kor/etc/email-policy.do' },
+  { key: 'footer.policy.2', label: '규정공고', href: 'https://www.sejong.ac.kr/kor/intro/regulation-overview.do' },
+  { key: 'footer.policy.3', label: '예·결산공고', href: 'https://www.sejong.ac.kr/kor/intro/budget-announcement.do' },
+  { key: 'footer.policy.4', label: '대학정보공시', href: 'https://www.academyinfo.go.kr/pubinfo/pubinfo1600/doInit.do?schlId=0000138' },
 ];
 
 // 건축공학과 홈페이지(dept.sejong.ac.kr/archeng) 푸터 레퍼런스 — 원래는 "대학/대학원 바로가기"·
 // "관련사이트 바로가기"가 드롭다운 메뉴였지만, 여기서는 화살표 자리에 아이콘을 넣어 각각
 // 인스타그램/건축공학과 사이트로 바로 연결되는 단일 링크로 단순화했다.
-// 주소·전화·이메일은 관리자(EditableText)가 나중에 우리 프로젝트 정보로 바꿀 수 있게 해뒀고,
-// 지금은 우선 레퍼런스 내용을 그대로 채워둔 상태.
+// 주소·이메일, 정책 링크(문구+연결 URL), 저작권 문구는 관리자(EditableText/EditableLink)가
+// 나중에 우리 프로젝트 정보로 바꿀 수 있게 해뒀고, 지금은 우선 레퍼런스 내용을 그대로 채워둔 상태.
 export default function SiteFooter() {
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -62,10 +63,6 @@ export default function SiteFooter() {
               <EditableText as="span" contentKey="footer.address" defaultText="05006 서울특별시 광진구 능동로 209(군자동) 세종대학교" />
             </li>
             <li>
-              <b>전화번호 :</b>
-              <EditableText as="span" contentKey="footer.tel" defaultText="02-3408-3114" />
-            </li>
-            <li>
               <b>이메일 :</b>
               <EditableText as="span" contentKey="footer.email" defaultText="webmaster@sejong.ac.kr" />
             </li>
@@ -76,14 +73,12 @@ export default function SiteFooter() {
           <div className="footer-bottom-row">
             <ul className="footer-policy-list">
               {POLICY_LINKS.map((p) => (
-                <li key={p.label}>
-                  <a href={p.href} target="_blank" rel="noopener noreferrer">
-                    {p.label}
-                  </a>
+                <li key={p.key}>
+                  <EditableLink contentKey={p.key} defaultLabel={p.label} defaultHref={p.href} />
                 </li>
               ))}
             </ul>
-            <div className="footer-copyright">COPYRIGHT 2025 SEJONG UNIVERSITY. ALL RIGHTS RESERVED.</div>
+            <EditableText as="div" className="footer-copyright" contentKey="footer.copyright" defaultText="COPYRIGHT 2025 SEJONG UNIVERSITY. ALL RIGHTS RESERVED." />
           </div>
         </div>
       </div>
