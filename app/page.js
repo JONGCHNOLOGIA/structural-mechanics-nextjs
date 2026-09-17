@@ -43,8 +43,11 @@ export default function HomePage() {
     <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
       <header className="home-header">
         <Link href="/" className="site-logo">
-          <div className="site-logo-eng">SEJONG UNIVERSITY</div>
-          <div className="site-logo-kr">2026 건축공학과 학술제</div>
+          <img src="/brand/sejong-emblem.png" alt="세종대학교 교표" className="site-logo-emblem" />
+          <div className="site-logo-text">
+            <div className="site-logo-eng">SEJONG UNIVERSITY</div>
+            <div className="site-logo-kr">2026 건축공학과 학술제</div>
+          </div>
         </Link>
 
         <nav className="site-nav">

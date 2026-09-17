@@ -55,14 +55,22 @@ header, .detail-header{
    home-header는 다른 페이지의 공용 header보다 좌우 여백을 넉넉히 줘서(40px→64px) 로고가
    화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 하고, 전체적으로 "시원시원한" 느낌을 낸다. */
 .home-header{ padding:26px 64px; }
-/* 로고 워드마크는 세종대 공식 사이트처럼 세리프체 + 네이비 톤으로 — 실제 교표(엠블럼) 이미지는
-   상표권/브랜드 가이드라인 문제로 넣지 않음 (공식 파일을 받으면 .site-logo 안에 <img>만 추가하면 됨). */
-.site-logo{ display:flex; flex-direction:column; gap:2px; }
+/* 로고 — 세종대 공식 브랜드 가이드(design/ 폴더) 기준.
+   - 교표(Authority Mark)는 가이드의 1-1.교표.jpg에서 원형 마크만 깨끗하게 오려내 public/brand에 저장.
+   - 영문 워드마크는 가이드 지정서체(Times New Roman)를 유지 — 실제 시그니춰가 이렇게 생겼고,
+     영문에서는 세리프가 "올드"보다는 정갈한 느낌을 준다.
+   - 국문 워드마크는 가이드의 실제 로고타입처럼 고딕(세리프 아님)이라, Pretendard로 바꿔서
+     "너무 올드해 보인다"던 피드백을 해결 — 명조체(Georgia)를 국문에 쓴 게 원인이었음.
+   - 색상은 가이드 이미지의 워드마크에서 실측한 값(#3A5267, 공식 팔레트엔 별도 네이비가 없어
+     가장 가까운 근사치). */
+.site-logo{ display:flex; align-items:center; gap:10px; }
+.site-logo-emblem{ width:38px; height:38px; flex-shrink:0; }
+.site-logo-text{ display:flex; flex-direction:column; gap:2px; }
 .site-logo-eng{
-  font-family:Georgia,'Times New Roman',serif; font-size:11px; font-weight:700; color:var(--navy);
+  font-family:'Times New Roman',Georgia,serif; font-size:11px; font-weight:700; color:#3A5267;
   letter-spacing:0.14em;
 }
-.site-logo-kr{ font-family:Georgia,'Times New Roman',serif; font-size:18px; font-weight:700; color:var(--ink); }
+.site-logo-kr{ font-family:'Pretendard',sans-serif; font-size:17px; font-weight:800; color:#3A5267; }
 .site-nav{ display:flex; align-items:center; gap:12px; }
 .site-nav-item{
   font-size:16px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
