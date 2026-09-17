@@ -30,9 +30,18 @@ export default function HomePage() {
     fetchProgressSummary().then(setProgressSummary);
   }, [userId]);
 
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // 세션이 이미 만료됐거나 네트워크가 끊겨도, 어쨌든 로그인 화면으로는 보내준다.
+    }
+    router.replace('/login');
+  }
+
   return (
-    <div>
-      <header>
+    <div style={{ background: 'var(--card)' }}>
+      <header className="home-header">
         <Link href="/" className="site-logo">
           <div className="site-logo-eng">SEJONG UNIVERSITY</div>
           <div className="site-logo-kr">2026 건축공학과 학술제</div>
@@ -49,14 +58,7 @@ export default function HomePage() {
 
         <div className="header-right">
           {userId ? (
-            <button
-              className="btn-outline"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.replace('/login');
-              }}
-              aria-label="로그아웃"
-            >
+            <button className="btn-outline" onClick={handleLogout} aria-label="로그아웃">
               로그아웃
             </button>
           ) : (

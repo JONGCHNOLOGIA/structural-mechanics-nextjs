@@ -30,8 +30,8 @@ export default function ContinueLearning({ visits }) {
   if (cards.length === 0) return null;
 
   return (
-    <div style={{ maxWidth: 1600, margin: '36px auto 0', padding: '0 40px' }}>
-      <div style={{ marginBottom: 24 }}>
+    <div style={{ maxWidth: 1600, margin: '48px auto 0', padding: '0 64px' }}>
+      <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 46, fontWeight: 500, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           이어서 학습하기
         </div>
@@ -39,7 +39,7 @@ export default function ContinueLearning({ visits }) {
           더보기 +
         </span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 22 }}>
         {cards.map((c) => {
           const key = `${c.chapter.num}::${c.subtopic.slug}`;
           const hovered = hoveredKey === key;
@@ -51,19 +51,19 @@ export default function ContinueLearning({ visits }) {
               onMouseLeave={() => setHoveredKey(null)}
               style={{
                 background: hovered ? 'var(--navy)' : 'var(--card)',
-                border: `1px solid ${hovered ? 'var(--navy)' : 'var(--line)'}`,
+                border: `1px solid ${hovered ? 'var(--navy)' : '#D8E0E8'}`,
                 borderRadius: 4,
-                padding: '26px 20px',
-                minHeight: 190,
+                padding: '36px 32px',
+                minHeight: 220,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
                 textAlign: 'center',
                 cursor: 'pointer',
-                transition: 'background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
-                boxShadow: hovered ? '0 10px 22px rgba(30,50,69,0.28)' : '0 1px 3px rgba(0,0,0,0.04)',
-                transform: hovered ? 'translateY(-2px)' : 'none',
+                transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease',
+                boxShadow: hovered ? '0 10px 24px rgba(30,50,69,0.28)' : 'none',
+                transform: hovered ? 'translateY(-3px)' : 'none',
               }}
             >
               <div style={{ fontSize: 17, fontWeight: 700, color: hovered ? '#fff' : 'var(--ink)', lineHeight: 1.4, marginBottom: 10 }}>

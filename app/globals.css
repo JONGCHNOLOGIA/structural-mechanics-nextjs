@@ -51,7 +51,10 @@ header, .detail-header{
 .logout-btn:hover{ background:var(--crimson-soft); color:var(--crimson); border-color:var(--crimson); }
 
 /* 건축공학과 홈페이지(dept.sejong.ac.kr/archeng) 헤더 레퍼런스 — 로고 락업 + 가운데 네비 +
-   우측 로그인/바로가기 버튼. 홈 화면(app/page.js)에서만 씀. */
+   우측 로그인/바로가기 버튼. 홈 화면(app/page.js)에서만 씀.
+   home-header는 다른 페이지의 공용 header보다 좌우 여백을 넉넉히 줘서(40px→64px) 로고가
+   화면 맨 끝이 아니라 살짝 안쪽에서 시작하게 하고, 전체적으로 "시원시원한" 느낌을 낸다. */
+.home-header{ padding:26px 64px; }
 .site-logo{ display:flex; flex-direction:column; gap:1px; }
 .site-logo-eng{ font-size:10px; font-weight:700; color:var(--gray-soft); letter-spacing:0.12em; }
 .site-logo-kr{ font-size:17px; font-weight:700; color:var(--ink); }
@@ -102,21 +105,21 @@ header, .detail-header{
 
 .board{
   display:grid; grid-template-columns: 300px 1fr;
-  max-width:1600px; margin:40px auto; padding:0 40px; gap:28px;
+  max-width:1600px; margin:56px auto; padding:0 64px; gap:36px;
   align-items:start;
 }
 .col-label{ font-size:13px; font-weight:500; color:var(--crimson); margin-bottom:14px; }
 
-.chapter-list{ display:flex; flex-direction:column; gap:10px; }
+.chapter-list{ display:flex; flex-direction:column; gap:12px; }
 .chapter{
   position:relative;
   background:var(--card);
-  border:1px solid var(--line);
+  border:1px solid #D8E0E8;
   border-radius:4px;
-  padding:16px 18px;
+  padding:20px 22px;
   cursor:pointer;
   display:flex; align-items:flex-start; gap:13px;
-  transition:box-shadow 0.15s ease, transform 0.15s ease;
+  transition:box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   box-shadow:0 1px 3px rgba(0,0,0,0.03);
 }
 .chapter .icon{
@@ -145,7 +148,7 @@ header, .detail-header{
 .chapter:hover .preview{ display:block; }
 
 .subtopics{
-  background:var(--card); border:1px solid var(--line); border-radius:4px;
+  background:var(--card); border:1px solid #D8E0E8; border-radius:4px;
   min-height:120px; display:flex; flex-direction:column; overflow:hidden;
 }
 .subtopics .empty{
