@@ -38,17 +38,30 @@ export default function HomePage() {
           <span>구조역학 2</span>
         </div>
         <div className="header-right">
-          <SettingsButton />
-          <LogoutButton />
-          <div className="user-tag">
-            {studentId} {displayName}
-          </div>
+          {userId ? (
+            <>
+              <SettingsButton />
+              <LogoutButton />
+              <div className="user-tag">
+                {studentId} {displayName}
+              </div>
+            </>
+          ) : (
+            <Link href="/login" className="add-block" style={{ margin: 0, padding: '8px 16px' }}>
+              로그인
+            </Link>
+          )}
         </div>
       </header>
 
       <div className="hero">
         <div className="hero-text">
-          <h1>안녕하세요, {displayName}님 👋</h1>
+          <h1>{userId ? `안녕하세요, ${displayName}님 👋` : '구조역학 2, 둘러보는 중이에요 👋'}</h1>
+          {!userId && (
+            <div style={{ fontSize: 12.5, color: 'var(--crimson)', fontWeight: 700, marginBottom: 4 }}>
+              <Link href="/login" style={{ color: 'inherit' }}>로그인</Link>하면 진도가 저장되고 이어서 학습할 수 있어요.
+            </div>
+          )}
           <EditableText
             contentKey="home.hero.description"
             defaultText="구조역학 2의 각 챕터를 클릭해 소주제를 살펴보고, 인터랙티브 시각화와 AI 튜터로 개념을 확인해보세요."
