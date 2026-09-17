@@ -28,11 +28,8 @@ export default function UserProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
 
+    async function applySession(session) {
       if (!session) {
         if (!PUBLIC_PATHS.includes(pathname)) router.replace('/login');
         if (!cancelled) setState({ userId: null, studentId: null, displayName: null, role: null, isAdmin: false, canEditContent: false, ready: true });
@@ -52,9 +49,20 @@ export default function UserProvider({ children }) {
           ready: true,
         });
       }
-    })();
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => applySession(session));
+
+    // 로그아웃 버튼을 누른 화면이 홈('/')처럼 이 useEffect가 다시 안 도는 경로면, pathname이
+    // 안 바뀌어서 로그아웃했는데도 화면이 그대로 "로그인된 상태"로 남아있었음 — signOut()이
+    // 일어나는 즉시 이 리스너가 따로 불려서 pathname 변화와 상관없이 상태를 갱신해준다.
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+
     return () => {
       cancelled = true;
+      listener.subscription.unsubscribe();
     };
   }, [pathname, router]);
 

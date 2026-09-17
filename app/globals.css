@@ -422,14 +422,19 @@ input[type='range']::-moz-range-thumb{
   position:relative; display:flex; background:#192E3E;
 }
 .footer-quicklink{
-  flex:1; display:flex; align-items:center; justify-content:space-between;
-  padding:28px 64px; color:#fff; font-size:16px; font-weight:700;
+  flex:1; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:28px 40px 28px 64px; color:#fff; font-size:19px; font-weight:700;
   transition:background 0.15s ease;
 }
 .footer-quicklink:hover{ background:rgba(255,255,255,0.06); }
 .footer-quicklink + .footer-quicklink{ border-left:1px solid rgba(255,255,255,0.14); }
-.footer-quicklink-icon{ display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
-.footer-quicklink-icon-img{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+.footer-quicklink-icon{
+  display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;
+  width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.5);
+  transition:border-color 0.15s ease, background 0.15s ease;
+}
+.footer-quicklink:hover .footer-quicklink-icon{ border-color:#fff; background:rgba(255,255,255,0.08); }
+.footer-quicklink-icon-img{ width:20px; height:20px; object-fit:contain; flex-shrink:0; }
 .footer-back-top{
   position:absolute; top:-22px; right:40px; width:44px; height:44px; border-radius:50%;
   background:var(--ink); color:#fff; border:3px solid var(--bg); cursor:pointer;

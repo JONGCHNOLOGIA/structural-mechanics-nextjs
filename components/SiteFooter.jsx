@@ -38,7 +38,9 @@ export default function SiteFooter() {
         </a>
         <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
           <span>건축공학과 사이트 바로가기</span>
-          <img src="/brand/sejong-emblem.png" alt="" className="footer-quicklink-icon-img" />
+          <span className="footer-quicklink-icon">
+            <img src="/brand/sejong-emblem.png" alt="" className="footer-quicklink-icon-img" />
+          </span>
         </a>
         <button type="button" className="footer-back-top" onClick={scrollToTop} aria-label="맨 위로">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
