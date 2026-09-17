@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
-import LogoutButton from '@/components/LogoutButton';
+import { supabase } from '@/lib/supabaseClient';
 import EditableText from '@/components/EditableText';
 import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
 import LearningStatus from '@/components/LearningStatus';
 import FloatingActions from '@/components/FloatingActions';
+import DeptNotices from '@/components/DeptNotices';
+
+const ARCHENG_URL = 'https://dept.sejong.ac.kr/archeng/index.do';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
@@ -47,16 +50,22 @@ export default function HomePage() {
 
         <div className="header-right">
           {userId ? (
-            <>
-              <LogoutButton />
-              <div className="user-tag">
-                {studentId} {displayName}
-              </div>
-            </>
+            <button
+              className="btn-outline"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace('/login');
+              }}
+              title={`${studentId ?? ''} ${displayName ?? ''}`.trim()}
+            >
+              로그아웃
+            </button>
           ) : (
             <Link href="/login" className="btn-outline">로그인</Link>
           )}
-          <Link href="/subjects" className="btn-solid">과목 선택 ↗</Link>
+          <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
+            건축공학과 ↗
+          </a>
         </div>
       </header>
 
@@ -105,6 +114,7 @@ export default function HomePage() {
       </div>
 
       <ContinueLearning visits={recentVisits} />
+      <DeptNotices />
       <LearningStatus summary={progressSummary} />
 
       <div className="board">
