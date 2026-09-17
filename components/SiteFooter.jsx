@@ -26,20 +26,22 @@ export default function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="footer-top">
-        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
-          <span>건축공학과 인스타그램 바로가기</span>
-          <span className="footer-quicklink-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <rect x="3" y="3" width="18" height="18" rx="5" />
-              <circle cx="12" cy="12" r="4.2" />
-              <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-            </svg>
-          </span>
-        </a>
-        <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
-          <span>건축공학과 사이트 바로가기</span>
-          <img src="/brand/sejong-emblem-white.png" alt="" className="footer-quicklink-icon-plain" />
-        </a>
+        <div className="footer-top-inner">
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
+            <span>건축공학과 인스타그램 바로가기</span>
+            <span className="footer-quicklink-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4.2" />
+                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+          </a>
+          <a href={ARCHENG_URL} target="_blank" rel="noopener noreferrer" className="footer-quicklink">
+            <span>건축공학과 사이트 바로가기</span>
+            <img src="/brand/sejong-emblem-white.png" alt="" className="footer-quicklink-icon-plain" />
+          </a>
+        </div>
         <button type="button" className="footer-back-top" onClick={scrollToTop} aria-label="맨 위로">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 19V5" />

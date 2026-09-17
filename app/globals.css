@@ -419,8 +419,11 @@ input[type='range']::-moz-range-thumb{
    상단 두 칸(인스타그램/건축공학과 바로가기, 진한 네이비)과 하단 정보란(검정)으로 구성됨. */
 .site-footer{ margin-top:64px; }
 .footer-top{
-  position:relative; display:flex; background:#192E3E;
+  position:relative; background:#192E3E;
 }
+/* 레퍼런스 사이트는 이 바가 화면 끝까지 안 닿고, 다른 섹션들처럼 1600px 안에서 가운데
+   정렬돼 있음 — 그래서 양쪽 바깥 여백이 항상 똑같이 맞춰짐. 우리도 같은 폭 제약을 준다. */
+.footer-top-inner{ display:flex; max-width:1600px; margin:0 auto; }
 .footer-quicklink{
   flex:1; display:flex; align-items:center; justify-content:space-between; gap:16px;
   padding:28px 64px; color:#fff; font-size:19px; font-weight:700;
