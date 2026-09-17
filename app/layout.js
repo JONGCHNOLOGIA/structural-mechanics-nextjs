@@ -4,7 +4,7 @@ import SiteContentProvider from '@/components/SiteContentProvider';
 import SettingsProvider from '@/components/SettingsProvider';
 
 export const metadata = {
-  title: '구조역학 2 — 세종대학교 건축공학과',
+  title: '세종대학교 건축공학과 공모전',
   description: 'AI 튜터 기반 구조역학 학습 사이트',
 };
 
