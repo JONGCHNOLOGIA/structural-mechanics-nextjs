@@ -152,7 +152,6 @@ function ProblemGeneratorContent() {
       </div>
 
       <div className="board">
-       <div className="board-grid">
         <div>
           <div className="col-label">CHAPTERS</div>
           <div className="chapter-list">
@@ -261,7 +260,6 @@ function ProblemGeneratorContent() {
             </div>
           </div>
         </div>
-       </div>
       </div>
 
       {problems && (

@@ -25,41 +25,43 @@ export default function SiteHeader({ active = 'sm2' }) {
 
   return (
     <header className="home-header">
-      <Link href="/" className="site-logo">
-        <img src="/brand/sejong-archeng-logo.png" alt="세종대학교 건축공학과" className="site-logo-img" />
-      </Link>
-
-      <nav className="site-nav">
-        <span className="site-nav-item disabled" title="다른 팀원이 만들고 있어요 — 준비중">
-          구조역학 1
-        </span>
-        <Link href="/" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
-          구조역학 2
+      <div className="home-header-inner">
+        <Link href="/" className="site-logo">
+          <img src="/brand/sejong-archeng-logo.png" alt="세종대학교 건축공학과" className="site-logo-img" />
         </Link>
-        <Link
-          href="/subjects/structural-mechanics-2/problem-generator"
-          className={'site-nav-item' + (active === 'problem-generator' ? ' active' : '')}
-        >
-          문제 제작
-        </Link>
-        <span className="site-nav-item disabled" title="준비중">
-          커뮤니티
-        </span>
-      </nav>
 
-      <div className="header-right">
-        {userId ? (
-          <button className="btn-outline" onClick={handleLogout} aria-label="로그아웃">
-            로그아웃
-          </button>
-        ) : (
-          <Link href="/login" className="btn-outline">
-            로그인
+        <nav className="site-nav">
+          <span className="site-nav-item disabled" title="다른 팀원이 만들고 있어요 — 준비중">
+            구조역학 1
+          </span>
+          <Link href="/" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
+            구조역학 2
           </Link>
-        )}
-        <a href={ECAMPUS_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
-          집현캠퍼스 ↗
-        </a>
+          <Link
+            href="/subjects/structural-mechanics-2/problem-generator"
+            className={'site-nav-item' + (active === 'problem-generator' ? ' active' : '')}
+          >
+            문제 제작
+          </Link>
+          <span className="site-nav-item disabled" title="준비중">
+            커뮤니티
+          </span>
+        </nav>
+
+        <div className="header-right">
+          {userId ? (
+            <button className="btn-outline" onClick={handleLogout} aria-label="로그아웃">
+              로그아웃
+            </button>
+          ) : (
+            <Link href="/login" className="btn-outline">
+              로그인
+            </Link>
+          )}
+          <a href={ECAMPUS_URL} target="_blank" rel="noopener noreferrer" className="btn-solid">
+            집현캠퍼스 ↗
+          </a>
+        </div>
       </div>
     </header>
   );

@@ -37,57 +37,55 @@ export default function HomePage() {
       <LearningStatus summary={progressSummary} />
 
       <div className="board">
-        <div className="board-grid">
-          <div>
-            <div className="col-label">챕터</div>
-            <div className="chapter-list">
-              {chapters.map((ch, idx) => (
-                <div
-                  key={ch.num}
-                  className={'chapter' + (ch.ready ? '' : ' disabled') + (previewChapter === idx ? ' active' : '')}
-                  onMouseEnter={() => ch.ready && setPreviewChapter(idx)}
-                >
-                  <div className="icon" dangerouslySetInnerHTML={{ __html: CHAPTER_ICONS[ch.num] || '' }} />
-                  <div className="body">
-                    <span className="num">
-                      {ch.num}
-                      {ch.ready ? <span className="tag">{ch.subtopics.length}개 소주제</span> : <span className="tag">준비중</span>}
-                    </span>
-                    <div className="title">{ch.title}</div>
-                    <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
-                  </div>
+        <div>
+          <div className="col-label">챕터</div>
+          <div className="chapter-list">
+            {chapters.map((ch, idx) => (
+              <div
+                key={ch.num}
+                className={'chapter' + (ch.ready ? '' : ' disabled') + (previewChapter === idx ? ' active' : '')}
+                onMouseEnter={() => ch.ready && setPreviewChapter(idx)}
+              >
+                <div className="icon" dangerouslySetInnerHTML={{ __html: CHAPTER_ICONS[ch.num] || '' }} />
+                <div className="body">
+                  <span className="num">
+                    {ch.num}
+                    {ch.ready ? <span className="tag">{ch.subtopics.length}개 소주제</span> : <span className="tag">준비중</span>}
+                  </span>
+                  <div className="title">{ch.title}</div>
+                  <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-          <div>
-            <div className="col-label">소주제</div>
-            <div className="subtopics">
-              <div className="subtopics-group-label">{activeCh.num} · {activeCh.title}</div>
-              {activeCh.subtopics.length === 0 ? (
-                <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
-              ) : (
-                activeCh.subtopics.map((st) => (
-                  <div
-                    key={st.slug}
-                    className="subtopic"
-                    onClick={() => router.push(`${activeCh.base}/${st.slug}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="subtopic-row">
-                      <span className="name">{st.name}</span>
-                      <span className="go">열기 →</span>
-                    </div>
-                    <EditableText
-                      as="div"
-                      className="subprev"
-                      contentKey={`subtopic.${activeCh.num}.${st.slug}.desc`}
-                      defaultText={st.desc}
-                    />
+        </div>
+        <div>
+          <div className="col-label">소주제</div>
+          <div className="subtopics">
+            <div className="subtopics-group-label">{activeCh.num} · {activeCh.title}</div>
+            {activeCh.subtopics.length === 0 ? (
+              <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
+            ) : (
+              activeCh.subtopics.map((st) => (
+                <div
+                  key={st.slug}
+                  className="subtopic"
+                  onClick={() => router.push(`${activeCh.base}/${st.slug}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="subtopic-row">
+                    <span className="name">{st.name}</span>
+                    <span className="go">열기 →</span>
                   </div>
-                ))
-              )}
-            </div>
+                  <EditableText
+                    as="div"
+                    className="subprev"
+                    contentKey={`subtopic.${activeCh.num}.${st.slug}.desc`}
+                    defaultText={st.desc}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

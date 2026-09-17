@@ -64,9 +64,11 @@ export default function LoginPage() {
   return (
     <div>
       <header className="home-header">
-        <Link href="/" className="site-logo">
-          <img src="/brand/sejong-archeng-logo.png" alt="세종대학교 건축공학과" className="site-logo-img" />
-        </Link>
+        <div className="home-header-inner">
+          <Link href="/" className="site-logo">
+            <img src="/brand/sejong-archeng-logo.png" alt="세종대학교 건축공학과" className="site-logo-img" />
+          </Link>
+        </div>
       </header>
       <div style={{ maxWidth: 400, margin: '80px auto 0' }}>
         <div className="login-card">
