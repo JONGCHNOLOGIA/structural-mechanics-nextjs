@@ -32,7 +32,7 @@ export default function ContinueLearning({ visits }) {
   return (
     <div style={{ maxWidth: 1600, margin: '36px auto 0', padding: '0 40px' }}>
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 46, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+        <div style={{ fontSize: 46, fontWeight: 500, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           이어서 학습하기
         </div>
         <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--crimson)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'default' }}>
@@ -66,14 +66,14 @@ export default function ContinueLearning({ visits }) {
                 transform: hovered ? 'translateY(-2px)' : 'none',
               }}
             >
-              <div style={{ fontSize: 17, fontWeight: 800, color: hovered ? '#fff' : 'var(--ink)', lineHeight: 1.4, marginBottom: 10 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: hovered ? '#fff' : 'var(--ink)', lineHeight: 1.4, marginBottom: 10 }}>
                 {c.chapter.num} · {c.chapter.title}
               </div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: hovered ? 'rgba(255,255,255,0.85)' : 'var(--gray)', lineHeight: 1.5, marginBottom: 16 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: hovered ? 'rgba(255,255,255,0.85)' : 'var(--gray)', lineHeight: 1.5, marginBottom: 16 }}>
                 {c.subtopic.name}
               </div>
               {c.visitedAt && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: hovered ? 'rgba(255,255,255,0.75)' : 'var(--gray-soft)' }}>
+                <div style={{ fontSize: 12, fontWeight: hovered ? 700 : 600, color: hovered ? 'rgba(255,255,255,0.75)' : 'var(--gray-soft)' }}>
                   {formatVisitedDate(c.visitedAt)}
                 </div>
               )}

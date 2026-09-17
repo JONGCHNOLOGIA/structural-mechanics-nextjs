@@ -54,8 +54,8 @@ header, .detail-header{
 /* 건축공학과 홈페이지(dept.sejong.ac.kr/archeng) 헤더 레퍼런스 — 로고 락업 + 가운데 네비 +
    우측 로그인/바로가기 버튼. 홈 화면(app/page.js)에서만 씀. */
 .site-logo{ display:flex; flex-direction:column; gap:1px; }
-.site-logo-eng{ font-size:10px; font-weight:500; color:var(--gray-soft); letter-spacing:0.12em; }
-.site-logo-kr{ font-size:17px; font-weight:500; color:var(--ink); }
+.site-logo-eng{ font-size:10px; font-weight:700; color:var(--gray-soft); letter-spacing:0.12em; }
+.site-logo-kr{ font-size:17px; font-weight:700; color:var(--ink); }
 .site-nav{ display:flex; align-items:center; gap:36px; }
 .site-nav-item{ font-size:14.5px; font-weight:700; color:var(--gray); cursor:pointer; position:relative; padding:4px 0; }
 .site-nav-item:hover{ color:var(--crimson); }
@@ -66,12 +66,12 @@ header, .detail-header{
 .site-nav-item.disabled{ color:var(--line); cursor:default; }
 .site-nav-item.disabled:hover{ color:var(--line); }
 .btn-outline{
-  font-size:13px; font-weight:700; color:var(--gray); border:1px solid var(--line); border-radius:20px;
+  font-size:13px; font-weight:600; color:var(--gray); border:1px solid var(--line); border-radius:20px;
   padding:8px 18px; background:var(--card); transition:border-color 0.15s ease, color 0.15s ease;
 }
 .btn-outline:hover{ border-color:var(--crimson); color:var(--crimson); }
 .btn-solid{
-  font-size:13px; font-weight:800; color:#fff; background:var(--crimson); border-radius:20px;
+  font-size:13px; font-weight:600; color:#fff; background:var(--crimson); border-radius:20px;
   padding:8px 18px; display:inline-flex; align-items:center; gap:4px;
 }
 
@@ -129,9 +129,9 @@ header, .detail-header{
 .chapter .body{ flex:1; min-width:0; }
 .chapter .num{ font-size:12px; font-weight:600; color:var(--crimson); display:block; margin-bottom:2px;}
 .chapter.disabled .num{ color:var(--gray-soft); }
-.chapter .title{ font-size:15px; font-weight:500; }
+.chapter .title{ font-size:15px; font-weight:700; }
 .chapter .tag{
-  font-size:10.5px; color:var(--gray-soft); margin-left:8px; font-weight:500;
+  font-size:10.5px; color:var(--gray-soft); margin-left:8px; font-weight:600;
   background:var(--bg); border-radius:4px; padding:2px 7px;
 }
 .chapter:hover{ box-shadow:0 4px 14px rgba(195,0,47,0.08); transform:translateY(-1px); }
@@ -158,8 +158,8 @@ header, .detail-header{
 .subtopic:last-child{ border-bottom:none; }
 .subtopic:hover{ background:var(--crimson-soft); }
 .subtopic-row{ display:flex; align-items:center; justify-content:space-between; }
-.subtopic .name{ font-size:15px; font-weight:500; color:var(--ink); }
-.subtopic .go{ font-size:12px; font-weight:600; color:var(--crimson); opacity:0; transition:opacity 0.15s; }
+.subtopic .name{ font-size:15px; font-weight:700; color:var(--ink); }
+.subtopic .go{ font-size:12px; font-weight:700; color:var(--crimson); opacity:0; transition:opacity 0.15s; }
 .subtopic:hover .go{ opacity:1; }
 .subtopic .subprev{
   display:none; font-size:12.5px; color:var(--gray); line-height:1.55;
