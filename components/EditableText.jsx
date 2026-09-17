@@ -75,7 +75,7 @@ export default function EditableText({ contentKey, defaultText, as: Tag = 'p', s
             fontSize: 14,
             fontFamily: 'inherit',
             padding: 10,
-            borderRadius: 8,
+            borderRadius: 0,
             border: '1px solid var(--line)',
             resize: 'vertical',
           }}

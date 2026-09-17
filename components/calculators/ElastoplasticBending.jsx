@@ -37,7 +37,7 @@ export default function ElastoplasticBending() {
         <EditableText
           contentKey="calc.ElastoplasticBending.intro"
           defaultText="직사각형 단면에 모멘트를 점점 키우면, 처음엔 **탄성**이다가 표면부터 **항복**하기 시작하고, 계속 키우면 단면 전체가 **완전소성** 상태가 돼요. 아래 슬라이더로 모멘트를 올려보세요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <FieldBlockCard
           title="단면 · 항복응력 (b, h, σY)"

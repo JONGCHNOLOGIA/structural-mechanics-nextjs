@@ -40,7 +40,7 @@ export default function PlaneStress() {
         <EditableText
           contentKey="calc.PlaneStress.intro"
           defaultText="임의의 응력 상태(σx, σy, τxy)에서, 요소를 θ만큼 돌렸을 때 새로운 면에 나타나는 응력(σx1, σy1, τx1y1)을 구해요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <StressStateCard
           sigmaX={sigmaX}

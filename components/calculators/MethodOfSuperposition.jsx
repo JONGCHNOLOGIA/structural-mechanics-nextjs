@@ -59,7 +59,7 @@ export default function MethodOfSuperposition() {
         <EditableText
           contentKey="calc.MethodOfSuperposition.intro"
           defaultText="보가 **선형탄성**이면, 여러 하중을 동시에 받을 때의 처짐은 각 하중을 **따로 작용시켰을 때의 처짐을 그냥 더한 것**과 같아요. 표준 공식표에 있는 케이스들을 조합해서 복잡한 하중도 빠르게 풀 수 있어요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           <button className={'add-block' + (useUDL ? ' active' : '')} style={{ margin: 0 }} onClick={() => setUseUDL((v) => !v)}>

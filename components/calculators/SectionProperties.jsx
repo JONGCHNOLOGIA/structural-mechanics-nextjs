@@ -102,7 +102,7 @@ export default function SectionProperties() {
         <EditableText
           contentKey="calc.SectionProperties.intro"
           defaultText="단면 형태와 치수를 바꿔가며 단면적 A, 단면 2차모멘트 I, 단면계수 S, 회전반경 r이 어떻게 달라지는지 실시간으로 확인해보세요. Composite Beams · Transformed Section에서 반복적으로 나오는 단면 특성 계산을 독립적으로 연습하는 도구예요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div className="field">
           <label>단면 형태</label>

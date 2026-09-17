@@ -76,9 +76,6 @@ function SettingsPanelBody() {
           </option>
         ))}
       </select>
-      <p style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginTop: 8, lineHeight: 1.5 }}>
-        {applying ? '적용 중... 화면을 새로고침해요.' : '로그인 계정이면 이 설정이 저장돼서 다음에 들어와도 유지돼요.'}
-      </p>
     </>
   );
 }

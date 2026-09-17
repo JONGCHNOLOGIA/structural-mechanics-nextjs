@@ -77,7 +77,7 @@ export default function ContinueLearning({ visits }) {
                 width: CARD_WIDTH,
                 background: hovered ? 'var(--navy)' : 'var(--card)',
                 border: `1px solid ${hovered ? 'var(--navy)' : '#D8E0E8'}`,
-                borderRadius: 4,
+                borderRadius: 0,
                 padding: '36px 32px',
                 minHeight: 220,
                 display: 'flex',
@@ -107,11 +107,11 @@ export default function ContinueLearning({ visits }) {
         })}
       </div>
       {thumb.widthPct < 100 && (
-        <div style={{ height: 4, marginTop: 22, borderRadius: 2, background: 'var(--line)', overflow: 'hidden' }}>
+        <div style={{ height: 4, marginTop: 22, borderRadius: 0, background: 'var(--line)', overflow: 'hidden' }}>
           <div
             style={{
               height: '100%',
-              borderRadius: 2,
+              borderRadius: 0,
               background: 'var(--crimson)',
               width: `${thumb.widthPct}%`,
               transform: `translateX(${(thumb.leftPct / thumb.widthPct) * 100}%)`,

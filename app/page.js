@@ -61,15 +61,30 @@ export default function HomePage() {
           <div className="col-label">소주제</div>
           <div className="subtopics">
             {!activeCh ? (
-              <div className="empty">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                  <path d="M8 9h8M8 13h5" />
-                </svg>
-                왼쪽에서 챕터를 클릭하면
-                <br />
-                소주제 목록이 나타납니다.
-              </div>
+              chapters.map((ch) => (
+                <div key={ch.num}>
+                  <div className="subtopics-group-label">{ch.num} · {ch.title}</div>
+                  {ch.subtopics.map((st) => (
+                    <div
+                      key={st.slug}
+                      className="subtopic"
+                      onClick={() => router.push(`${ch.base}/${st.slug}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="subtopic-row">
+                        <span className="name">{st.name}</span>
+                        <span className="go">열기 →</span>
+                      </div>
+                      <EditableText
+                        as="div"
+                        className="subprev"
+                        contentKey={`subtopic.${ch.num}.${st.slug}.desc`}
+                        defaultText={st.desc}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))
             ) : activeCh.subtopics.length === 0 ? (
               <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
             ) : (

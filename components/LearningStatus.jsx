@@ -43,7 +43,7 @@ export default function LearningStatus({ summary }) {
               maxWidth: 320,
               background: 'var(--card)',
               border: '1px solid var(--line)',
-              borderRadius: 14,
+              borderRadius: 0,
               padding: '16px 18px',
             }}
           >
@@ -72,7 +72,7 @@ export default function LearningStatus({ summary }) {
                   justifyContent: 'space-between',
                   background: 'var(--card)',
                   border: '1px solid var(--line)',
-                  borderRadius: 12,
+                  borderRadius: 0,
                   padding: '12px 18px',
                 }}
               >
@@ -107,7 +107,7 @@ function TreeRow({ label, value, pct, last, muted, highlight }) {
       <span style={{ fontSize: 12, color: 'var(--gray-soft)', width: 14 }}>{last ? '└' : '├'}</span>
       <span style={{ fontSize: 12.5, color: 'var(--gray)', width: 72 }}>{label}</span>
       {typeof pct === 'number' && (
-        <span style={{ flex: 1, height: 6, background: 'var(--bg)', borderRadius: 4, overflow: 'hidden', maxWidth: 70 }}>
+        <span style={{ flex: 1, height: 6, background: 'var(--bg)', borderRadius: 0, overflow: 'hidden', maxWidth: 70 }}>
           <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: 'var(--teal)' }} />
         </span>
       )}

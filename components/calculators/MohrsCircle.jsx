@@ -31,7 +31,7 @@ export default function MohrsCircle() {
         <EditableText
           contentKey="calc.MohrsCircle.intro"
           defaultText="Plane Stress와 **같은 입력**이에요 — 같은 계산을 숫자 대신 **원(circle)**으로 표현하는 방법입니다."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <StressStateCard
           sigmaX={sigmaX}

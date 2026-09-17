@@ -62,7 +62,7 @@ export default function MomentAreaMethod() {
         <EditableText
           contentKey="calc.MomentAreaMethod.intro"
           defaultText="**1st 정리**: 두 점 사이 접선의 각도 차이 = 그 구간 M/EI 다이어그램의 면적. **2nd 정리**: 한 점의 접선으로부터 다른 점까지의 편차 = M/EI 면적의 1차모멘트(면적×도심거리)."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (loadType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setLoadType('point')}>

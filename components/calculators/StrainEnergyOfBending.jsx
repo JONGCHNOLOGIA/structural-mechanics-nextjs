@@ -57,7 +57,7 @@ export default function StrainEnergyOfBending() {
         <EditableText
           contentKey="calc.StrainEnergyOfBending.intro"
           defaultText="굽힘모멘트가 있으면 보 안에 **변형에너지** U = ∫ M²/2EI dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서 비교해보세요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
           <button className={'add-block' + (caseType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('point')}>

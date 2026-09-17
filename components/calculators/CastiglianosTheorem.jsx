@@ -74,7 +74,7 @@ export default function CastiglianosTheorem() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
+        <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}>
           <b>Castigliano 정리</b>: δ = <Frac num="∂U" den="∂P" />, θ = <Frac num="∂U" den="∂M" /> — 변형에너지를 하중으로 편미분.
           <EditableText
             as="div"

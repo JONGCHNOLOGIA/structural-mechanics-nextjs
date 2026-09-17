@@ -41,7 +41,7 @@ export default function HookesLaw() {
         <EditableText
           contentKey="calc.HookesLaw.intro"
           defaultText="평면응력 상태에서 응력↔변형률을 서로 변환해요. 어느 쪽 값을 알고 있는지 선택하세요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (mode === 'stressToStrain' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setMode('stressToStrain')}>

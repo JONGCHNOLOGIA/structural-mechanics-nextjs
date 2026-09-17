@@ -449,7 +449,7 @@ function EditableLabel({ x, y, text, color, editing, editValue, onStartEdit, onC
             fontWeight: 700,
             color,
             border: `1.3px solid ${color}`,
-            borderRadius: 4,
+            borderRadius: 0,
             textAlign: 'center',
             padding: '0 2px',
             fontFamily: "'JetBrains Mono',monospace",

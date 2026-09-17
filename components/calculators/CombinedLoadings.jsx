@@ -27,7 +27,7 @@ export default function CombinedLoadings() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.7, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}>
+        <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.7, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}>
           <EditableText
             as="span"
             contentKey="calc.CombinedLoadings.intro"

@@ -273,7 +273,7 @@ function ProblemGeneratorContent() {
               color: 'var(--gray-soft)',
               background: 'var(--card)',
               border: '1px solid var(--line)',
-              borderRadius: 8,
+              borderRadius: 0,
               padding: '8px 12px',
               marginBottom: 14,
             }}
@@ -291,7 +291,7 @@ function ProblemGeneratorContent() {
                       {p.prompt}
                     </div>
                     {p.diagram && (
-                      <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 10px', marginBottom: 12 }}>
+                      <div style={{ background: 'var(--bg)', borderRadius: 0, padding: '14px 10px', marginBottom: 12 }}>
                         <ProblemDiagram diagram={p.diagram} />
                       </div>
                     )}
@@ -305,7 +305,7 @@ function ProblemGeneratorContent() {
                           fontSize: 13,
                           color: 'var(--teal)',
                           background: 'var(--teal-soft)',
-                          borderRadius: 10,
+                          borderRadius: 0,
                           padding: '10px 14px',
                           lineHeight: 1.8,
                         }}
@@ -352,7 +352,7 @@ function ProblemGeneratorContent() {
                   <div
                     style={{
                       border: '1.5px dashed var(--line)',
-                      borderRadius: 12,
+                      borderRadius: 0,
                       padding: 14,
                       minHeight: 220,
                       display: 'flex',
@@ -365,7 +365,7 @@ function ProblemGeneratorContent() {
                         <img
                           src={solutionImages[i]}
                           alt="첨부한 풀이"
-                          style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 8, marginBottom: 10, background: 'var(--bg)' }}
+                          style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 0, marginBottom: 10, background: 'var(--bg)' }}
                         />
                         <label className="add-block" style={{ textAlign: 'center', cursor: 'pointer', margin: 0 }}>
                           다시 첨부하기

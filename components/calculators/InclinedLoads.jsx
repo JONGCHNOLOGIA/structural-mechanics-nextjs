@@ -123,7 +123,7 @@ export default function InclinedLoads() {
         <EditableText
           contentKey="calc.InclinedLoads.intro"
           defaultText="지붕 purlin처럼, 직사각형 단면이 경사 α만큼 기울어진 채로 얹혀 있어요. 등분포하중 q는 항상 수직으로 작용하지만, 기울어진 단면 기준으로는 qy·qz 두 성분으로 나뉘어서 My·Mz 2축 굽힘을 만들어요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 16, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
 
         <SectionBlockCard
@@ -255,7 +255,7 @@ export default function InclinedLoads() {
                       </div>
                       <div style={{ flexShrink: 0, textAlign: 'right' }}>
                         {calcState[name] === 'stale' && (
-                          <div style={{ fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)', borderRadius: 8, padding: '8px 12px', marginBottom: 8, maxWidth: 180 }}>
+                          <div style={{ fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)', borderRadius: 0, padding: '8px 12px', marginBottom: 8, maxWidth: 180 }}>
                             ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
                           </div>
                         )}
@@ -503,7 +503,7 @@ function EditableDimLabel({ editing, x, y, textAnchor, fill, fontSize, fontWeigh
             fontWeight,
             color: fill,
             border: `1.3px solid ${fill}`,
-            borderRadius: 4,
+            borderRadius: 0,
             textAlign: 'center',
             padding: '0 2px',
             fontFamily: "'JetBrains Mono',monospace",

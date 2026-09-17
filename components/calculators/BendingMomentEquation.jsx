@@ -227,7 +227,7 @@ export default function BendingMomentEquation() {
         <EditableText
           contentKey="calc.BendingMomentEquation.intro"
           defaultText="길이 L짜리 빈 보에 **지지단**과 **하중**을 직접 얹어서 나만의 문제를 만들어보세요. 정정보(statically determinate)가 되면 반력과 처짐곡선이 자동으로 계산돼요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <FieldBlockCard
           title="보 조건 (L, E, I)"
@@ -467,7 +467,7 @@ function RowShell({ selected, onSelect, onRemove, color, children }) {
       style={{
         border: `1.4px solid ${selected ? color : 'var(--line)'}`,
         background: selected ? 'var(--bg)' : 'transparent',
-        borderRadius: 10,
+        borderRadius: 0,
         padding: '8px 10px',
         cursor: 'pointer',
         position: 'relative',
@@ -571,7 +571,7 @@ function CalcTrigger({ name, calcState, onCalc }) {
         <div
           style={{
             fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)',
-            borderRadius: 8, padding: '7px 11px', marginBottom: 8, display: 'inline-block',
+            borderRadius: 0, padding: '7px 11px', marginBottom: 8, display: 'inline-block',
           }}
         >
           ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.

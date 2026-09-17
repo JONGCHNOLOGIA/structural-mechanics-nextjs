@@ -62,7 +62,7 @@ export default function EditableVideo({ contentKey, style }) {
             fontSize: 13,
             fontFamily: 'inherit',
             padding: '8px 10px',
-            borderRadius: 8,
+            borderRadius: 0,
             border: '1px solid var(--line)',
           }}
         />
@@ -85,7 +85,7 @@ export default function EditableVideo({ contentKey, style }) {
       <div
         style={{
           border: '1.5px dashed var(--line)',
-          borderRadius: 10,
+          borderRadius: 0,
           padding: '14px 16px',
           fontSize: 12.5,
           color: 'var(--gray-soft)',
@@ -106,7 +106,7 @@ export default function EditableVideo({ contentKey, style }) {
 
   return (
     <div style={{ position: 'relative', ...style }}>
-      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 10, overflow: 'hidden', background: '#000' }}>
+      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 0, overflow: 'hidden', background: '#000' }}>
         <iframe
           src={`https://www.youtube.com/embed/${embedId}`}
           title="소개 영상"

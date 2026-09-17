@@ -57,7 +57,7 @@ export default function DifferentialEquationMethod() {
         <EditableText
           contentKey="calc.DifferentialEquationMethod.intro"
           defaultText="반력이 평형방정식 3개보다 많으면(**부정정**) 반력 하나를 **여분력**으로 남겨두고 EIv''=M(x)를 적분해요. 그러면 처짐·처짐각 조건이 하나 더 남는데, 그걸로 여분력을 거꾸로 구합니다."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           <button className={'add-block' + (isPropped ? ' active' : '')} style={{ margin: 0 }} onClick={() => setBeamType('propped')}>

@@ -33,7 +33,7 @@ export default function CylindricalVessel() {
         <EditableText
           contentKey="calc.CylindricalVessel.intro"
           defaultText="원통형 압력용기는 **원주방향(hoop) 응력이 길이방향의 2배**예요. 용접선이 축과 비스듬한 각도(θ)일 때 그 방향의 응력도 계산해요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <FieldBlockCard
           title="용기 치수 · 압력 (r, t, p)"

@@ -34,7 +34,7 @@ export default function SphericalVessel() {
         <EditableText
           contentKey="calc.SphericalVessel.intro"
           defaultText="구형 압력용기는 벽 두께가 반지름보다 훨씬 얇을 때(r/t≫1), 벽면에 **모든 방향으로 같은 크기의 인장응력**이 생겨요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <FieldBlockCard
           title="용기 치수 · 압력 (r, t, p)"

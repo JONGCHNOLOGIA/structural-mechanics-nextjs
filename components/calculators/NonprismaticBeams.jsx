@@ -65,7 +65,7 @@ export default function NonprismaticBeams() {
         <EditableText
           contentKey="calc.NonprismaticBeams.intro"
           defaultText="단면 2차모멘트가 한 값이 아니라(**Nonprismatic**) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. M/EI 다이어그램이 **c에서 불연속으로 꺾이고**, 구간을 나눠 적분해야 해요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 10, padding: '12px 14px' }}
+          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
         <FieldBlockCard
           title="보 조건 (L, P, E, I₁, I₂)"
