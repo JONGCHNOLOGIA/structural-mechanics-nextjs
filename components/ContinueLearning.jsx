@@ -31,9 +31,11 @@ export default function ContinueLearning({ visits }) {
 
   return (
     <div style={{ maxWidth: 1600, margin: '36px auto 0', padding: '0 40px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em' }}>이어서 학습하기</div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-soft)' }}>더보기 +</span>
+      <div style={{ position: 'relative', marginBottom: 22 }}>
+        <div style={{ fontSize: 34, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em', textAlign: 'center' }}>
+          이어서 학습하기
+        </div>
+        <span style={{ position: 'absolute', top: 4, right: 0, fontSize: 13, fontWeight: 700, color: 'var(--gray-soft)' }}>더보기 +</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
         {cards.map((c) => {
