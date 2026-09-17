@@ -63,14 +63,14 @@ header, .detail-header{
      "너무 올드해 보인다"던 피드백을 해결 — 명조체(Georgia)를 국문에 쓴 게 원인이었음.
    - 색상은 가이드 이미지의 워드마크에서 실측한 값(#3A5267, 공식 팔레트엔 별도 네이비가 없어
      가장 가까운 근사치). */
-.site-logo{ display:flex; align-items:center; gap:10px; }
-.site-logo-emblem{ width:38px; height:38px; flex-shrink:0; }
-.site-logo-text{ display:flex; flex-direction:column; gap:2px; }
+.site-logo{ display:flex; align-items:center; gap:13px; }
+.site-logo-emblem{ width:50px; height:50px; flex-shrink:0; }
+.site-logo-text{ display:flex; flex-direction:column; gap:3px; }
 .site-logo-eng{
-  font-family:'Times New Roman',Georgia,serif; font-size:11px; font-weight:700; color:#3A5267;
+  font-family:'Times New Roman',Georgia,serif; font-size:13px; font-weight:700; color:#3A5267;
   letter-spacing:0.14em;
 }
-.site-logo-kr{ font-family:'Pretendard',sans-serif; font-size:15px; font-weight:600; color:#3A5267; }
+.site-logo-kr{ font-family:'Pretendard',sans-serif; font-size:18px; font-weight:600; color:#3A5267; }
 .site-nav{ display:flex; align-items:center; gap:24px; }
 .site-nav-item{
   font-size:18.5px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
