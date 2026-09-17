@@ -35,9 +35,6 @@ export default function ContinueLearning({ visits }) {
         <div style={{ fontSize: 46, fontWeight: 500, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           이어서 학습하기
         </div>
-        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--crimson)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'default' }}>
-          더보기 +
-        </span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 22 }}>
         {cards.map((c) => {
