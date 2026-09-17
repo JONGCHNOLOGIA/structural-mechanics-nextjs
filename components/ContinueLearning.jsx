@@ -27,9 +27,10 @@ export default function ContinueLearning({ visits }) {
   if (cards.length === 0) return null;
 
   return (
-    <div style={{ maxWidth: 1600, margin: '28px auto 0', padding: '0 40px' }}>
-      <div className="col-label" style={{ marginBottom: 14 }}>
-        이어서 학습하기
+    <div style={{ maxWidth: 1600, margin: '36px auto 0', padding: '0 40px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em' }}>이어서 학습하기</div>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-soft)' }}>더보기 +</span>
       </div>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
         {cards.map((c) => (
@@ -63,6 +64,7 @@ export default function ContinueLearning({ visits }) {
           </div>
         ))}
       </div>
+      <div style={{ height: 3, marginTop: 26, borderRadius: 2, background: 'linear-gradient(to right, var(--crimson) 0%, var(--crimson) 30%, var(--line) 30%, var(--line) 100%)' }} />
     </div>
   );
 }

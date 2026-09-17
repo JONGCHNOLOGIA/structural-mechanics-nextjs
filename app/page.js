@@ -31,12 +31,20 @@ export default function HomePage() {
   return (
     <div>
       <header>
-        <div className="subject-title">
-          <Link href="/subjects" className="back-link">
-            ← 과목 선택
-          </Link>
-          <span>구조역학 2</span>
-        </div>
+        <Link href="/subjects" className="site-logo">
+          <div className="site-logo-eng">SEJONG UNIVERSITY</div>
+          <div className="site-logo-kr">구조역학</div>
+        </Link>
+
+        <nav className="site-nav">
+          <span className="site-nav-item disabled" title="다른 팀원이 만들고 있어요 — 준비중">구조역학 1</span>
+          <span className="site-nav-item active">구조역학 2</span>
+          <span className="site-nav-item" onClick={() => router.push('/subjects/structural-mechanics-2/problem-generator')}>
+            문제 제작
+          </span>
+          <span className="site-nav-item disabled" title="준비중">커뮤니티</span>
+        </nav>
+
         <div className="header-right">
           {userId ? (
             <>
@@ -46,10 +54,9 @@ export default function HomePage() {
               </div>
             </>
           ) : (
-            <Link href="/login" className="add-block" style={{ margin: 0, padding: '8px 16px' }}>
-              로그인
-            </Link>
+            <Link href="/login" className="btn-outline">로그인</Link>
           )}
+          <Link href="/subjects" className="btn-solid">과목 선택 ↗</Link>
         </div>
       </header>
 
