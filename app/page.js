@@ -40,7 +40,7 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ background: 'var(--card)' }}>
+    <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
       <header className="home-header">
         <Link href="/" className="site-logo">
           <div className="site-logo-eng">SEJONG UNIVERSITY</div>
