@@ -71,10 +71,10 @@ header, .detail-header{
   letter-spacing:0.14em;
 }
 .site-logo-kr{ font-family:'Pretendard',sans-serif; font-size:15px; font-weight:600; color:var(--ink); }
-.site-nav{ display:flex; align-items:center; gap:12px; }
+.site-nav{ display:flex; align-items:center; gap:24px; }
 .site-nav-item{
-  font-size:16px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
-  padding:14px 16px; transition:color 0.2s ease;
+  font-size:18.5px; font-weight:700; color:var(--gray); cursor:pointer; position:relative;
+  padding:20px 22px; transition:color 0.2s ease;
 }
 .site-nav-item:hover{ color:var(--crimson); }
 .site-nav-item.active{ color:var(--crimson); }
