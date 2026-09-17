@@ -6,6 +6,9 @@ import { findTopic } from '@/lib/chapters';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const CARD_WIDTH = 260;
+// 카드 목록 좌우 페이드 폭 — 페이지 기본 좌우 여백(64px, .home-header/.board와 동일 값)과
+// 맞춰서, 카드가 옅어지는 구간이 "원래 거기 있던 여백"만큼만 차지하도록 함.
+const EDGE_FADE = 64;
 
 // 건축공학과 홈페이지 공지사항 카드처럼 "7월 19일(금)" 형식으로 날짜를 표시.
 function formatVisitedDate(iso) {
@@ -23,6 +26,8 @@ export default function ContinueLearning({ visits }) {
   const router = useRouter();
   const [hoveredKey, setHoveredKey] = useState(null);
   const scrollRef = useRef(null);
+  const trackRef = useRef(null);
+  const draggingRef = useRef(false);
   const [thumb, setThumb] = useState({ widthPct: 100, leftPct: 0 });
 
   const cards = (visits || [])
@@ -41,14 +46,62 @@ export default function ContinueLearning({ visits }) {
     setThumb({ widthPct, leftPct });
   }
 
+  // 진행바를 실제 스크롤바처럼 드래그해서 카드 목록을 넘길 수 있게 함 — 트랙의 어디를 잡든
+  // 그 x좌표 비율만큼 카드 목록의 scrollLeft를 옮긴다.
+  function seekTo(clientX) {
+    const track = trackRef.current;
+    const el = scrollRef.current;
+    if (!track || !el) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = rect.width > 0 ? Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) : 0;
+    el.scrollLeft = ratio * (el.scrollWidth - el.clientWidth);
+  }
+
+  function handleTrackPointerDown(e) {
+    draggingRef.current = true;
+    seekTo(e.clientX);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  }
+
+  function handlePointerMove(e) {
+    if (!draggingRef.current) return;
+    seekTo(e.clientX);
+  }
+
+  function handlePointerUp() {
+    draggingRef.current = false;
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', handlePointerUp);
+  }
+
   useEffect(() => {
     updateThumb();
     window.addEventListener('resize', updateThumb);
-    return () => window.removeEventListener('resize', updateThumb);
+    return () => {
+      window.removeEventListener('resize', updateThumb);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards.length]);
 
   if (cards.length === 0) return null;
+
+  // 왼쪽/오른쪽 중 실제로 가려진 카드가 있는 쪽만 옅어지게 — 양쪽 다 가려졌으면 양쪽 다,
+  // 한쪽 끝까지 다 왔으면 그쪽은 다시 선명해짐(대칭적으로 동작).
+  const atStart = thumb.leftPct <= 0.5;
+  const atEnd = thumb.leftPct + thumb.widthPct >= 99.5;
+  let maskImage = 'none';
+  if (thumb.widthPct < 100) {
+    if (!atStart && !atEnd) {
+      maskImage = `linear-gradient(to right, transparent, black ${EDGE_FADE}px, black calc(100% - ${EDGE_FADE}px), transparent)`;
+    } else if (!atEnd) {
+      maskImage = `linear-gradient(to right, black calc(100% - ${EDGE_FADE}px), transparent)`;
+    } else if (!atStart) {
+      maskImage = `linear-gradient(to right, transparent, black ${EDGE_FADE}px)`;
+    }
+  }
 
   return (
     <div style={{ maxWidth: 1600, margin: '48px auto 0', padding: '0 64px' }}>
@@ -61,7 +114,14 @@ export default function ContinueLearning({ visits }) {
         ref={scrollRef}
         onScroll={updateThumb}
         className="hide-scrollbar"
-        style={{ display: 'flex', gap: 22, overflowX: 'auto', paddingBottom: 4 }}
+        style={{
+          display: 'flex',
+          gap: 22,
+          overflowX: 'auto',
+          paddingBottom: 4,
+          WebkitMaskImage: maskImage,
+          maskImage,
+        }}
       >
         {cards.map((c) => {
           const key = `${c.chapter.num}::${c.subtopic.slug}`;
@@ -106,8 +166,12 @@ export default function ContinueLearning({ visits }) {
           );
         })}
       </div>
-      {thumb.widthPct < 100 && (
-        <div style={{ height: 4, marginTop: 22, borderRadius: 0, background: 'var(--line)', overflow: 'hidden' }}>
+      <div
+        ref={trackRef}
+        onPointerDown={handleTrackPointerDown}
+        style={{ height: 14, marginTop: 16, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none' }}
+      >
+        <div style={{ width: '100%', height: 4, borderRadius: 0, background: 'var(--line)', overflow: 'hidden', pointerEvents: 'none' }}>
           <div
             style={{
               height: '100%',
@@ -115,11 +179,11 @@ export default function ContinueLearning({ visits }) {
               background: 'var(--crimson)',
               width: `${thumb.widthPct}%`,
               transform: `translateX(${(thumb.leftPct / thumb.widthPct) * 100}%)`,
-              transition: 'transform 0.1s linear',
+              transition: draggingRef.current ? 'none' : 'transform 0.1s linear',
             }}
           />
         </div>
-      )}
+      </div>
     </div>
   );
 }

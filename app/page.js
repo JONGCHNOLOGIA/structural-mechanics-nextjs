@@ -13,8 +13,11 @@ import SiteHeader from '@/components/SiteHeader';
 
 // 프로토타입의 #home (header + hero + board) 마크업을 그대로 옮긴 것.
 export default function HomePage() {
-  const [activeChapter, setActiveChapter] = useState(null);
-  const activeCh = activeChapter !== null ? chapters[activeChapter] : null;
+  // 클릭 대신 마우스를 올린 챕터를 바로 오른쪽에 미리보기 — 아무것도 안 올렸을 때는
+  // 첫 챕터(CH.6)를 기본으로 보여줘서 오른쪽 칸이 비어 보이지 않게 한다.
+  const [hoverChapter, setHoverChapter] = useState(null);
+  const previewChapter = hoverChapter !== null ? hoverChapter : 0;
+  const activeCh = chapters[previewChapter];
   const { userId } = useUser();
   const router = useRouter();
 
@@ -23,7 +26,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!userId) return;
-    fetchRecentVisits(5).then(setRecentVisits);
+    fetchRecentVisits(10).then(setRecentVisits);
     fetchProgressSummary().then(setProgressSummary);
   }, [userId]);
 
@@ -41,8 +44,9 @@ export default function HomePage() {
             {chapters.map((ch, idx) => (
               <div
                 key={ch.num}
-                className={'chapter' + (ch.ready ? '' : ' disabled') + (activeChapter === idx ? ' active' : '')}
-                onClick={() => ch.ready && setActiveChapter(idx)}
+                className={'chapter' + (ch.ready ? '' : ' disabled') + (previewChapter === idx ? ' active' : '')}
+                onMouseEnter={() => ch.ready && setHoverChapter(idx)}
+                onMouseLeave={() => setHoverChapter(null)}
               >
                 <div className="icon" dangerouslySetInnerHTML={{ __html: CHAPTER_ICONS[ch.num] || '' }} />
                 <div className="body">
@@ -60,32 +64,8 @@ export default function HomePage() {
         <div>
           <div className="col-label">소주제</div>
           <div className="subtopics">
-            {!activeCh ? (
-              chapters.map((ch) => (
-                <div key={ch.num}>
-                  <div className="subtopics-group-label">{ch.num} · {ch.title}</div>
-                  {ch.subtopics.map((st) => (
-                    <div
-                      key={st.slug}
-                      className="subtopic"
-                      onClick={() => router.push(`${ch.base}/${st.slug}`)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="subtopic-row">
-                        <span className="name">{st.name}</span>
-                        <span className="go">열기 →</span>
-                      </div>
-                      <EditableText
-                        as="div"
-                        className="subprev"
-                        contentKey={`subtopic.${ch.num}.${st.slug}.desc`}
-                        defaultText={st.desc}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))
-            ) : activeCh.subtopics.length === 0 ? (
+            <div className="subtopics-group-label">{activeCh.num} · {activeCh.title}</div>
+            {activeCh.subtopics.length === 0 ? (
               <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
             ) : (
               activeCh.subtopics.map((st) => (
