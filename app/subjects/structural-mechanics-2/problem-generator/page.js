@@ -193,7 +193,7 @@ function ProblemGeneratorContent() {
             ) : (
               activeChapters.map((ch) => (
                 <div key={ch.num} style={{ padding: '16px 22px', borderBottom: '1px solid var(--line)' }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--crimson)', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy)', marginBottom: 8 }}>
                     {ch.num} · {ch.title}
                   </div>
                   {ch.subtopics.map((st) => {
