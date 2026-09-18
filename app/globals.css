@@ -172,7 +172,7 @@ header{
 /* 챕터를 아직 고르지 않았을 때 소주제 패널에 CH.6~CH.10 전체를 쭉 나열해서 보여줄 때 쓰는
    챕터 구분용 라벨 — problem-generator의 그룹 헤더와 같은 톤(crimson, bold, small). */
 .subtopics-group-label{
-  font-size:12px; font-weight:800; color:var(--crimson);
+  font-size:14px; font-weight:800; color:var(--crimson);
   padding:16px 22px 8px; background:var(--bg); border-bottom:1px solid var(--line);
 }
 .subtopic{ display:block; border-bottom:1px solid var(--line); padding:18px 22px; cursor:pointer; transition:background 0.15s ease; text-decoration:none; color:inherit; }
