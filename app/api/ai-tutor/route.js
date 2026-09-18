@@ -1,9 +1,7 @@
 // 우측 "AI TUTOR" 채팅 패널이 호출하는 서버 라우트. /api/grade-solution과 같은 이유로
 // GEMINI_API_KEY는 여기(서버)에서만 쓰고 클라이언트에는 절대 보내지 않는다.
 import { buildSystemPrompt } from '@/lib/aiTutorPrompt';
-
-const MODEL = 'gemini-3.8-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+import { callGemini } from '@/lib/geminiFetch';
 
 export async function POST(req) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -36,33 +34,14 @@ export async function POST(req) {
     { role: 'user', parts: [{ text: q }] },
   ];
 
-  let geminiRes;
   try {
-    geminiRes = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-goog-api-key': apiKey, // 쿼리스트링이 아니라 헤더로 — URL·서버 로그에 키가 안 남게
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: { text: buildSystemPrompt(chapterNum) } },
-        contents,
-        generationConfig: { maxOutputTokens: 800 },
-      }),
+    const answer = await callGemini(apiKey, {
+      systemInstruction: { parts: { text: buildSystemPrompt(chapterNum) } },
+      contents,
+      generationConfig: { maxOutputTokens: 800 },
     });
-  } catch {
-    return Response.json({ error: 'AI 서버에 연결하지 못했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
+    return Response.json({ answer });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 502 });
   }
-
-  if (!geminiRes.ok) {
-    return Response.json({ error: '답변 요청이 실패했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
-  }
-
-  const data = await geminiRes.json();
-  const answer = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text?.trim();
-  if (!answer) {
-    return Response.json({ error: '답변을 받아오지 못했어요. 다시 시도해주세요.' }, { status: 502 });
-  }
-
-  return Response.json({ answer });
 }

@@ -3,8 +3,7 @@
 // 붙이지 않는다 — 이 파일은 서버에서만 실행되므로 클라이언트로 키가 노출되지 않는다.
 // (참고: AITUTOR.html 프로토타입은 이 키를 클라이언트 JS에 그대로 박아뒀었는데, 그러면 브라우저
 // "소스 보기"만으로 키가 유출된다 — 그래서 이 프로젝트는 항상 서버 라우트를 거친다.)
-const MODEL = 'gemini-3.8-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+import { callGemini } from '@/lib/geminiFetch';
 
 const SYSTEM_PROMPT =
   '당신은 세종대학교 건축공학과 구조역학 수업의 AI 조교입니다. 학생이 손으로 푼 풀이 사진을 보고, ' +
@@ -39,42 +38,22 @@ export async function POST(req) {
     '\n첨부된 사진은 이 문제에 대한 학생의 손풀이입니다. 검토해주세요.',
   ].join('\n');
 
-  let geminiRes;
   try {
-    geminiRes = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        // 쿼리스트링(?key=...)이 아니라 헤더로 넘겨서 키가 URL·서버 로그에 남지 않게 한다.
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: { text: SYSTEM_PROMPT } },
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: userText },
-              { inline_data: { mime_type: imageMediaType, data: imageBase64 } },
-            ],
-          },
-        ],
-        generationConfig: { maxOutputTokens: 700 },
-      }),
+    const feedback = await callGemini(apiKey, {
+      systemInstruction: { parts: { text: SYSTEM_PROMPT } },
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: userText },
+            { inline_data: { mime_type: imageMediaType, data: imageBase64 } },
+          ],
+        },
+      ],
+      generationConfig: { maxOutputTokens: 700 },
     });
-  } catch {
-    return Response.json({ error: 'AI 서버에 연결하지 못했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
+    return Response.json({ feedback });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 502 });
   }
-
-  if (!geminiRes.ok) {
-    return Response.json({ error: '채점 요청이 실패했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
-  }
-
-  const data = await geminiRes.json();
-  const feedback = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text?.trim();
-  if (!feedback) {
-    return Response.json({ error: '피드백을 받아오지 못했어요. 다시 시도해주세요.' }, { status: 502 });
-  }
-
-  return Response.json({ feedback });
 }
