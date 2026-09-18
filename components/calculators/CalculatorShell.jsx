@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
+import { useProgress } from '@/components/ProgressProvider';
 import SiteHeader from '@/components/SiteHeader';
 import FloatingActions from '@/components/FloatingActions';
 import { recordVisit } from '@/lib/progress';
@@ -22,11 +23,16 @@ const SUBJECT_HOME = { sm1: '/', sm2: '/subjects/structural-mechanics-2' };
 
 export default function CalculatorShell({ chapter, activeSlug, children, subject = 'sm2', homeHref }) {
   const { userId } = useUser();
+  const { refresh } = useProgress();
   const backHref = homeHref || SUBJECT_HOME[subject] || '/';
 
-  // 소주제 페이지를 열 때마다 방문 시각 기록 → 홈 화면 "이어서 학습하기"에서 사용
+  // 소주제 페이지를 열 때마다 방문 시각 기록 → 홈 화면 "이어서 학습하기"에서 사용.
+  // 기록 후 refresh()로 ProgressProvider의 캐시도 같이 갱신해둬야, 로비로 돌아갔을 때
+  // 방금 들어온 이 소주제가 바로 반영된다(캐시를 로비 쪽에서 다시 fetch하지 않으므로).
   useEffect(() => {
-    if (userId) recordVisit(chapter.num, activeSlug);
+    if (!userId) return;
+    recordVisit(chapter.num, activeSlug).then(refresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, chapter.num, activeSlug]);
 
   return (

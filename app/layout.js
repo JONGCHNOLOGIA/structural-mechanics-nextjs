@@ -1,5 +1,6 @@
 import './globals.css';
 import UserProvider from '@/components/UserProvider';
+import ProgressProvider from '@/components/ProgressProvider';
 import SiteContentProvider from '@/components/SiteContentProvider';
 import SettingsProvider from '@/components/SettingsProvider';
 import SiteFooter from '@/components/SiteFooter';
@@ -15,10 +16,12 @@ export default function RootLayout({ children }) {
       <body>
         <SiteContentProvider>
           <UserProvider>
-            <div className="app-main">
-              <SettingsProvider>{children}</SettingsProvider>
-            </div>
-            <SiteFooter />
+            <ProgressProvider>
+              <div className="app-main">
+                <SettingsProvider>{children}</SettingsProvider>
+              </div>
+              <SiteFooter />
+            </ProgressProvider>
           </UserProvider>
         </SiteContentProvider>
       </body>

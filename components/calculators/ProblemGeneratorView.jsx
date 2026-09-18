@@ -7,6 +7,7 @@ import SiteHeader from '@/components/SiteHeader';
 import FloatingActions from '@/components/FloatingActions';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 import EditableText from '@/components/EditableText';
+import { useProgress } from '@/components/ProgressProvider';
 import { recordAttempt } from '@/lib/progress';
 import { fileToResizedBase64 } from '@/lib/resizeImage';
 
@@ -31,6 +32,7 @@ export default function ProblemGeneratorView(props) {
 
 function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generateProblem, subject, homeHref, introDefault }) {
   const searchParams = useSearchParams();
+  const { refresh } = useProgress();
 
   const SUPPORTED_CHAPTERS = useMemo(
     () =>
@@ -125,7 +127,7 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
   // 대신함. 이 기록이 홈 화면의 "문제 풀이 %"와 "오답 횟수", "최근 틀린 개념"의 근거가 됨.
   function handleSelfGrade(i, p, isCorrect) {
     setGraded((prev) => ({ ...prev, [i]: isCorrect ? 'correct' : 'wrong' }));
-    recordAttempt(p.ch.num, p.st.slug, isCorrect);
+    recordAttempt(p.ch.num, p.st.slug, isCorrect).then(refresh);
   }
 
   function handleUploadSolution(i, file) {
