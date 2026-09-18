@@ -114,7 +114,7 @@ export default function EditableImages({ contentKeyBase, className }) {
       {urls.length > 0 && (
         <div className="subtopic-preview-imgs">
           {urls.map((u, i) => (
-            <img key={i} src={u} alt="" />
+            <img key={i} src={u} alt="" loading="lazy" decoding="async" />
           ))}
         </div>
       )}
