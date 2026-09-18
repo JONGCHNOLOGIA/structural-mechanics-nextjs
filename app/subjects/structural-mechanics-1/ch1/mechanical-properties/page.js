@@ -8,7 +8,6 @@ export default function MechanicalPropertiesPage() {
       chapter={chapters1[0]}
       activeSlug="mechanical-properties"
       subject="sm1"
-      homeHref="/subjects/structural-mechanics-1"
     >
       <MaterialProperties />
     </CalculatorShell>

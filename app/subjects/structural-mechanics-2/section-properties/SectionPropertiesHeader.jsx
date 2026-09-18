@@ -8,7 +8,7 @@ export default function SectionPropertiesHeader() {
     <>
       <SiteHeader active="sm2" />
       <div className="page-subheader">
-        <Link href="/" className="back-link">
+        <Link href="/subjects/structural-mechanics-2" className="back-link">
           ← 목록으로
         </Link>
         <span className="page-subheader-title">단면 특성 계산기</span>

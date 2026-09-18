@@ -166,7 +166,7 @@ function ProblemGeneratorContent() {
       <SiteHeader active="problem-generator" />
 
       <div className="page-subheader">
-        <Link href="/" className="back-link">
+        <Link href="/subjects/structural-mechanics-2" className="back-link">
           ← 목록으로
         </Link>
         <span className="page-subheader-title">문제 생성</span>

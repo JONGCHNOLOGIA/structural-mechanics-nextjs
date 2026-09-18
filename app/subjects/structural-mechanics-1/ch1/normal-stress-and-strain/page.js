@@ -8,7 +8,6 @@ export default function NormalStressPage() {
       chapter={chapters1[0]}
       activeSlug="normal-stress-and-strain"
       subject="sm1"
-      homeHref="/subjects/structural-mechanics-1"
     >
       <NormalStress />
     </CalculatorShell>

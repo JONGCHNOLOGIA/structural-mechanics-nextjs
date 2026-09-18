@@ -8,7 +8,6 @@ export default function AllowableDesignPage() {
       chapter={chapters1[0]}
       activeSlug="allowable-stresses-design"
       subject="sm1"
-      homeHref="/subjects/structural-mechanics-1"
     >
       <AllowableDesign />
     </CalculatorShell>

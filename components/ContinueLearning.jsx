@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { findTopic } from '@/lib/chapters';
+import { chapters as sm2Chapters } from '@/lib/chapters';
+
+// 방문 기록의 (chapterNum, slug)를 주어진 챕터 목록에서 찾아 실제 라우트까지 만들어준다.
+// chapters를 넘기지 않으면 구조역학 2 목록을 쓴다(기존 호출부 호환).
+function resolveTopic(chapters, chapterNum, slug) {
+  const chapter = chapters.find((c) => c.num === chapterNum);
+  const subtopic = chapter?.subtopics.find((s) => s.slug === slug);
+  if (!chapter || !subtopic) return null;
+  return { chapter, subtopic, href: `${chapter.base}/${subtopic.slug}` };
+}
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const CARD_WIDTH = 260;
@@ -22,7 +31,7 @@ function formatVisitedDate(iso) {
 // 건축공학과 홈페이지의 "학과 공지사항" 카드를 레퍼런스 삼음 — 기본은 흰 배경(제목=CH.n · 챕터명,
 // 본문=소주제명, 하단=날짜)이고, 마우스를 올리면 레퍼런스의 "선택된" 카드처럼 네이비+흰 글씨로 바뀐다.
 // 화면이 좁아지면 카드가 줄바꿈되는 대신, 레퍼런스처럼 가로 스크롤 + 하단 진행바로 넘겨본다.
-export default function ContinueLearning({ visits }) {
+export default function ContinueLearning({ visits, chapters = sm2Chapters }) {
   const router = useRouter();
   const [hoveredKey, setHoveredKey] = useState(null);
   const scrollRef = useRef(null);
@@ -32,7 +41,7 @@ export default function ContinueLearning({ visits }) {
 
   const cards = (visits || [])
     .map((v) => {
-      const topic = findTopic(v.chapter_num, v.subtopic_slug);
+      const topic = resolveTopic(chapters, v.chapter_num, v.subtopic_slug);
       return topic ? { ...topic, visitedAt: v.visited_at } : null;
     })
     .filter(Boolean);

@@ -8,7 +8,6 @@ export default function ShearStressPage() {
       chapter={chapters1[0]}
       activeSlug="shear-stress-and-strain"
       subject="sm1"
-      homeHref="/subjects/structural-mechanics-1"
     >
       <ShearStress />
     </CalculatorShell>

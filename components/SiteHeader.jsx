@@ -31,10 +31,10 @@ export default function SiteHeader({ active = 'sm2' }) {
         </Link>
 
         <nav className="site-nav">
-          <Link href="/subjects/structural-mechanics-1" className={'site-nav-item' + (active === 'sm1' ? ' active' : '')}>
+          <Link href="/" className={'site-nav-item' + (active === 'sm1' ? ' active' : '')}>
             구조역학 1
           </Link>
-          <Link href="/" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
+          <Link href="/subjects/structural-mechanics-2" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
             구조역학 2
           </Link>
           <Link

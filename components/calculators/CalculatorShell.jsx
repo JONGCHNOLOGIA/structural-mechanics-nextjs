@@ -16,8 +16,13 @@ import { recordVisit } from '@/lib/progress';
   챕터명만 얇게 붙인다. AI 튜터 패널은 이미 오른쪽 컬럼(panel-ai)에 항상 떠 있어서,
   플로팅 버튼에서는 설정만 남기고 AI 버튼은 뺀다(showAi=false).
 */
-export default function CalculatorShell({ chapter, activeSlug, children, subject = 'sm2', homeHref = '/' }) {
+// homeHref를 따로 넘기지 않으면 과목에 맞는 로비로 돌아간다
+// (구조역학 1은 사이트 첫 화면이라 '/', 구조역학 2는 자기 로비 경로).
+const SUBJECT_HOME = { sm1: '/', sm2: '/subjects/structural-mechanics-2' };
+
+export default function CalculatorShell({ chapter, activeSlug, children, subject = 'sm2', homeHref }) {
   const { userId } = useUser();
+  const backHref = homeHref || SUBJECT_HOME[subject] || '/';
 
   // 소주제 페이지를 열 때마다 방문 시각 기록 → 홈 화면 "이어서 학습하기"에서 사용
   useEffect(() => {
@@ -29,7 +34,7 @@ export default function CalculatorShell({ chapter, activeSlug, children, subject
       <SiteHeader active={subject} />
 
       <div className="page-subheader">
-        <Link href={homeHref} className="back-link">
+        <Link href={backHref} className="back-link">
           ← 목록으로
         </Link>
         <span className="page-subheader-title">{chapter.num} · {chapter.title}</span>

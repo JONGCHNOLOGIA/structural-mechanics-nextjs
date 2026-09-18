@@ -1,7 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { findTopic } from '@/lib/chapters';
+import { chapters as sm2Chapters } from '@/lib/chapters';
+
+function resolveTopic(chapters, chapterNum, slug) {
+  const chapter = chapters.find((c) => c.num === chapterNum);
+  const subtopic = chapter?.subtopics.find((s) => s.slug === slug);
+  if (!chapter || !subtopic) return null;
+  return { chapter, subtopic, href: `${chapter.base}/${subtopic.slug}` };
+}
 
 /*
   홈 화면 "학습 현황" + "최근 틀린 개념".
@@ -10,11 +17,13 @@ import { findTopic } from '@/lib/chapters';
   지표라 아직 연결 전이라, 지금은 "문제 풀이 %"와 "오답 횟수"만 실제 값이고 나머지 둘은
   "AI 연결 후 제공" 표시로 자리만 잡아둔다.
 */
-export default function LearningStatus({ summary }) {
+// problemGeneratorHref: 이 과목의 문제 생성기 경로. 아직 문제은행이 없는 과목(구조역학 1)은
+// null을 받아 "다시 풀기" 버튼을 숨긴다 — 눌러도 못 만드는 버튼을 두지 않기 위함.
+export default function LearningStatus({ summary, chapters = sm2Chapters, problemGeneratorHref = '/subjects/structural-mechanics-2/problem-generator' }) {
   const router = useRouter();
   const rows = (summary || [])
     .map((s) => {
-      const topic = findTopic(s.chapterNum, s.slug);
+      const topic = resolveTopic(chapters, s.chapterNum, s.slug);
       if (!topic) return null;
       const total = s.correct + s.wrong;
       const solveRate = total > 0 ? Math.round((s.correct / total) * 100) : null;
@@ -81,13 +90,15 @@ export default function LearningStatus({ summary }) {
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{r.subtopic.name}</span>
                   <span style={{ fontSize: 12, color: 'var(--gray-soft)', marginLeft: 10 }}>오답 {r.wrong}회</span>
                 </div>
-                <button
-                  className="add-block"
-                  style={{ margin: 0 }}
-                  onClick={() => router.push(`/subjects/structural-mechanics-2/problem-generator?ch=${r.chapterNum}&slug=${r.slug}`)}
-                >
-                  다시 풀기
-                </button>
+                {problemGeneratorHref && (
+                  <button
+                    className="add-block"
+                    style={{ margin: 0 }}
+                    onClick={() => router.push(`${problemGeneratorHref}?ch=${r.chapterNum}&slug=${r.slug}`)}
+                  >
+                    다시 풀기
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -8,7 +8,6 @@ export default function HookesLawPoissonPage() {
       chapter={chapters1[0]}
       activeSlug="hookes-law-poisson"
       subject="sm1"
-      homeHref="/subjects/structural-mechanics-1"
     >
       <HookePoisson />
     </CalculatorShell>
