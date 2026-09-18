@@ -137,14 +137,19 @@ header{
 }
 .chapter .icon{
   flex-shrink:0; width:38px; height:38px; border-radius:0;
-  background:var(--bg); display:flex; align-items:center; justify-content:center;
-  color:var(--navy);
+  background:#FFD8AB; display:flex; align-items:center; justify-content:center;
+  color:var(--ink);
 }
-.chapter.disabled .icon{ color:var(--gray-soft); }
+.chapter.disabled .icon{ background:var(--bg); color:var(--gray-soft); }
 .chapter .body{ flex:1; min-width:0; }
-.chapter .num{ font-size:12px; font-weight:600; color:var(--navy); display:block; margin-bottom:2px;}
+.chapter .num{ font-size:12px; font-weight:600; display:block; margin-bottom:2px;}
 .chapter.disabled .num{ color:var(--gray-soft); }
 .chapter .title{ font-size:15px; font-weight:700; }
+.ch-badge{
+  display:inline-block; background:#FFD8AB; color:var(--ink); font-weight:700;
+  padding:2px 8px; margin-right:8px;
+}
+.chapter.disabled .ch-badge{ background:var(--bg); color:var(--gray-soft); }
 .chapter .tag{
   font-size:10.5px; color:var(--gray-soft); margin-left:8px; font-weight:600;
   background:var(--bg); border-radius:0; padding:2px 7px;
@@ -172,8 +177,9 @@ header{
 /* 챕터를 아직 고르지 않았을 때 소주제 패널에 CH.6~CH.10 전체를 쭉 나열해서 보여줄 때 쓰는
    챕터 구분용 라벨 — problem-generator의 그룹 헤더와 같은 톤(crimson, bold, small). */
 .subtopics-group-label{
-  font-size:14px; font-weight:800; color:var(--navy);
+  font-size:14px; font-weight:800; color:var(--ink);
   padding:16px 22px 8px; background:var(--bg); border-bottom:1px solid var(--line);
+  display:flex; align-items:center;
 }
 .subtopic{ display:block; border-bottom:1px solid var(--line); padding:18px 22px; cursor:pointer; transition:background 0.15s ease; text-decoration:none; color:inherit; }
 .subtopic:last-child{ border-bottom:none; }
