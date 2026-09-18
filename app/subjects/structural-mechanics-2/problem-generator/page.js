@@ -10,10 +10,12 @@ import FloatingActions from '@/components/FloatingActions';
 import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 import EditableText from '@/components/EditableText';
 import { recordAttempt } from '@/lib/progress';
+import { fileToResizedBase64 } from '@/lib/resizeImage';
 
 // 챕터/소주제를 고르면 lib/problemBank.js의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를 생성한다.
 // 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
-// 검증된 공식(lib/calc/*.js)으로 계산한다. AI API는 아직 쓰지 않음.
+// 검증된 공식(lib/calc/*.js)으로 계산한다. 손풀이 사진 채점만 /api/grade-solution을 거쳐 Claude
+// Vision을 씀 — 문제 자체를 AI가 새로 만들지는 않는다(정확한 숫자 계산은 여전히 코드가 담당).
 // 참고자료(PDF)에 실제로 있던 유형만 지원하므로, PROBLEM_BANK에 없는 소주제(예: FGM, Plane Stress)는
 // 아예 선택 목록에 나타나지 않는다.
 function subtopicKey(ch, st) {
@@ -41,7 +43,9 @@ function ProblemGeneratorContent() {
   const [problems, setProblems] = useState(null);
   const [revealed, setRevealed] = useState(new Set());
   const [solutionImages, setSolutionImages] = useState({});
+  const [solutionFiles, setSolutionFiles] = useState({});
   const [graded, setGraded] = useState({}); // { [problemIndex]: 'correct' | 'wrong' }
+  const [aiReview, setAiReview] = useState({}); // { [problemIndex]: { loading, feedback, error } }
 
   // 홈 화면 "최근 틀린 개념 → 다시 풀기"에서 ?ch=CH.6&slug=composite-beams 로 들어오면 자동 선택
   useEffect(() => {
@@ -124,6 +128,32 @@ function ProblemGeneratorContent() {
   function handleUploadSolution(i, file) {
     const url = URL.createObjectURL(file);
     setSolutionImages((prev) => ({ ...prev, [i]: url }));
+    setSolutionFiles((prev) => ({ ...prev, [i]: file }));
+    setAiReview((prev) => ({ ...prev, [i]: undefined }));
+  }
+
+  async function handleAiReview(i, p) {
+    const file = solutionFiles[i];
+    if (!file) return;
+    setAiReview((prev) => ({ ...prev, [i]: { loading: true } }));
+    try {
+      const { data, mediaType } = await fileToResizedBase64(file);
+      const res = await fetch('/api/grade-solution', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: data,
+          imageMediaType: mediaType,
+          prompt: p.prompt,
+          answers: p.answers,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || '요청에 실패했어요.');
+      setAiReview((prev) => ({ ...prev, [i]: { feedback: result.feedback } }));
+    } catch (err) {
+      setAiReview((prev) => ({ ...prev, [i]: { error: err.message || '검토 요청에 실패했어요. 잠시 후 다시 시도해주세요.' } }));
+    }
   }
 
   const activeChapters = SUPPORTED_CHAPTERS.filter((ch) => selectedChapters.has(ch.num));
@@ -403,9 +433,33 @@ function ProblemGeneratorContent() {
                         />
                       </label>
                     )}
-                    <button className="add-block" disabled style={{ marginTop: 10, opacity: 0.5, margin: '10px 0 0' }} title="준비중">
-                      AI 튜터에게 검토 요청 (준비중)
+                    <button
+                      className="add-block"
+                      disabled={!solutionFiles[i] || aiReview[i]?.loading}
+                      onClick={() => handleAiReview(i, p)}
+                      style={{ marginTop: 10, opacity: solutionFiles[i] ? 1 : 0.5, margin: '10px 0 0' }}
+                    >
+                      {aiReview[i]?.loading ? '검토 중...' : 'AI 튜터에게 검토 요청'}
                     </button>
+                    {aiReview[i]?.feedback && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          fontSize: 12.5,
+                          color: 'var(--ink)',
+                          background: 'var(--bg)',
+                          border: '1px solid var(--line)',
+                          padding: '10px 12px',
+                          lineHeight: 1.7,
+                          whiteSpace: 'pre-line',
+                        }}
+                      >
+                        {aiReview[i].feedback}
+                      </div>
+                    )}
+                    {aiReview[i]?.error && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--crimson)' }}>{aiReview[i].error}</div>
+                    )}
                   </div>
                 </div>
               </div>
