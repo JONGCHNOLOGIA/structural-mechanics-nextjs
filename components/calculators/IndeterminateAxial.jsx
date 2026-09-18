@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeIndeterminate } from '@/lib/calc/indeterminateAxial';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
-import PracticePanel, { randInt } from './sm1/PracticePanel';
 
 // CH.2-3 Statically Indeterminate Axial Members — 원본 renderIndeterminate()의 React 버전.
 
@@ -23,16 +23,8 @@ export default function IndeterminateAxial() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeIndeterminate(s), [s]);
+  const gate = useCalcGate(s);
 
-  const generate = useCallback(() => {
-    const P = randInt(50, 300), a = randInt(1, 8), b = randInt(1, 8);
-    const r = computeIndeterminate({ mode: 'fixedBar', P, PUnit: 'kN', a, b, LUnit: 'm', A: 500, AUnit: 'mm2', E: 200, EUnit: 'GPa' });
-    if (!r.valid) return null;
-    return {
-      q: `양단고정보(A-B)에서 A로부터 a=${a}m 지점에 P=${P}kN이 작용, 전체 길이=a+b=${a + b}m(b=${b}m). R_A, R_B, 하중점 변위 δ_C를 구하시오.`,
-      a: `R_A=${fmt1(fromBase(r.R_A, 'kN', FORCE_UNITS), 2)}kN, R_B=${fmt1(fromBase(r.R_B, 'kN', FORCE_UNITS), 2)}kN, δ_C=${fmt1(fromBase(r.delta_C, 'mm', LENGTH_UNITS), 4)}mm`,
-    };
-  }, []);
 
   const isRigid = s.mode === 'rigidBeam';
 
@@ -148,13 +140,16 @@ export default function IndeterminateAxial() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeIndeterminate(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="적합조건식은 왜 필요한가요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }

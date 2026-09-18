@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeAllowableDesign } from '@/lib/calc/allowableDesign';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
@@ -17,8 +17,8 @@ import {
   InputNeededPlaceholder,
   DiagramSkipNote,
 } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxisPlaneNote, AxialFBD } from './sm1/Diagrams';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
 
 // CH.1-5 Allowable Stresses and Design — 원본 renderAllowableDesign()의 React 버전.
 // Mode A는 "이 단면이 버티나?", B는 "얼마까지 실을 수 있나?", C는 "얼마나 굵어야 하나?"를 푼다.
@@ -55,6 +55,7 @@ export default function AllowableDesign() {
   const setDim = (key) => (v) => setS((prev) => ({ ...prev, dims: { ...prev.dims, [key]: parseFloat(v) } }));
 
   const res = useMemo(() => computeAllowableDesign(s), [s]);
+  const gate = useCalcGate(s);
   const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
   const needP = s.mode === 'A' || s.mode === 'C';
 
@@ -62,34 +63,6 @@ export default function AllowableDesign() {
   const dInReq = res.d_inner_required_m !== undefined ? fromBase(res.d_inner_required_m, s.dimUnit, LENGTH_UNITS) : undefined;
   const hReq = res.h_required_m !== undefined ? fromBase(res.h_required_m, s.dimUnit, LENGTH_UNITS) : undefined;
 
-  const generate = useCallback(() => {
-    const mode = randChoice(['A', 'B', 'C']);
-    const sigmaAllow = randChoice([100, 120, 150, 180, 200]);
-    const P = randInt(10, 150);
-    const d = randInt(15, 60);
-    const r = computeAllowableDesign({
-      mode, useFOS: false, sigmaAllow, stressUnit: 'MPa', failureStrength: 250, n: 2,
-      P, PUnit: 'kN', sectionType: 'solid_circular',
-      dims: { d, d_outer: 40, d_inner: 25, b: 20, h: 30 }, dimUnit: 'mm',
-    });
-    if (!r.valid) return null;
-    if (mode === 'A') {
-      return {
-        q: `허용응력 σ_allow=${sigmaAllow}MPa인 재료로 만든 직경 d=${d}mm 원형봉에 P=${P}kN이 작용한다. 안전한지 판정하시오.`,
-        a: `σ_actual = ${fmt1(fromBase(r.sigma_actual_Pa, 'MPa', STRESS_UNITS), 2)} MPa → ${r.safe ? 'SAFE' : 'NOT SAFE'} (utilization ${fmt1(r.ratio, 3)})`,
-      };
-    }
-    if (mode === 'B') {
-      return {
-        q: `허용응력 σ_allow=${sigmaAllow}MPa, 직경 d=${d}mm 원형봉이 견딜 수 있는 허용하중 P_allow를 구하시오.`,
-        a: `P_allow = ${fmt1(fromBase(r.P_allow_N, 'kN', FORCE_UNITS), 3)} kN`,
-      };
-    }
-    return {
-      q: `허용응력 σ_allow=${sigmaAllow}MPa인 재료로 P=${P}kN을 지지하려 한다. 필요한 원형 단면의 직경을 구하시오.`,
-      a: `A_required = ${fmt1(r.A_required_m2 / 1e-6, 2)} mm², d_required = ${fmt1(fromBase(r.d_required_m, 'mm', LENGTH_UNITS), 2)} mm`,
-    };
-  }, []);
 
   return (
     <>
@@ -234,18 +207,22 @@ export default function AllowableDesign() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} areaScale={areaScale} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeAllowableDesign(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="안전율이 클수록 항상 좋은 건가요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }
 
-function Steps({ s, res, areaScale }) {
+function Steps({ s, res }) {
+  const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
   const allowStep = s.useFOS ? (
     <StepCard
       title="Step 0. Allowable Stress from Factor of Safety"

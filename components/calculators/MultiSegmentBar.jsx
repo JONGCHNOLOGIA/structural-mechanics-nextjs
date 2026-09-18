@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeMultiSegment } from '@/lib/calc/multiSegmentBar';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
-import PracticePanel, { randInt } from './sm1/PracticePanel';
 
 // CH.2-2 Nonuniform Bar (Multi-Segment) — 원본 renderMultiSegment()의 React 버전.
 
@@ -23,6 +23,7 @@ const DEFAULTS = {
 export default function MultiSegmentBar() {
   const [s, setS] = useState(DEFAULTS);
   const res = useMemo(() => computeMultiSegment(s), [s]);
+  const gate = useCalcGate(s);
 
   function setSeg(i, key, v, numeric = true) {
     setS((prev) => {
@@ -31,22 +32,6 @@ export default function MultiSegmentBar() {
     });
   }
 
-  const generate = useCallback(() => {
-    const load1 = randInt(-200, 300), load2 = randInt(-200, 300);
-    const L1 = randInt(5, 20) / 10, L2 = randInt(5, 20) / 10;
-    const r = computeMultiSegment({
-      segCount: 2,
-      segs: [
-        { load: load1, loadUnit: 'kN', L: L1, LUnit: 'm', A: 500, AUnit: 'mm2', E: 200, EUnit: 'GPa' },
-        { load: load2, loadUnit: 'kN', L: L2, LUnit: 'm', A: 400, AUnit: 'mm2', E: 200, EUnit: 'GPa' },
-      ],
-    });
-    if (!r.valid) return null;
-    return {
-      q: `왼쪽 고정단, 구간1 끝(경계1)에 ${load1}kN, 자유단(구간2 끝)에 ${load2}kN이 작용(→+)한다. L1=${L1}m, L2=${L2}m, A1=500mm², A2=400mm², E=200GPa일 때 R, N1, N2, δ_total을 구하시오.`,
-      a: `R=${fmt1(fromBase(r.R_N, 'kN', FORCE_UNITS), 2)}kN, N1=${fmt1(fromBase(r.perSeg[0].N_N, 'kN', FORCE_UNITS), 2)}kN, N2=${fmt1(fromBase(r.perSeg[1].N_N, 'kN', FORCE_UNITS), 2)}kN, δ_total=${fmt1(fromBase(r.delta_total_m, 'mm', LENGTH_UNITS), 4)}mm`,
-    };
-  }, []);
 
   const segments = res.valid
     ? res.perSeg.map((p) => ({ value: fromBase(p.N_N, 'kN', FORCE_UNITS), length: fromBase(p.L_m, 'm', LENGTH_UNITS) }))
@@ -128,13 +113,16 @@ export default function MultiSegmentBar() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeMultiSegment(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="절단할 때마다 왜 지나온 힘들을 다 더해야 하나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }

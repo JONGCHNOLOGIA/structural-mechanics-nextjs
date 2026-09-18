@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeSpringConstant } from '@/lib/calc/springConstant';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ToggleRow, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
 
 // CH.2-1 Spring Constant and Flexibility — 원본 renderSpringConstant()의 React 버전.
 
@@ -25,17 +25,9 @@ export default function SpringConstant() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeSpringConstant(s), [s]);
+  const gate = useCalcGate(s);
   const tone = res.valid ? (res.sign > 0 ? 'tens' : 'comp') : undefined;
 
-  const generate = useCallback(() => {
-    const P = randInt(5, 100), A = randInt(200, 1000), L = randInt(5, 30) / 10, E = randChoice([70, 100, 200]);
-    const r = computeSpringConstant({ P, PUnit: 'kN', mode: 'tension', A, AUnit: 'mm2', L, LUnit: 'm', E, EUnit: 'GPa', P2: P * 2, P2Unit: 'kN' });
-    if (!r.valid) return null;
-    return {
-      q: `A=${A}mm², L=${L}m, E=${E}GPa인 봉의 스프링상수 k와, P=${P}kN일 때 변위 δ를 구하시오.`,
-      a: `k=${fmt1(r.k / 1e6, 3)} MN/m,  δ=${fmt1(fromBase(r.delta_m, 'mm', LENGTH_UNITS), 4)} mm`,
-    };
-  }, []);
 
   return (
     <>
@@ -99,6 +91,24 @@ export default function SpringConstant() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeSpringConstant(frozen);
+              return <Steps s={frozen} res={fres} />;
+            }}
+          </CalcGate>
+        </div>
+      </div>
+
+      <AiTutorPanel question="스프링상수 개념이 왜 부정정 구조 해석에 쓰이나요?" />
+    </>
+  );
+}
+
+function Steps({ s, res }) {
+  const tone = res.sign > 0 ? 'tens' : 'comp';
+  return (
+    <>
           {res.valid ? (
             <>
               <StepCard title="Step 1. Axial Rigidity & Spring Constant" formula="k = EA / L"
@@ -114,12 +124,6 @@ export default function SpringConstant() {
           ) : (
             <InputNeededPlaceholder />
           )}
-        </div>
-      </div>
-
-      <AiTutorPanel question="스프링상수 개념이 왜 부정정 구조 해석에 쓰이나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }

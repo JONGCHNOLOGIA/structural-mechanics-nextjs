@@ -38,10 +38,16 @@ export default function SiteHeader({ active = 'sm2' }) {
             구조역학 2
           </Link>
           <Link
-            href="/subjects/structural-mechanics-2/problem-generator"
-            className={'site-nav-item' + (active === 'problem-generator' ? ' active' : '')}
+            href="/subjects/structural-mechanics-1/problem-generator"
+            className={'site-nav-item' + (active === 'problem-generator-1' ? ' active' : '')}
           >
-            문제 제작
+            문제 제작 1
+          </Link>
+          <Link
+            href="/subjects/structural-mechanics-2/problem-generator"
+            className={'site-nav-item' + (active === 'problem-generator-2' ? ' active' : '')}
+          >
+            문제 제작 2
           </Link>
           <span className="site-nav-item disabled" title="준비중">
             커뮤니티

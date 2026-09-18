@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeNormalStress } from '@/lib/calc/normalStress';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
@@ -16,8 +16,8 @@ import {
   ErrorBox,
   InputNeededPlaceholder,
 } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxisPlaneNote, AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
 
 // CH.1-1 Normal Stress and Strain — 원본 프로토타입의 renderNormalStress()를 React로 옮긴 것.
 // 입력값은 "표시 단위 그대로" 상태에 두고(원본과 동일), 단위 변환은 계산 함수 안에서만 한다.
@@ -48,35 +48,13 @@ export default function NormalStress() {
   const setDim = (key) => (v) => setS((prev) => ({ ...prev, dims: { ...prev.dims, [key]: parseFloat(v) } }));
 
   const res = useMemo(() => computeNormalStress(s), [s]);
+  const gate = useCalcGate(s);
 
   const tone = res.valid ? (res.sign > 0 ? 'tens' : 'comp') : undefined;
   const A_disp = res.valid ? res.A_m2 / Math.pow(LENGTH_UNITS[s.dimUnit], 2) : NaN;
   const sigmaMPa = res.valid ? fromBase(res.sigma_Pa, 'MPa', STRESS_UNITS) : NaN;
   const deltaMm = res.valid ? fromBase(res.delta_m, 'mm', LENGTH_UNITS) : NaN;
 
-  const generate = useCallback(() => {
-    const P = randInt(5, 150);
-    const mode = randChoice(['tension', 'compression']);
-    const type = randChoice(['solid_circular', 'rectangular']);
-    let dims, dimsText;
-    if (type === 'solid_circular') {
-      const d = randInt(10, 80);
-      dims = { d, d_outer: 80, d_inner: 40, b: 20, h: 30 };
-      dimsText = `지름 d=${d}mm 원형`;
-    } else {
-      const b = randInt(10, 60), h = randInt(10, 80);
-      dims = { d: 30, d_outer: 80, d_inner: 40, b, h };
-      dimsText = `${b}×${h}mm 사각형`;
-    }
-    const L = randInt(5, 30) / 10;
-    const E = randChoice([70, 100, 200]);
-    const r = computeNormalStress({ P, PUnit: 'kN', mode, sectionType: type, dims, dimUnit: 'mm', L, LUnit: 'm', E, EUnit: 'GPa' });
-    if (!r.valid) return null;
-    return {
-      q: `${dimsText} 단면봉이 길이 L=${L}m, E=${E}GPa일 때 ${mode === 'tension' ? '인장' : '압축'}하중 P=${P}kN이 작용한다. σ와 δ를 구하시오.`,
-      a: `σ = ${fmt1(fromBase(r.sigma_Pa, 'MPa', STRESS_UNITS), 2)} MPa,  δ = ${fmt1(fromBase(r.delta_m, 'mm', LENGTH_UNITS), 4)} mm`,
-    };
-  }, []);
 
   return (
     <>
@@ -252,18 +230,25 @@ export default function NormalStress() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} A_disp={A_disp} sigmaMPa={sigmaMPa} deltaMm={deltaMm} tone={tone} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeNormalStress(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="중공 단면인데 왜 인장응력이 더 크게 나오나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }
 
-function Steps({ s, res, A_disp, sigmaMPa, deltaMm, tone }) {
+function Steps({ s, res }) {
+  const tone = res.sign > 0 ? 'tens' : 'comp';
+  const A_disp = res.A_m2 / Math.pow(LENGTH_UNITS[s.dimUnit], 2);
+  const sigmaMPa = fromBase(res.sigma_Pa, 'MPa', STRESS_UNITS);
+  const deltaMm = fromBase(res.delta_m, 'mm', LENGTH_UNITS);
   let areaFormula, areaEq;
   if (s.sectionType === 'solid_circular') {
     areaFormula = 'A = (π/4)·d²';

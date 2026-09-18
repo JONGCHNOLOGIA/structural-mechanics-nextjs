@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   computeMaterialProperties,
   curveFor,
@@ -11,7 +11,7 @@ import { fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { ToggleRow, ResetButton, ResultGrid, ResultCard, StepCard } from './sm1/Controls';
-import PracticePanel, { randChoice, randRange } from './sm1/PracticePanel';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
 // CH.1-2 Mechanical Properties of Materials — 원본 renderMaterialProperties()의 React 버전.
 // 슬라이더로 변형률을 옮기면 응력-변형률 선도 위의 점이 따라 움직이고, 지금 어느 구간인지와
@@ -22,6 +22,7 @@ const DEFAULTS = { material: 'ductile', strain: 0.05 };
 export default function MaterialProperties() {
   const [s, setS] = useState(DEFAULTS);
   const res = useMemo(() => computeMaterialProperties(s), [s]);
+  const gate = useCalcGate(s);
   const maxStrain = curveFor(s.material).slice(-1)[0].x;
 
   // 재료를 바꾸면 곡선의 길이가 달라지므로, 슬라이더 값이 범위를 넘지 않게 원본처럼 잘라준다.
@@ -30,16 +31,6 @@ export default function MaterialProperties() {
     setS((prev) => ({ material: v, strain: Math.min(prev.strain, newMax * 0.5) }));
   }
 
-  const generate = useCallback(() => {
-    const material = randChoice(['ductile', 'brittle']);
-    const maxS = curveFor(material).slice(-1)[0].x;
-    const strain = Math.round(randRange(0.001, maxS) * 1000) / 1000;
-    const r = computeMaterialProperties({ material, strain });
-    return {
-      q: `${material === 'ductile' ? '연성' : '취성'} 재료의 개념 곡선에서 변형률 ε=${strain}일 때, 현재 구간과 탄성/소성 상태를 판정하시오.`,
-      a: `구간 = ${r.label},  상태 = ${r.state},  σ ≈ ${fmt1(r.stress, 3)} (normalized)`,
-    };
-  }, []);
 
   const tone = res.state === 'Elastic' ? 'tens' : 'comp';
 
@@ -94,6 +85,24 @@ export default function MaterialProperties() {
         />
 
         <div className="steps" style={{ marginTop: 20 }}>
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeMaterialProperties(frozen);
+              return <Steps s={frozen} res={fres} />;
+            }}
+          </CalcGate>
+        </div>
+      </div>
+
+      <AiTutorPanel question="취성 재료는 왜 항복점이 없나요?" />
+    </>
+  );
+}
+
+function Steps({ s, res }) {
+  const tone = res.state === 'Elastic' ? 'tens' : 'comp';
+  return (
+    <>
           <StepCard
             title="Step 1. 현재 위치(변형률) 확인"
             formula="ε = slider value"
@@ -128,12 +137,6 @@ export default function MaterialProperties() {
               </>
             }
           />
-        </div>
-      </div>
-
-      <AiTutorPanel question="취성 재료는 왜 항복점이 없나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }

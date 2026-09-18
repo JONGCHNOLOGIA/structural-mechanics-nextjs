@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeHookePoisson } from '@/lib/calc/hookePoisson';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, toBase, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
@@ -17,8 +17,8 @@ import {
   InputNeededPlaceholder,
   DiagramSkipNote,
 } from './sm1/Controls';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
 
 // CH.1-3 Hooke's Law and Poisson's Ratio — 원본 renderHookePoisson()의 React 버전.
 
@@ -46,24 +46,10 @@ export default function HookePoisson() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeHookePoisson(s), [s]);
+  const gate = useCalcGate(s);
   const tone = res.valid ? (res.sign > 0 ? 'tens' : 'comp') : undefined;
   const toneOpp = tone === 'tens' ? 'comp' : 'tens'; // 횡방향은 종방향과 반대 부호
 
-  const generate = useCallback(() => {
-    const P = randInt(5, 120), A = randInt(100, 2000);
-    const E = randChoice([70, 100, 200]), nu = randChoice([0.25, 0.3, 0.33]);
-    const L = randInt(5, 30) / 10, w = randInt(10, 80);
-    const T = randChoice(['tension', 'compression']);
-    const r = computeHookePoisson({
-      mode: 'load', T, P, PUnit: 'kN', A, AUnit: 'mm2', sigma: 0, sigmaUnit: 'MPa',
-      E, EUnit: 'GPa', nu, L, LUnit: 'm', w, wUnit: 'mm',
-    });
-    if (!r.valid) return null;
-    return {
-      q: `단면적 A=${A}mm², 길이 L=${L}m, 폭 w=${w}mm인 부재에 ${T === 'tension' ? '인장' : '압축'}하중 P=${P}kN이 작용한다. E=${E}GPa, ν=${nu}일 때 ΔL과 Δw를 구하시오.`,
-      a: `ΔL = ${fmt1(fromBase(r.deltaL_m, 'mm', LENGTH_UNITS), 4)} mm,  Δw = ${fmt1(fromBase(r.deltaW_m, 'mm', LENGTH_UNITS), 4)} mm`,
-    };
-  }, []);
 
   return (
     <>
@@ -151,18 +137,22 @@ export default function HookePoisson() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} tone={tone} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeHookePoisson(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="음의 Poisson 비를 가지는 재료가 실제로 있나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }
 
-function Steps({ s, res, tone }) {
+function Steps({ s, res }) {
+  const tone = res.sign > 0 ? 'tens' : 'comp';
   const sigmaStep =
     s.mode === 'load' ? [`σ = P/A = ${s.P} ${s.PUnit} / ${s.A} ${s.AUnit}`] : [`σ = ${s.sigma} ${s.sigmaUnit} (직접 입력)`];
   return (

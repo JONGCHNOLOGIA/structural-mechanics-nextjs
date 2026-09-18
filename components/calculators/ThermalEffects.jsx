@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeThermal } from '@/lib/calc/thermalEffects';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
-import PracticePanel, { randChoice, randRange } from './sm1/PracticePanel';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
 // CH.2-4 Thermal Effects and Prestrain — 원본 renderThermal()의 React 버전.
 
@@ -18,22 +18,9 @@ export default function ThermalEffects() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeThermal(s), [s]);
+  const gate = useCalcGate(s);
   const isFree = s.mode === 'free';
 
-  const generate = useCallback(() => {
-    const alpha = Math.round(randRange(8, 20));
-    const deltaT = randChoice([-40, -20, 20, 40, 60]);
-    const mode = randChoice(['free', 'restrained']);
-    const r = computeThermal({ mode, alpha: alpha * 1e-6, deltaT, L: 1, LUnit: 'm', E: 200, EUnit: 'GPa', A: 500, AUnit: 'mm2' });
-    if (!r.valid) return null;
-    return {
-      q: `α=${alpha}×10⁻⁶/°C, L=1m 부재의 온도가 ΔT=${deltaT}°C 변했다. ${mode === 'free' ? '자유 팽창일 때 δ_T를' : '양단 완전구속(E=200GPa, A=500mm²)일 때 σ_T와 N_T를'} 구하시오.`,
-      a:
-        mode === 'free'
-          ? `δ_T = ${fmt1(fromBase(r.deltaDisp_m, 'mm', LENGTH_UNITS), 4)} mm`
-          : `σ_T = ${fmt1(fromBase(r.sigmaT_Pa, 'MPa', STRESS_UNITS), 2)} MPa, N_T = ${fmt1(fromBase(r.N_T, 'kN', FORCE_UNITS), 3)} kN`,
-    };
-  }, []);
 
   return (
     <>
@@ -104,6 +91,24 @@ export default function ThermalEffects() {
         )}
 
         <div className="steps" style={{ marginTop: 20 }}>
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeThermal(frozen);
+              return <Steps s={frozen} res={fres} />;
+            }}
+          </CalcGate>
+        </div>
+      </div>
+
+      <AiTutorPanel question="구속된 부재는 왜 온도가 오르면 압축을 받나요?" />
+    </>
+  );
+}
+
+function Steps({ s, res }) {
+  const isFree = s.mode === 'free';
+  return (
+    <>
           {res.valid ? (
             <>
               <StepCard title="Step 1. 열변형률" formula="ε_T = α · ΔT"
@@ -133,12 +138,6 @@ export default function ThermalEffects() {
           ) : (
             <InputNeededPlaceholder />
           )}
-        </div>
-      </div>
-
-      <AiTutorPanel question="구속된 부재는 왜 온도가 오르면 압축을 받나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }

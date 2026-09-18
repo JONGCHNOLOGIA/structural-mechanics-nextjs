@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeShear } from '@/lib/calc/shearStress';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
@@ -16,7 +16,7 @@ import {
   InputNeededPlaceholder,
   DiagramSkipNote,
 } from './sm1/Controls';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
 // CH.1-4 Shear Stress and Strain — 원본 renderShearStress()의 React 버전.
 
@@ -35,24 +35,9 @@ export default function ShearStress() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeShear(s), [s]);
+  const gate = useCalcGate(s);
   const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
 
-  const generate = useCallback(() => {
-    const mode = randChoice(['single', 'double', 'bearing']);
-    const P = randInt(5, 120), d = randInt(8, 50), t = randInt(5, 30);
-    const r = computeShear({ mode, d, dimUnit: 'mm', t, P, PUnit: 'kN', gammaDeg: 0, G: 80, GUnit: 'GPa' });
-    if (!r.valid) return null;
-    if (mode === 'bearing') {
-      return {
-        q: `두께 t=${t}mm 판에 직경 d=${d}mm 볼트가 P=${P}kN을 전달한다. 지압응력 σᵦ를 구하시오.`,
-        a: `σᵦ = ${fmt1(fromBase(r.sigma_b_Pa, 'MPa', STRESS_UNITS), 2)} MPa`,
-      };
-    }
-    return {
-      q: `직경 d=${d}mm 볼트가 ${mode === 'single' ? '단일전단(single shear)' : '이중전단(double shear)'} 상태로 P=${P}kN을 받는다. 전단응력 τ를 구하시오.`,
-      a: `τ = ${fmt1(fromBase(r.tau_Pa, 'MPa', STRESS_UNITS), 2)} MPa`,
-    };
-  }, []);
 
   return (
     <>
@@ -139,18 +124,22 @@ export default function ShearStress() {
         </DiagramSkipNote>
 
         <div className="steps" style={{ marginTop: 20 }}>
-          {res.valid ? <Steps s={s} res={res} areaScale={areaScale} /> : <InputNeededPlaceholder />}
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeShear(frozen);
+              return fres.valid ? <Steps s={frozen} res={fres} /> : <InputNeededPlaceholder />;
+            }}
+          </CalcGate>
         </div>
       </div>
 
       <AiTutorPanel question="Bearing stress는 왜 전단응력과 다른 면적을 쓰나요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }
 
-function Steps({ s, res, areaScale }) {
+function Steps({ s, res }) {
+  const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
   if (s.mode === 'single' || s.mode === 'double') {
     const A_disp = res.A_m2 / areaScale;
     return (

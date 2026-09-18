@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeStressConcentration } from '@/lib/calc/stressConcentration';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder, DiagramSkipNote } from './sm1/Controls';
-import PracticePanel, { randInt, randChoice } from './sm1/PracticePanel';
+import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
 // CH.2-5 Stress Concentration — 원본 renderStressConcentration()의 React 버전.
 
@@ -18,18 +18,9 @@ export default function StressConcentration() {
   const setNum = (key) => (v) => set({ [key]: parseFloat(v) });
 
   const res = useMemo(() => computeStressConcentration(s), [s]);
+  const gate = useCalcGate(s);
   const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
 
-  const generate = useCallback(() => {
-    const b = randInt(30, 120), d = randInt(5, Math.max(6, Math.floor(b / 3))), t = randInt(5, 25);
-    const P = randInt(5, 80), K = randChoice([1.8, 2.0, 2.1, 2.3, 2.5]);
-    const r = computeStressConcentration({ P, PUnit: 'kN', b, t, d, dimUnit: 'mm', K });
-    if (!r.valid) return null;
-    return {
-      q: `폭 b=${b}mm, 두께 t=${t}mm 평판 중앙에 직경 d=${d}mm 구멍이 있고 P=${P}kN이 작용한다. K=${K}일 때 σ_nom과 σ_max를 구하시오.`,
-      a: `σ_nom = ${fmt1(fromBase(r.sigmaNom, 'MPa', STRESS_UNITS), 2)} MPa,  σ_max = ${fmt1(fromBase(r.sigmaMax, 'MPa', STRESS_UNITS), 2)} MPa`,
-    };
-  }, []);
 
   return (
     <>
@@ -76,6 +67,24 @@ export default function StressConcentration() {
           defaultText="💬 왜 정적 연성재료 설계에서는 응력집중을 종종 무시해도 되는지, 오른쪽 AI 튜터에게 물어보세요." />
 
         <div className="steps" style={{ marginTop: 20 }}>
+          <CalcGate gate={gate}>
+            {(frozen) => {
+              const fres = computeStressConcentration(frozen);
+              return <Steps s={frozen} res={fres} />;
+            }}
+          </CalcGate>
+        </div>
+      </div>
+
+      <AiTutorPanel question="구멍이 작을수록 K가 커지는 이유가 뭔가요?" />
+    </>
+  );
+}
+
+function Steps({ s, res }) {
+  const areaScale = Math.pow(LENGTH_UNITS[s.dimUnit], 2);
+  return (
+    <>
           {res.valid ? (
             <>
               <StepCard title="Step 1. 순단면적" formula="A_net = (b − d) × t"
@@ -91,12 +100,6 @@ export default function StressConcentration() {
           ) : (
             <InputNeededPlaceholder />
           )}
-        </div>
-      </div>
-
-      <AiTutorPanel question="구멍이 작을수록 K가 커지는 이유가 뭔가요?" />
-
-      <PracticePanel generate={generate} />
     </>
   );
 }
