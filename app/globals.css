@@ -187,7 +187,8 @@ header{
   margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
 }
 .subtopic-preview-imgs img{
-  max-height:130px; max-width:220px; object-fit:contain; border:1px solid var(--line); background:var(--bg);
+  flex:1 1 0; min-width:0; max-width:340px; height:150px;
+  object-fit:contain; border:1px solid var(--line); background:var(--bg);
 }
 .subtopic:hover .subtopic-preview-imgs{ display:flex; }
 
