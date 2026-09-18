@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useUser } from './UserProvider';
 import { useSiteContent } from './SiteContentProvider';
@@ -18,7 +18,7 @@ export default function EditableImages({ contentKeyBase, className }) {
   const { content, setLocal } = useSiteContent();
   const [uploadingIndex, setUploadingIndex] = useState(null);
   const [error, setError] = useState('');
-  const fileInputs = useRef([]);
+  const uid = useId();
 
   const urls = Array.from({ length: MAX_IMAGES }, (_, i) => content[`${contentKeyBase}.${i + 1}`]).filter(Boolean);
 
@@ -63,7 +63,8 @@ export default function EditableImages({ contentKeyBase, className }) {
       {canEditContent && (
         <div
           onClick={(e) => {
-            e.preventDefault();
+            // label의 파일창 열기 네이티브 동작이 살아있어야 하므로 preventDefault는 걸지 않음 —
+            // .subtopic 행의 라우팅 클릭으로 번지는 것만 막으면 됨.
             e.stopPropagation();
           }}
           style={{
@@ -82,7 +83,7 @@ export default function EditableImages({ contentKeyBase, className }) {
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {url && <img src={url} alt="" style={{ width: 28, height: 28, objectFit: 'cover', border: '1px solid var(--line)' }} />}
                 <input
-                  ref={(el) => (fileInputs.current[i] = el)}
+                  id={`${uid}-${i}`}
                   type="file"
                   accept="image/*"
                   style={{
@@ -98,21 +99,27 @@ export default function EditableImages({ contentKeyBase, className }) {
                   }}
                   onChange={(e) => handleFile(i, e.target.files?.[0])}
                 />
-                <button
-                  type="button"
-                  onClick={() => fileInputs.current[i]?.click()}
-                  disabled={uploadingIndex === i}
+                {/* button 대신 input과 직접 연결된 label을 씀 — JS로 입력창에 .click()을
+                    대신 걸어주는 방식은 일부 환경에서 브라우저가 "진짜 사용자 클릭"으로 안 쳐줘서
+                    파일 선택창이 안 열리는 경우가 있었음. label 클릭은 브라우저가 직접 처리하는
+                    네이티브 동작이라 이 문제가 아예 생기지 않음. */}
+                <label
+                  htmlFor={`${uid}-${i}`}
+                  aria-disabled={uploadingIndex === i}
                   style={{
                     fontSize: 11,
                     padding: '4px 9px',
                     border: '1px solid var(--line)',
                     background: 'var(--card)',
                     color: 'var(--gray)',
-                    cursor: 'pointer',
+                    cursor: uploadingIndex === i ? 'default' : 'pointer',
+                    opacity: uploadingIndex === i ? 0.6 : 1,
+                    pointerEvents: uploadingIndex === i ? 'none' : 'auto',
+                    display: 'inline-block',
                   }}
                 >
                   {uploadingIndex === i ? '업로드 중...' : `이미지 ${i + 1} ${url ? '변경' : '추가'}`}
-                </button>
+                </label>
                 {url && (
                   <button
                     type="button"
