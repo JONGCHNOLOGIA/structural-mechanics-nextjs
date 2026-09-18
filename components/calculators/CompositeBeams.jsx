@@ -785,26 +785,34 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const xLeft = centerX - (maxWidth * scale) / 2;
   const xRight = centerX + (maxWidth * scale) / 2;
 
-  const stressPts = [];
-  result.blocks.forEach((b, i) => {
-    stressPts.push({ y: b.yBottom, s: result.stressAt(b.yBottom, b.E), blockIdx: i });
-    stressPts.push({ y: b.yTop, s: result.stressAt(b.yTop, b.E), blockIdx: i });
-  });
-  // 응력 다이어그램은 실제 단면처럼 "물리적 비율"을 지킬 필요가 없는 그래프라서, 슬라이더가
-  // 낼 수 있는 최댓값이 아니라 지금 이 순간의 실제 최대 응력 기준으로 매번 꽉 차게 자동 스케일함
-  // (모멘트를 작게 넣어도 막대가 눈에 띄게 보이도록 — 가독성 우선, 정확한 값은 라벨로 확인).
-  const maxAbsStress = Math.max(1e-9, ...stressPts.map((p) => Math.abs(p.s)));
-  const diagCenterX = centerX + (maxWidth * scale) / 2 + 200;
-  const diagHalfW = 120;
-  const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
-  const naY = yToPx(result.ybar);
-
   const momentLabelForElevation = moment === null ? '미입력' : `${fmt(disp(moment, momF))} ${units.moment}`;
   const momRForBend = cbSliderRangeFor('moment', units.moment);
   const momentMaxForBend = Math.max(Math.abs(momRForBend[0]), Math.abs(momRForBend[1])) * momF;
   const maxBendPx = 24;
   const bendPx =
     momentMaxForBend > 0 ? Math.max(-maxBendPx, Math.min(maxBendPx, ((moment || 0) / momentMaxForBend) * maxBendPx)) : 0;
+
+  const stressPts = [];
+  result.blocks.forEach((b, i) => {
+    stressPts.push({ y: b.yBottom, s: result.stressAt(b.yBottom, b.E), blockIdx: i });
+    stressPts.push({ y: b.yTop, s: result.stressAt(b.yTop, b.E), blockIdx: i });
+  });
+  // 응력 다이어그램의 폭은 "지금 이 순간의 최대 응력"이 아니라 모멘트 슬라이더가 낼 수 있는
+  // 최댓값(momentMaxForBend) 기준 응력으로 고정 스케일링한다 — 그래야 슬라이더를 왼쪽 끝(0)에서
+  // 오른쪽 끝으로 움직일 때 다이어그램이 처음부터 꽉 차 있지 않고 실제로 점점 커지는 게 보인다.
+  // (값 라벨 자체는 그대로 지금 모멘트 기준 정확한 응력을 보여줌 — 바뀌는 건 폭 스케일뿐.)
+  const resultAtMaxMoment = computeComposite(result.blocks, momentMaxForBend || 1);
+  const maxAbsStress = Math.max(
+    1e-9,
+    ...result.blocks.flatMap((b) => [
+      Math.abs(resultAtMaxMoment.stressAt(b.yBottom, b.E)),
+      Math.abs(resultAtMaxMoment.stressAt(b.yTop, b.E)),
+    ])
+  );
+  const diagCenterX = centerX + (maxWidth * scale) / 2 + 200;
+  const diagHalfW = 120;
+  const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
+  const naY = yToPx(result.ybar);
 
   return (
     <>
