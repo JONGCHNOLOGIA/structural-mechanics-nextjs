@@ -308,7 +308,7 @@ export default function BendingMomentEquation() {
       <div className="panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <h3 style={{ margin: 0 }}>
-            VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+            VISUALIZER
           </h3>
           <div style={{ display: 'flex', gap: 6 }}>
             <button

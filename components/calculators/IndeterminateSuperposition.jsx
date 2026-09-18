@@ -108,7 +108,7 @@ export default function IndeterminateSuperposition() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER
         </h3>
         <DeflectionCurveSVG points={result.pts} L={L} support="propped" />
 

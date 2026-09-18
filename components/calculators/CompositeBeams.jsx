@@ -950,14 +950,15 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
                 stroke={c.stroke}
                 strokeWidth="1.6"
                 opacity="0.9"
+                style={{ transition: 'all 0.3s ease' }}
               />
-              <circle cx={x1} cy={y1} r="2.5" fill={c.stroke} />
-              <circle cx={x2} cy={y2} r="2.5" fill={c.stroke} />
-              <text x={x1 + (p1.s >= 0 ? 6 : -6)} y={y1 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor1}>
+              <circle cx={x1} cy={y1} r="2.5" fill={c.stroke} style={{ transition: 'all 0.3s ease' }} />
+              <circle cx={x2} cy={y2} r="2.5" fill={c.stroke} style={{ transition: 'all 0.3s ease' }} />
+              <text x={x1 + (p1.s >= 0 ? 6 : -6)} y={y1 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor1} style={{ transition: 'all 0.3s ease' }}>
                 {label1}
               </text>
               {Math.abs(y2 - y1) > 16 && (
-                <text x={x2 + (p2.s >= 0 ? 6 : -6)} y={y2 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor2}>
+                <text x={x2 + (p2.s >= 0 ? 6 : -6)} y={y2 + 3} fontSize="13" fill="#3A3A3A" textAnchor={anchor2} style={{ transition: 'all 0.3s ease' }}>
                   {label2}
                 </text>
               )}

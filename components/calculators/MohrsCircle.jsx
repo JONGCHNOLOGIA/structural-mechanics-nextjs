@@ -59,7 +59,7 @@ export default function MohrsCircle() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER
         </h3>
         <MohrCircleSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} />
         <div className="steps">

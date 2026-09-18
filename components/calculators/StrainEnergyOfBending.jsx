@@ -97,7 +97,7 @@ export default function StrainEnergyOfBending() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER
         </h3>
         <MomentDiagramSVG pts={diagramPts} L={L} maxAbsM={maxAbsM} />
         <div className="result-grid">

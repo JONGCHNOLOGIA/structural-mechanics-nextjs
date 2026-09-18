@@ -61,7 +61,7 @@ export default function PlaneStress() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER
         </h3>
         <ElementsSVG sigmaX={sigmaX} sigmaY={sigmaY} tauXY={tauXY} theta={theta} r={r} stressF={stressF} unitStress={units.stress} />
         <div className="steps">

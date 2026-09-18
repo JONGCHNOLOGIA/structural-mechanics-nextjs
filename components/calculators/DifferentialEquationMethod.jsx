@@ -103,7 +103,7 @@ export default function DifferentialEquationMethod() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>실시간</span>
+          VISUALIZER
         </h3>
         <DeflectionCurveSVG points={result.pts} L={L} support={isPropped ? 'propped' : 'fixed-fixed'} pointLoadAt={isPropped ? undefined : L / 2} />
 
