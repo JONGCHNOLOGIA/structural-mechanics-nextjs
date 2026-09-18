@@ -13,7 +13,7 @@ import { fileToResizedBase64 } from '@/lib/resizeImage';
 
 // 챕터/소주제를 고르면 문제은행(lib/problemBank*.js)의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를
 // 생성한다. 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
-// 검증된 공식(lib/calc/*.js)으로 계산한다. 손풀이 사진 채점만 /api/grade-solution을 거쳐 Claude
+// 검증된 공식(lib/calc/*.js)으로 계산한다. 손풀이 사진 채점만 /api/grade-solution을 거쳐 Gemini
 // Vision을 씀 — 문제 자체를 AI가 새로 만들지는 않는다(정확한 숫자 계산은 여전히 코드가 담당).
 // 문제은행에 없는 소주제는 아예 선택 목록에 나타나지 않는다.
 //

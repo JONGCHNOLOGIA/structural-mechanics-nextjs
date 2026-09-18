@@ -1,7 +1,10 @@
-// 문제 생성기의 "내 풀이(사진)" 채점 요청을 받아 Claude Vision에 보내는 서버 라우트.
-// ANTHROPIC_API_KEY는 .env.local(로컬)·Vercel 환경변수(배포)에만 넣고, 절대 NEXT_PUBLIC_ 접두어를
+// 문제 생성기의 "내 풀이(사진)" 채점 요청을 받아 Gemini Vision에 보내는 서버 라우트.
+// GEMINI_API_KEY는 .env.local(로컬)·Vercel 환경변수(배포)에만 넣고, 절대 NEXT_PUBLIC_ 접두어를
 // 붙이지 않는다 — 이 파일은 서버에서만 실행되므로 클라이언트로 키가 노출되지 않는다.
-const MODEL = 'claude-sonnet-5';
+// (참고: AITUTOR.html 프로토타입은 이 키를 클라이언트 JS에 그대로 박아뒀었는데, 그러면 브라우저
+// "소스 보기"만으로 키가 유출된다 — 그래서 이 프로젝트는 항상 서버 라우트를 거친다.)
+const MODEL = 'gemini-3.8-flash';
+const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 const SYSTEM_PROMPT =
   '당신은 세종대학교 건축공학과 구조역학 수업의 AI 조교입니다. 학생이 손으로 푼 풀이 사진을 보고, ' +
@@ -10,10 +13,10 @@ const SYSTEM_PROMPT =
   '전체 분량은 6~8문장 이내로, 한국어로, 격려하는 톤을 유지하세요.';
 
 export async function POST(req) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: 'ANTHROPIC_API_KEY가 서버에 설정되어 있지 않아요. .env.local에 키를 추가한 뒤 dev 서버를 다시 시작해주세요.' },
+      { error: 'GEMINI_API_KEY가 서버에 설정되어 있지 않아요. .env.local에 키를 추가한 뒤 dev 서버를 다시 시작해주세요.' },
       { status: 500 }
     );
   }
@@ -36,40 +39,39 @@ export async function POST(req) {
     '\n첨부된 사진은 이 문제에 대한 학생의 손풀이입니다. 검토해주세요.',
   ].join('\n');
 
-  let anthropicRes;
+  let geminiRes;
   try {
-    anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    geminiRes = await fetch(ENDPOINT, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        // 쿼리스트링(?key=...)이 아니라 헤더로 넘겨서 키가 URL·서버 로그에 남지 않게 한다.
+        'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 700,
-        system: SYSTEM_PROMPT,
-        messages: [
+        systemInstruction: { parts: { text: SYSTEM_PROMPT } },
+        contents: [
           {
             role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: imageMediaType, data: imageBase64 } },
-              { type: 'text', text: userText },
+            parts: [
+              { text: userText },
+              { inline_data: { mime_type: imageMediaType, data: imageBase64 } },
             ],
           },
         ],
+        generationConfig: { maxOutputTokens: 700 },
       }),
     });
   } catch {
     return Response.json({ error: 'AI 서버에 연결하지 못했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
   }
 
-  if (!anthropicRes.ok) {
+  if (!geminiRes.ok) {
     return Response.json({ error: '채점 요청이 실패했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
   }
 
-  const data = await anthropicRes.json();
-  const feedback = data?.content?.find((c) => c.type === 'text')?.text?.trim();
+  const data = await geminiRes.json();
+  const feedback = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text?.trim();
   if (!feedback) {
     return Response.json({ error: '피드백을 받아오지 못했어요. 다시 시도해주세요.' }, { status: 502 });
   }

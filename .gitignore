@@ -3,3 +3,8 @@ node_modules
 .env.local
 hw
 design
+
+# 팀원들이 참고용으로 올려둔 원본 프로토타입 파일 — 앱 코드가 아니고, 개중엔 키가 그대로
+# 박혀 있는 것도 있어서(AITUTOR.html) 실수로 커밋되지 않게 막아둔다.
+구조역학1 (13).html
+AITUTOR.html
