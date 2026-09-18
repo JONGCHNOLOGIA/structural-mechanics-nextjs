@@ -49,7 +49,7 @@ export default function HomePage() {
                 <div className="icon" dangerouslySetInnerHTML={{ __html: CHAPTER_ICONS[ch.num] || '' }} />
                 <div className="body">
                   <span className="num">
-                    <span className="ch-badge">{ch.num}</span>
+                    {ch.num}
                     {ch.ready ? <span className="tag">{ch.subtopics.length}개 소주제</span> : <span className="tag">준비중</span>}
                   </span>
                   <div className="title">{ch.title}</div>
@@ -62,9 +62,7 @@ export default function HomePage() {
         <div>
           <div className="col-label">Sections</div>
           <div className="subtopics">
-            <div className="subtopics-group-label">
-              <span className="ch-badge">{activeCh.num}</span> {activeCh.title}
-            </div>
+            <div className="subtopics-group-label">{activeCh.num} · {activeCh.title}</div>
             {activeCh.subtopics.length === 0 ? (
               <div className="empty">이 챕터는 아직 소주제가 준비되지 않았습니다.</div>
             ) : (
