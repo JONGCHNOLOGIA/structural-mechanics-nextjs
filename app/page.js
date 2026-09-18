@@ -53,7 +53,6 @@ export default function HomePage() {
                     {ch.ready ? <span className="tag">{ch.subtopics.length}개 소주제</span> : <span className="tag">준비중</span>}
                   </span>
                   <div className="title">{ch.title}</div>
-                  <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
                 </div>
               </div>
             ))}
