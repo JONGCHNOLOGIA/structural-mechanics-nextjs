@@ -12,11 +12,11 @@ const TEAL = 0x1e7f72;
 const GRAY = 0x51626f;
 const INK = 0x3a3a3a;
 
-export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad }) {
+export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxSigma }) {
   const mountRef = useRef(null);
-  const propsRef = useRef({ b, h, alphaRad, corners, betaRad });
+  const propsRef = useRef({ b, h, alphaRad, corners, betaRad, maxSigma });
   const rebuildRef = useRef(null);
-  propsRef.current = { b, h, alphaRad, corners, betaRad };
+  propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma };
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -41,7 +41,7 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad }) {
     const cornerDots = [];
 
     function rebuild() {
-      const { b, h, alphaRad, corners, betaRad } = propsRef.current;
+      const { b, h, alphaRad, corners, betaRad, maxSigma } = propsRef.current;
       if (beam) {
         scene.remove(beam);
         beam.traverse((o) => {
@@ -63,8 +63,9 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad }) {
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo), new THREE.LineBasicMaterial({ color: GRAY }));
       beam.add(edges);
 
-      // 응력 색상판 (D-F-E-G 사각형 둘레 순서)
-      const maxAbs = Math.max(1e-9, ...corners.map((c) => Math.abs(c.sigma)));
+      // 응력 색상판 (D-F-E-G 사각형 둘레 순서) — 색 강도는 지금 이 순간의 최대 응력이 아니라
+      // q 슬라이더 최댓값 기준 응력(maxSigma)으로 고정 정규화해서, 하중을 올릴수록 점점 진해지게 함.
+      const maxAbs = maxSigma != null ? Math.max(1e-9, maxSigma) : Math.max(1e-9, ...corners.map((c) => Math.abs(c.sigma)));
       const colorFor = (sigma) => {
         const t = Math.min(1, Math.abs(sigma) / maxAbs);
         const base = new THREE.Color(sigma >= 0 ? TEAL : CRIMSON);
@@ -191,9 +192,9 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad }) {
 
   // props가 바뀔 때마다(치수/각도/응력) 다시 지오메트리만 새로 그림 — 씬/카메라는 그대로 유지
   useEffect(() => {
-    propsRef.current = { b, h, alphaRad, corners, betaRad };
+    propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma };
     if (rebuildRef.current) rebuildRef.current();
-  }, [b, h, alphaRad, corners, betaRad]);
+  }, [b, h, alphaRad, corners, betaRad, maxSigma]);
 
   return (
     <div>

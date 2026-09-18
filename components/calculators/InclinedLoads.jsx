@@ -83,6 +83,15 @@ export default function InclinedLoads() {
   const alphaRad = (alphaDeg * Math.PI) / 180;
   const r = useMemo(() => (b && h && L ? computeInclinedLoads(b, h, q, L, alphaRad) : null), [b, h, q, L, alphaRad]);
   const betaDeg = r ? (r.betaRad * 180) / Math.PI : 0;
+  // 3D 뷰의 응력 색상 강도를 "지금 이 순간의 최대 응력"이 아니라 q 슬라이더가 낼 수 있는
+  // 최댓값 기준 응력으로 고정 정규화 — 그래야 하중이 작을 땐 색이 연하고 슬라이더를 올릴수록
+  // 점점 진해지는 게 보인다 (Composite Beams 응력 다이어그램과 같은 방식).
+  const qMaxBase = qEffectiveRange()[1] * qF;
+  const maxSigma = useMemo(() => {
+    if (!(b && h && L)) return 1e-9;
+    const rMax = computeInclinedLoads(b, h, qMaxBase, L, alphaRad);
+    return Math.max(1e-9, ...rMax.corners.map((c) => Math.abs(c.sigma)));
+  }, [b, h, L, alphaRad, qMaxBase]);
 
   function markStale() {
     setCalcState((prev) => {
@@ -227,7 +236,7 @@ export default function InclinedLoads() {
               </button>
             </div>
             {elevation3D ? (
-              <InclinedLoads3D b={b} h={h} alphaRad={alphaRad} corners={r.corners} betaRad={r.betaRad} />
+              <InclinedLoads3D b={b} h={h} alphaRad={alphaRad} corners={r.corners} betaRad={r.betaRad} maxSigma={maxSigma} />
             ) : (
               <InclinedLoadsSVG
                 b={b}
