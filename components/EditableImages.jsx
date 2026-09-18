@@ -66,7 +66,14 @@ export default function EditableImages({ contentKeyBase, className }) {
             e.preventDefault();
             e.stopPropagation();
           }}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: urls.length ? 8 : 0 }}
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: urls.length ? 8 : 0,
+          }}
         >
           {Array.from({ length: MAX_IMAGES }).map((_, i) => {
             const key = `${contentKeyBase}.${i + 1}`;
