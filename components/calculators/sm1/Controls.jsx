@@ -1,6 +1,8 @@
 'use client';
 
 import { fmt1 } from '@/lib/calc/units1';
+import { Tip } from '../FormulaSection';
+import { SYMBOL_TIPS } from './glossary';
 
 // 구조역학 1 계산기들이 공용으로 쓰는 입력/결과 UI 조각들.
 // 원본 프로토타입의 dualField()/unitSelect()/resultCard()/stepCard()/errorBox() 를 React로 옮긴 것 —
@@ -116,12 +118,34 @@ export function ResultGrid({ children }) {
   return <div className="result-grid">{children}</div>;
 }
 
+// 수식 문자열에 나오는 기호를 용어집에서 찾아 툴팁으로 감싼다.
+// 아래첨자가 붙은 기호(σ_allow)를 먼저 잡도록 긴 것부터 맞춰보고, 알파벳 기호는 단어 중간에
+// 걸리지 않게(예: "failure strength"의 f) 앞뒤가 글자가 아닐 때만 인식한다.
+const TIP_KEYS = Object.keys(SYMBOL_TIPS).sort((a, b) => b.length - a.length);
+const TIP_PATTERN = new RegExp(
+  '(' + TIP_KEYS.map((k) => `(?<![A-Za-z_])${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z_])`).join('|') + ')',
+  'g'
+);
+
+function withTips(text) {
+  if (typeof text !== 'string') return text;
+  return text.split(TIP_PATTERN).map((part, i) =>
+    SYMBOL_TIPS[part] ? (
+      <Tip key={i} title={SYMBOL_TIPS[part]}>
+        {part}
+      </Tip>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
 export function StepCard({ title, formula, eqLines = [], final }) {
   return (
     <div className="step-card">
       <div className="step-header static">{title}</div>
       <div className="step-body">
-        {formula && <div className="step-formula">{formula}</div>}
+        {formula && <div className="step-formula">{withTips(formula)}</div>}
         {eqLines.map((line, i) => (
           <div className="step-eq" key={i}>
             {line}
