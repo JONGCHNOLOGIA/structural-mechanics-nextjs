@@ -1,7 +1,8 @@
 import EditableText from '@/components/EditableText';
 
 // 프로토타입의 aiHTMLPlaceholder()를 그대로 옮긴 것. 모든 계산기 페이지에서 동일하게 재사용.
-export default function AiTutorPanel() {
+// question: 소주제마다 다른 "학생이 물어볼 법한 예시 질문" (구조역학 1 계산기들이 넘겨줌).
+export default function AiTutorPanel({ question }) {
   return (
     <div className="panel panel-ai">
       <h3>
@@ -14,7 +15,11 @@ export default function AiTutorPanel() {
           contentKey="aiTutor.exampleAiMsg"
           defaultText="이 계산 결과에 대해 궁금한 점이 있으면 물어보세요. (백엔드 연결 전 — 예시 문구)"
         />
-        <EditableText as="div" className="msg user" contentKey="aiTutor.exampleUserMsg" defaultText="이 값이 왜 이렇게 나오나요?" />
+        {question ? (
+          <div className="msg user">{question}</div>
+        ) : (
+          <EditableText as="div" className="msg user" contentKey="aiTutor.exampleUserMsg" defaultText="이 값이 왜 이렇게 나오나요?" />
+        )}
       </div>
       <div className="chat-input">
         <input type="text" placeholder="질문을 입력하세요" disabled />

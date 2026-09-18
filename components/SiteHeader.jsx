@@ -31,9 +31,9 @@ export default function SiteHeader({ active = 'sm2' }) {
         </Link>
 
         <nav className="site-nav">
-          <span className="site-nav-item disabled" title="다른 팀원이 만들고 있어요 — 준비중">
+          <Link href="/subjects/structural-mechanics-1" className={'site-nav-item' + (active === 'sm1' ? ' active' : '')}>
             구조역학 1
-          </span>
+          </Link>
           <Link href="/" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
             구조역학 2
           </Link>

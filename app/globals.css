@@ -399,6 +399,54 @@ input[type='range']::-moz-range-thumb{
 .result-card .v.tens{ color:var(--teal); }
 .result-card .v.comp{ color:var(--crimson); }
 
+/* ---------- 구조역학 1(CH.1~CH.5) 계산기에서 추가로 쓰는 요소들 ----------
+   원본 프로토타입("구조역학1 (13).html")에 있던 클래스들을 지금 디자인(각진 모서리, Pretendard)에
+   맞춰 옮긴 것. 나머지(.step-*, .result-*, .badge 등)는 구조역학 2와 그대로 공용한다. */
+.dual-field input[type=range]{ width:100%; margin-bottom:7px; accent-color:var(--crimson); }
+.dual-field .input-unit-group{ margin-top:0; }
+.field .hint{ font-size:11px; color:var(--gray-soft); margin-top:4px; line-height:1.5; }
+.hint{ font-size:11.5px; color:var(--gray-soft); line-height:1.6; margin-top:8px; }
+.toggle-row{ display:flex; gap:6px; margin-bottom:14px; }
+.toggle-btn{
+  flex:1; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--gray);
+  background:var(--bg); border:1px solid var(--line); border-radius:0; padding:9px 6px; cursor:pointer;
+  transition:border-color 0.15s ease, color 0.15s ease;
+}
+.toggle-btn.active{ background:var(--ink); border-color:var(--ink); color:#fff; }
+.toggle-btn.active.tens{ background:var(--teal); border-color:var(--teal); color:#fff; }
+.toggle-btn.active.comp{ background:var(--crimson); border-color:var(--crimson); color:#fff; }
+.reset-btn{
+  width:100%; padding:9px; margin-top:6px; background:var(--bg); color:var(--gray);
+  border:1px solid var(--line); border-radius:0; font-size:12.5px; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:border-color 0.15s ease, color 0.15s ease;
+}
+.reset-btn:hover{ border-color:var(--crimson); color:var(--crimson); }
+.error-box{
+  font-size:12px; color:var(--crimson); background:var(--crimson-soft); border-radius:0;
+  padding:10px 14px; margin-top:6px; line-height:1.6;
+}
+.axis-note{
+  display:flex; align-items:center; gap:10px; margin-top:10px; padding:9px 12px;
+  background:var(--bg); border:1px solid var(--line); border-radius:0;
+  font-size:11px; color:var(--gray); line-height:1.5;
+}
+.axis-note svg{ flex-shrink:0; }
+.diagram-skip-note{
+  font-size:11.5px; color:var(--gray); background:var(--bg); border:1px dashed var(--line);
+  border-radius:0; padding:10px 12px; margin-top:12px; line-height:1.6;
+}
+.step-final .tens{ color:var(--teal); }
+.step-final .comp{ color:var(--crimson); }
+/* 소주제별 연습문제 추천 — 3개 패널 아래에 가로 전체로 깔린다 */
+.practice-panel{
+  grid-column:1 / -1; background:var(--card); border:1px solid var(--line); border-radius:0;
+  padding:26px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.practice-answer{
+  margin-top:8px; padding:10px 12px; background:var(--teal-soft); border-radius:0;
+  font-weight:800; color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:12.5px;
+}
+
 .chat-log{ display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
 .msg{ font-size:13px; line-height:1.55; padding:11px 14px; border-radius:14px; }
 .msg.ai{ background:var(--crimson-soft); color:var(--ink); border-bottom-left-radius:4px; }
