@@ -27,6 +27,15 @@ body{
   background:var(--bg);
   color:var(--ink);
   min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+/* 콘텐츠가 화면 높이보다 짧아도(로그인 화면 등) 푸터가 뜨지 않고 항상 맨 아래에 붙도록 하는 래퍼 —
+   app/layout.js에서 {children}을 감싼다. */
+.app-main{
+  flex:1 0 auto;
+  display:flex;
+  flex-direction:column;
 }
 
 /* 사이트 전체가 공유하는 헤더(components/SiteHeader.jsx) 크롬 — home-header가 로비뿐 아니라

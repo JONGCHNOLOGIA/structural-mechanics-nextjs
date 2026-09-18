@@ -15,7 +15,9 @@ export default function RootLayout({ children }) {
       <body>
         <SiteContentProvider>
           <UserProvider>
-            <SettingsProvider>{children}</SettingsProvider>
+            <div className="app-main">
+              <SettingsProvider>{children}</SettingsProvider>
+            </div>
             <SiteFooter />
           </UserProvider>
         </SiteContentProvider>
