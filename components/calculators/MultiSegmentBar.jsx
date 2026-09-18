@@ -43,10 +43,12 @@ export default function MultiSegmentBar() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <div className="note-box">
-          왼쪽 끝은 고정단(반력 R은 자동 계산)이고, 오른쪽 끝은 자유단입니다. 각 구간 오른쪽 경계에 외력을 직접 입력하면, 절단법으로 각 구간의 내력
-          N이 유도됩니다.
-        </div>
+        <EditableText
+          as="div"
+          className="note-box"
+          contentKey="calc.MultiSegmentBar.note"
+          defaultText="왼쪽 끝은 고정단(반력 R은 자동 계산)이고, 오른쪽 끝은 자유단입니다. 각 구간 오른쪽 경계에 외력을 직접 입력하면, 절단법으로 각 구간의 내력 N이 유도됩니다."
+        />
         <SelectField
           label="구간 개수"
           value={String(s.segCount)}

@@ -39,10 +39,12 @@ export default function MaterialProperties() {
       {/* ---------------- Setting Menu ---------------- */}
       <div className="panel">
         <h3>SETTING MENU</h3>
-        <div className="note-box">
-          이 그래프는 <b>Illustrative / Conceptual Curve</b>입니다. 강의자료에 제시된 재료거동의 정성적 형태(구간 순서·명칭)를 나타낼 뿐, 실제 재료의
-          물성치 수치가 아닙니다.
-        </div>
+        <EditableText
+          as="div"
+          className="note-box"
+          contentKey="calc.MaterialProperties.note"
+          defaultText="이 그래프는 **Illustrative / Conceptual Curve**입니다. 강의자료에 제시된 재료거동의 정성적 형태(구간 순서·명칭)를 나타낼 뿐, 실제 재료의 물성치 수치가 아닙니다."
+        />
         <ToggleRow
           value={s.material}
           onChange={setMaterial}

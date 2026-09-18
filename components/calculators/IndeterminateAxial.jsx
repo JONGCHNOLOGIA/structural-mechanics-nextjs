@@ -62,9 +62,12 @@ export default function IndeterminateAxial() {
           </>
         ) : (
           <>
-            <div className="note-box">
-              강체보 ABC가 A점에서 핀으로 지지되고, B점의 탄성기둥이 추가로 받쳐줍니다. C점에 하중 P가 작용합니다 (교재 Example 2-2 형태).
-            </div>
+            <EditableText
+              as="div"
+              className="note-box"
+              contentKey="calc.IndeterminateAxial.noteRigid"
+              defaultText="강체보 ABC가 A점에서 핀으로 지지되고, B점의 탄성기둥이 추가로 받쳐줍니다. C점에 하중 P가 작용합니다 (교재 Example 2-2 형태)."
+            />
             <DualField label="A→B 거리 (기둥 위치)" value={s.rbB} min={0.1} max={10} step={0.05} onChange={setNum('rbB')}
               unitMap={LENGTH_UNITS} unit={s.LUnit} onUnitChange={(v) => set({ LUnit: v })} invalid={!(s.rbB > 0)} />
             <DualField label="A→C 거리 (하중 위치, 전체 보 길이)" value={s.rbL} min={0.1} max={15} step={0.05} onChange={setNum('rbL')}
