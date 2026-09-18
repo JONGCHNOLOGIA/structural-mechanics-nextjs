@@ -9,8 +9,11 @@ const ECAMPUS_URL = 'https://ecampus.sejong.ac.kr/';
 
 // 로비(app/page.js) 헤더와 동일한 로고 락업 + 가운데 네비 + 우측 로그인/바로가기 버튼을
 // 모든 페이지(챕터 상세, 문제 제작, 단면 특성 계산기 등)에서 그대로 재사용하기 위한 공용 컴포넌트.
-// active로 어떤 네비 항목을 강조할지 정한다: 'sm2' | 'problem-generator'.
+// active로 어떤 네비 항목을 강조할지 정한다: 'sm1' | 'sm2' | 'problem-generator'(허브)
+// | 'problem-generator-1' | 'problem-generator-2'(과목별 생성기 화면 — 이 둘도 "문제 제작" 항목을 강조한다).
 export default function SiteHeader({ active = 'sm2' }) {
+  const isProblemGenerator = active === 'problem-generator' || active === 'problem-generator-1' || active === 'problem-generator-2';
+
   const { userId } = useUser();
   const router = useRouter();
 
@@ -37,17 +40,8 @@ export default function SiteHeader({ active = 'sm2' }) {
           <Link href="/subjects/structural-mechanics-2" className={'site-nav-item' + (active === 'sm2' ? ' active' : '')}>
             구조역학 2
           </Link>
-          <Link
-            href="/subjects/structural-mechanics-1/problem-generator"
-            className={'site-nav-item' + (active === 'problem-generator-1' ? ' active' : '')}
-          >
-            문제 제작 1
-          </Link>
-          <Link
-            href="/subjects/structural-mechanics-2/problem-generator"
-            className={'site-nav-item' + (active === 'problem-generator-2' ? ' active' : '')}
-          >
-            문제 제작 2
+          <Link href="/problem-generator" className={'site-nav-item' + (isProblemGenerator ? ' active' : '')}>
+            문제 제작
           </Link>
           <span className="site-nav-item disabled" title="준비중">
             커뮤니티
