@@ -212,12 +212,6 @@ function ProblemGeneratorContent() {
                         />
                         <span>
                           <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{st.name}</span>
-                          <EditableText
-                            as="span"
-                            contentKey={`subtopic.${ch.num}.${st.slug}.desc`}
-                            defaultText={st.desc}
-                            style={{ display: 'block', fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 1 }}
-                          />
                         </span>
                       </label>
                     );
