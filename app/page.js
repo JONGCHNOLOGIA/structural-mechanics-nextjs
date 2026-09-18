@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { chapters, CHAPTER_ICONS, findTopic } from '@/lib/chapters';
 import { useUser } from '@/components/UserProvider';
-import EditableText from '@/components/EditableText';
+import EditableImages from '@/components/EditableImages';
 import { fetchRecentVisits, fetchProgressSummary } from '@/lib/progress';
 import ContinueLearning from '@/components/ContinueLearning';
 import LearningStatus from '@/components/LearningStatus';
@@ -76,12 +76,7 @@ export default function HomePage() {
                     <span className="name">{st.name}</span>
                     <span className="go">열기 →</span>
                   </div>
-                  <EditableText
-                    as="div"
-                    className="subprev"
-                    contentKey={`subtopic.${activeCh.num}.${st.slug}.desc`}
-                    defaultText={st.desc}
-                  />
+                  <EditableImages contentKeyBase={`subtopic.${activeCh.num}.${st.slug}.image`} />
                 </div>
               ))
             )}

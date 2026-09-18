@@ -182,11 +182,14 @@ header{
 .subtopic .name{ font-size:15px; font-weight:700; color:var(--ink); }
 .subtopic .go{ font-size:12px; font-weight:700; color:var(--crimson); opacity:0; transition:opacity 0.15s; }
 .subtopic:hover .go{ opacity:1; }
-.subtopic .subprev{
-  display:none; font-size:12.5px; color:var(--gray); line-height:1.55;
+.subtopic-preview-imgs{
+  display:none; gap:12px; align-items:center; justify-content:center;
   margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
 }
-.subtopic:hover .subprev{ display:block; }
+.subtopic-preview-imgs img{
+  max-height:130px; max-width:220px; object-fit:contain; border:1px solid var(--line); background:var(--bg);
+}
+.subtopic:hover .subtopic-preview-imgs{ display:flex; }
 
 /* ---------- Detail page ----------
    로비(app/page.js)와 같은 SiteHeader를 챕터 상세/문제 제작/단면 특성 페이지에서도 그대로 쓰고,

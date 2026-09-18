@@ -151,3 +151,34 @@ create policy "지정된 학번만 문구 수정" on site_content
   with check (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')));
 
 -- 교수자는 role 컬럼을 보고 별도 정책/뷰로 익명 열람 처리 (필요시 추가)
+
+-- SECTIONS 목록에서 소주제에 마우스를 올리면 보여줄 미리보기 이미지 저장용 버킷.
+-- 파일 자체는 여기 버킷에, 실제 URL은 site_content 테이블에 키(subtopic.CH.6.composite-beams.image.1)로 저장함.
+insert into storage.buckets (id, name, public)
+values ('content-images', 'content-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "누구나 미리보기 이미지 조회 가능" on storage.objects;
+create policy "누구나 미리보기 이미지 조회 가능" on storage.objects
+  for select using (bucket_id = 'content-images');
+
+drop policy if exists "지정된 학번만 미리보기 이미지 업로드" on storage.objects;
+create policy "지정된 학번만 미리보기 이미지 업로드" on storage.objects
+  for insert with check (
+    bucket_id = 'content-images'
+    and exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin'))
+  );
+
+drop policy if exists "지정된 학번만 미리보기 이미지 수정" on storage.objects;
+create policy "지정된 학번만 미리보기 이미지 수정" on storage.objects
+  for update using (
+    bucket_id = 'content-images'
+    and exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin'))
+  );
+
+drop policy if exists "지정된 학번만 미리보기 이미지 삭제" on storage.objects;
+create policy "지정된 학번만 미리보기 이미지 삭제" on storage.objects
+  for delete using (
+    bucket_id = 'content-images'
+    and exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin'))
+  );
