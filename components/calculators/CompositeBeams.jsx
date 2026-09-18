@@ -262,9 +262,7 @@ export default function CompositeBeams() {
 
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
-        <h3>
-          VISUALIZER <span className="badge live" style={{ marginLeft: 6 }}>슬라이더는 실시간</span>
-        </h3>
+        <h3>VISUALIZER</h3>
 
         {result ? (
           <>
