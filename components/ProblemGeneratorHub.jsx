@@ -16,7 +16,8 @@ import { chapters as chapters2 } from '@/lib/chapters';
 function SubjectColumn({ heading, chapters, generatorHref }) {
   return (
     <div style={{ flex: '1 1 380px', minWidth: 300 }}>
-      <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: 6 }}>
+      {/* CHAPTERS/SECTIONS 라벨(.col-label)과 같은 글씨체 — 네이비, 22px, 600, 대문자 */}
+      <div className="col-label" style={{ marginBottom: 6 }}>
         {heading}
       </div>
       <Link
@@ -54,8 +55,9 @@ export default function ProblemGeneratorHub() {
     <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
       <SiteHeader active="problem-generator" />
 
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '48px 64px 0' }}>
-        <div style={{ fontSize: 34, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: 10 }}>
+      <div style={{ maxWidth: 1600, margin: '48px auto 0', padding: '0 64px' }}>
+        {/* "이어서 학습하기"(components/ContinueLearning.jsx)와 동일한 제목 크기·굵기·색 */}
+        <div style={{ fontSize: 56, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 14 }}>
           문제 제작
         </div>
         <EditableText
@@ -65,7 +67,7 @@ export default function ProblemGeneratorHub() {
         />
       </div>
 
-      <div style={{ maxWidth: 1600, margin: '28px auto 0', padding: '0 64px 64px', display: 'flex', gap: 60, flexWrap: 'wrap' }}>
+      <div style={{ maxWidth: 1600, margin: '32px auto 0', padding: '0 64px 64px', display: 'flex', gap: 60, flexWrap: 'wrap' }}>
         <SubjectColumn heading="구조역학 1" chapters={chapters1} generatorHref="/subjects/structural-mechanics-1/problem-generator" />
         <SubjectColumn heading="구조역학 2" chapters={chapters2} generatorHref="/subjects/structural-mechanics-2/problem-generator" />
       </div>

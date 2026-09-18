@@ -165,7 +165,8 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
   );
 
   return (
-    <div>
+    // body 기본 배경이 흰색으로 바뀌었어도 이 페이지는 원래대로 크림 배경을 쓴다.
+    <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <SiteHeader active={subject} />
 
       <div className="page-subheader">

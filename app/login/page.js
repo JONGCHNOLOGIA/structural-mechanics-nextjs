@@ -62,7 +62,8 @@ export default function LoginPage() {
   if (checking) return null;
 
   return (
-    <div>
+    // body 기본 배경이 흰색으로 바뀌었어도 로그인 화면은 원래대로 크림 배경을 쓴다.
+    <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <header className="home-header">
         <div className="home-header-inner">
           <Link href="/" className="site-logo">

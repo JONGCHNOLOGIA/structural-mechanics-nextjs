@@ -22,9 +22,14 @@
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 a{ color:inherit; text-decoration:none; }
+/* 로비류 페이지(구조역학 1·2, 문제 제작 허브)가 전부 흰 배경(var(--card))을 쓰는데, body 기본색이
+   달라서(예전엔 var(--bg) 크림) 페이지 전환 중 옛 페이지가 사라지고 새 페이지가 그려지기 전
+   찰나에 body의 크림색이 비쳐 "깜박임"으로 보였다. body를 흰색으로 맞추고, 크림 배경을 쓰던
+   계산기 상세 페이지 쪽(CalculatorShell 등)에만 그 페이지 자체에서 var(--bg)를 명시해 원래
+   모습은 그대로 두었다. */
 body{
   font-family:'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
-  background:var(--bg);
+  background:var(--card);
   color:var(--ink);
   min-height:100vh;
   display:flex;
