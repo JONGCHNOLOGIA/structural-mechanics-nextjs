@@ -144,25 +144,40 @@ create policy "본인 이름으로 대화 작성" on chat_logs
 -- 교수자(관리자) 통계 페이지용 — role='instructor'면 다른 학생들의 기록도 전체 조회 가능.
 -- 같은 테이블에 SELECT 정책이 여러 개면 OR로 합쳐지므로, 학생 본인용 정책은 그대로 둔 채
 -- "전체 열람" 정책만 추가하는 방식이다(하나를 고쳐 쓰는 게 아니라 나란히 놓는다).
+--
+-- ⚠️ profiles를 조회하는 정책을 profiles 테이블 자체에 "select ... from profiles" 서브쿼리로
+-- 직접 걸면(바로 아래 profiles 정책이 처음에 이렇게 돼 있었음), Postgres가 그 정책을 평가하려고
+-- profiles를 다시 읽다가 또 같은 정책을 평가해야 해서 "infinite recursion detected in policy"
+-- 에러가 나고, 이게 profiles에 대한 모든 쿼리(로그인 시 프로필 조회 포함)를 다 막아버린다
+-- (실제로 이 버그로 로그인/로그아웃이 막혔었다). SECURITY DEFINER 함수로 감싸면 함수 안에서는
+-- RLS를 안 타므로 이 문제가 없다 — Supabase 공식 문서가 권장하는 해결 패턴.
+create or replace function public.is_instructor()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from profiles where id = auth.uid() and role = 'instructor');
+$$;
+
 drop policy if exists "교수자는 전체 대화 조회 가능" on chat_logs;
 create policy "교수자는 전체 대화 조회 가능" on chat_logs
-  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+  for select using (public.is_instructor());
 
 drop policy if exists "교수자는 전체 방문기록 조회 가능" on topic_visits;
 create policy "교수자는 전체 방문기록 조회 가능" on topic_visits
-  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+  for select using (public.is_instructor());
 
 drop policy if exists "교수자는 전체 풀이기록 조회 가능" on problem_attempts;
 create policy "교수자는 전체 풀이기록 조회 가능" on problem_attempts
-  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+  for select using (public.is_instructor());
 
 -- 통계 화면에서 방문 학생 수 막대에 마우스를 올리면 학번을 보여주기 위해, 교수자는
--- 다른 학생들의 profiles 행(학번)도 조회할 수 있게 한다. 아래 서브쿼리는 "본인 프로필만
--- 조회/수정" 정책과 같은 테이블(profiles)을 자기참조하지만, 그 서브쿼리 자체는 항상
--- auth.uid()=id로 좁혀서 재귀적으로 막히지 않는다(다른 정책들과 동일한 패턴).
+-- 다른 학생들의 profiles 행(학번)도 조회할 수 있게 한다.
 drop policy if exists "교수자는 전체 프로필(학번) 조회 가능" on profiles;
 create policy "교수자는 전체 프로필(학번) 조회 가능" on profiles
-  for select using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'instructor'));
+  for select using (public.is_instructor());
 
 -- site_content: 문구는 누구나 읽을 수 있지만, 수정은 정해진 학번(22011031, demo-admin)만 가능.
 -- role='instructor' 전체로 허용하면 관계없는 instructor 계정도 실제 문구를 고칠 수 있게 되므로
