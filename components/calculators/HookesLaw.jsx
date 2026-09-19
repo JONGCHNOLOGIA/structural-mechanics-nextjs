@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import StressStateCard from './StressStateCard';
+import { Dim } from './EditableDim';
 
 // 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
 
@@ -124,7 +125,14 @@ export default function HookesLaw() {
         <h3>VISUALIZER</h3>
         {r ? (
           <>
-            <ElementSVG sx={r.sx} sy={r.sy} txy={r.txy} />
+            <ElementSVG
+              sx={r.sx}
+              sy={r.sy}
+              txy={r.txy}
+              thickness={thickness === null ? null : disp(thickness, lenF)}
+              lengthUnit={units.length}
+              onEditThickness={(v) => setThickness(v * lenF)}
+            />
             <div className="steps" style={{ marginTop: 12 }}>
               {mode === 'stressToStrain' ? (
                 <FormulaSection title="응력 → 변형률">
@@ -257,14 +265,14 @@ function svgArrow(x1, y1, x2, y2, color, key) {
   );
 }
 
-function ElementSVG({ sx, sy, txy }) {
+function ElementSVG({ sx, sy, txy, thickness, lengthUnit, onEditThickness }) {
   const cx = 150, cy = 100, s = 60, L = 34, color = '#51626F';
   const sxo = sx >= 0 ? 1 : -1;
   const syo = sy >= 0 ? -1 : 1;
   const to = txy >= 0 ? 1 : -1;
   const tl = 22;
   return (
-    <svg viewBox="0 0 300 220" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block' }}>
+    <svg viewBox="0 0 300 244" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - s} y={cy - s} width={s * 2} height={s * 2} fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />
       {svgArrow(cx + s, cy, cx + s + sxo * L, cy, color, 'a1')}
       {svgArrow(cx - s, cy, cx - s - sxo * L, cy, color, 'a2')}
@@ -275,6 +283,21 @@ function ElementSVG({ sx, sy, txy }) {
       {svgArrow(cx - tl * 0.4 * to, cy - s, cx + tl * 0.6 * to, cy - s, color, 'a7')}
       {svgArrow(cx + tl * 0.4 * to, cy + s, cx - tl * 0.6 * to, cy + s, color, 'a8')}
       <text x={cx} y={cy + s + 40} fontSize="14" fontWeight="800" fill={color} textAnchor="middle">현재 상태</text>
+      {/* 두께 t는 이 요소의 유일한 치수 입력이라(Δt 계산용) 여기 적어두고 클릭해서 고칠 수 있게 한다.
+          아직 입력 전이면 치수가 없으므로 표시하지 않는다. */}
+      {thickness !== null && (
+        <Dim
+          x={cx}
+          y={cy + s + 58}
+          color={color}
+          fontSize={11}
+          value={thickness}
+          unit={lengthUnit}
+          prefix="두께 t = "
+          boxW={58}
+          onChange={onEditThickness}
+        />
+      )}
     </svg>
   );
 }

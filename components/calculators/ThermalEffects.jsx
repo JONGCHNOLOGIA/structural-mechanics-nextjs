@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH } from './EditableDim';
 
 // CH.2-4 Thermal Effects and Prestrain — 원본 renderThermal()의 React 버전.
 
@@ -71,7 +72,7 @@ export default function ThermalEffects() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <MemberSVG mode={s.mode} res={res} />
+        <MemberSVG mode={s.mode} res={res} length={s.L} lengthUnit={s.LUnit} onEditL={setNum('L')} />
         {res.valid ? (
           <>
             {isFree ? (
@@ -149,8 +150,9 @@ function Steps({ s, res }) {
 }
 
 // 자유단이면 길이가 변하고(과장 표현), 양단 구속이면 길이는 그대로인 대신 열응력이 생긴다.
-function MemberSVG({ mode, res }) {
-  const w = 460, h = 170, x1 = 90, x2 = 370, barY = 85, barH = 26;
+function MemberSVG({ mode, res, length, lengthUnit, onEditL }) {
+  // 아래쪽에 길이 치수선을 넣을 자리를 두려고 높이를 170에서 늘렸다.
+  const w = 460, h = 206, x1 = 90, x2 = 370, barY = 85, barH = 26;
   const restrained = mode === 'restrained';
   const color = res.valid && (res.deltaDisp_m < 0 || res.sigmaT_Pa < 0) ? 'var(--crimson)' : 'var(--teal)';
 
@@ -178,7 +180,20 @@ function MemberSVG({ mode, res }) {
   );
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+      {/* 원래 길이 L 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(점선이 변형 전 길이) */}
+      <DimLineH
+        x1={x1}
+        x2={x2}
+        y={barY + barH + 30}
+        labelDy={14}
+        fontSize={10.5}
+        value={length}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={56}
+        onChange={onEditL}
+      />
       {wall(x1, -1, 'l')}
       {restrained && wall(x2, 1, 'r')}
       <rect x={x1} y={barY} width={x2 - x1} height={barH} fill="none" stroke="#C3C3C3" strokeWidth="1.3" strokeDasharray="4 3" />

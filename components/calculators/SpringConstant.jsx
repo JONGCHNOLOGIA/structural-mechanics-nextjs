@@ -8,6 +8,7 @@ import EditableText from '@/components/EditableText';
 import { DualField, ToggleRow, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
+import { DimLineH } from './EditableDim';
 
 // CH.2-1 Spring Constant and Flexibility — 원본 renderSpringConstant()의 React 버전.
 
@@ -66,7 +67,7 @@ export default function SpringConstant() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <SpringSVG mode={s.mode} res={res} />
+        <SpringSVG mode={s.mode} res={res} length={s.L} lengthUnit={s.LUnit} onEditL={setNum('L')} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -129,8 +130,9 @@ function Steps({ s, res }) {
 }
 
 // 고정단에 매달린 스프링이 하중 방향으로 늘어나거나 눌리는 모습 (δ는 보이도록 과장 표현)
-function SpringSVG({ mode, res }) {
-  const w = 440, h = 170, x1 = 60, x2 = 340, y = 85, coils = 8;
+function SpringSVG({ mode, res, length, lengthUnit, onEditL }) {
+  // 아래쪽에 길이 치수선을 넣을 자리를 두려고 높이를 170에서 늘렸다.
+  const w = 440, h = 206, x1 = 60, x2 = 340, y = 85, coils = 8;
   const color = mode === 'tension' ? 'var(--teal)' : 'var(--crimson)';
   const extra = res.valid ? Math.max(-40, Math.min(40, res.sign * 30)) : 0;
   const springEnd = x2 + extra;
@@ -147,7 +149,7 @@ function SpringSVG({ mode, res }) {
   const tipX = springEnd + 30 + arrowDir * 30;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={x1 - 10} y1={y - 25} x2={x1 - 10} y2={y + 25} stroke="#51626F" strokeWidth="2" />
       {Array.from({ length: 6 }).map((_, i) => {
         const yy = y - 22 + i * 8;
@@ -160,7 +162,21 @@ function SpringSVG({ mode, res }) {
       <text x={springEnd + 30 + arrowDir * 15} y={y - 14} fontSize="11" fontWeight="800" fill={color} textAnchor="middle">
         P
       </text>
-      <text x={(x1 + springEnd) / 2} y={y + 40} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
+      {/* 원래 길이 L 치수 — 클릭해서 고칠 수 있다. 그림의 늘어난 길이는 δ를 확대해 그린 것이라
+          치수선은 변형 전 길이(x1~x2) 기준으로 긋는다. */}
+      <DimLineH
+        x1={x1}
+        x2={x2}
+        y={y + 46}
+        labelDy={14}
+        fontSize={10.5}
+        value={length}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={56}
+        onChange={onEditL}
+      />
+      <text x={(x1 + springEnd) / 2} y={y + 80} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
         k = EA/L (그림은 δ를 확대 표현)
       </text>
     </svg>

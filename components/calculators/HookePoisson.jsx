@@ -19,6 +19,7 @@ import {
 } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.1-3 Hooke's Law and Poisson's Ratio — 원본 renderHookePoisson()의 React 버전.
 
@@ -103,7 +104,16 @@ export default function HookePoisson() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <MemberSVG mode={s.T} res={res} />
+        <MemberSVG
+          mode={s.T}
+          res={res}
+          length={s.L}
+          lengthUnit={s.LUnit}
+          width={s.w}
+          widthUnit={s.wUnit}
+          onEditL={setNum('L')}
+          onEditW={setNum('w')}
+        />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -196,8 +206,9 @@ function Steps({ s, res }) {
 }
 
 // 하중을 받은 부재가 길이방향으로 늘거나 줄면서 폭은 반대로 변하는 모습 (변형은 과장 표현)
-function MemberSVG({ mode, res }) {
-  const w = 460, h = 220, cx = 230, baseW = 220, baseH = 70;
+function MemberSVG({ mode, res, length, lengthUnit, width, widthUnit, onEditL, onEditW }) {
+  // 아래쪽에 길이 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
+  const w = 460, h = 256, cx = 230, baseW = 220, baseH = 70;
   const color = mode === 'tension' ? 'var(--teal)' : 'var(--crimson)';
   const ampL = res.valid ? (res.sign > 0 ? 26 : -26) : 0;
   const ampW = res.valid ? (res.sign > 0 ? -16 : 16) : 0;
@@ -208,7 +219,7 @@ function MemberSVG({ mode, res }) {
   const latX = cx + defW / 2 + 34;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 480, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 480, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - baseW / 2} y={h / 2 - baseH / 2} width={baseW} height={baseH} fill="none" stroke="#C3C3C3" strokeWidth="1.3" strokeDasharray="4 3" />
       <rect x={cx - defW / 2} y={h / 2 - defH / 2} width={defW} height={defH} fill={color} opacity="0.18" stroke={color} strokeWidth="1.8" />
       <line x1={ax1 - arrowDir * 22} y1={h / 2} x2={ax1 - 6} y2={h / 2} stroke={color} strokeWidth="2.2" />
@@ -219,6 +230,32 @@ function MemberSVG({ mode, res }) {
       <text x={latX} y={h / 2} fontSize="11" fill={color} textAnchor="middle" fontWeight="800" transform={`rotate(90 ${latX} ${h / 2})`}>
         Lateral (w)
       </text>
+
+      {/* 원래 치수 L(길이)과 w(폭) — 변형 전 크기(점선 사각형) 기준으로 긋고, 클릭해서 고칠 수 있다.
+          그림의 늘어남/줄어듦은 보기 좋게 확대해 그린 것이라 치수선은 점선 쪽에 맞춘다. */}
+      <DimLineH
+        x1={cx - baseW / 2}
+        x2={cx + baseW / 2}
+        y={h / 2 + baseH / 2 + 34}
+        labelDy={14}
+        fontSize={10.5}
+        value={length}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={56}
+        onChange={onEditL}
+      />
+      <DimLineV
+        x={cx - baseW / 2 - 22}
+        y1={h / 2 - baseH / 2}
+        y2={h / 2 + baseH / 2}
+        fontSize={10.5}
+        value={width}
+        unit={widthUnit}
+        prefix="w = "
+        boxW={56}
+        onChange={onEditW}
+      />
     </svg>
   );
 }

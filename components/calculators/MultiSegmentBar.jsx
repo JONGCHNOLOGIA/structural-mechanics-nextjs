@@ -8,6 +8,7 @@ import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
+import { Dim, DimLineH } from './EditableDim';
 
 // CH.2-2 Nonuniform Bar (Multi-Segment) — 원본 renderMultiSegment()의 React 버전.
 
@@ -82,7 +83,7 @@ export default function MultiSegmentBar() {
         {res.valid ? (
           <>
             <h3>전체 부재 — 반력과 외력</h3>
-            <BarWithLoadsSVG res={res} />
+            <BarWithLoadsSVG res={res} segs={s.segs.slice(0, s.segCount)} onEditSeg={setSeg} />
             <ResultGrid>
               {res.perSeg.map((p, i) => (
                 <ResultCard key={i} label={`구간${i + 1} δ`} value={`${fmt1(fromBase(p.delta_m, 'mm', LENGTH_UNITS), 4)} mm`} />
@@ -191,8 +192,9 @@ function Steps({ s, res }) {
 }
 
 // 전체 부재 한 줄 그림 — 고정단 반력 R과 각 경계의 외력 화살표
-function BarWithLoadsSVG({ res }) {
-  const w = 460, h = 140, x0 = 50, xEnd = 420, barY = 60;
+function BarWithLoadsSVG({ res, segs = [], onEditSeg }) {
+  // 아래쪽에 구간 길이 치수선을 넣을 자리를 두려고 높이를 140에서 늘렸다.
+  const w = 460, h = 186, x0 = 50, xEnd = 420, barY = 60;
   const totalLen = res.perSeg.reduce((a, p) => a + fromBase(p.L_m, 'm', LENGTH_UNITS), 0) || 1;
   const X = (x) => x0 + (x / totalLen) * (xEnd - x0);
   const Rdisp = fromBase(res.R_N, 'kN', FORCE_UNITS);
@@ -221,7 +223,7 @@ function BarWithLoadsSVG({ res }) {
   });
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={x0} y1={barY - 22} x2={x0} y2={barY + 22} stroke="#51626F" strokeWidth="2" />
       {Array.from({ length: 6 }).map((_, i) => {
         const yy = barY - 20 + i * 8;
@@ -236,6 +238,35 @@ function BarWithLoadsSVG({ res }) {
       {marks}
       <text x={x0} y={barY + 36} fontSize="9.5" fill="var(--gray-soft)" textAnchor="middle">고정단</text>
       <text x={xEnd} y={barY + 36} fontSize="9.5" fill="var(--gray-soft)" textAnchor="middle">자유단</text>
+
+      {/* 구간별 길이 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다.
+          그림의 축척은 구간 길이를 전부 같은 단위로 환산해 맞춰두었지만, 라벨은 그 구간이
+          쓰는 단위(seg.LUnit) 그대로 보여준다. */}
+      {(() => {
+        let acc = 0;
+        return res.perSeg.map((p, i) => {
+          const startX = X(acc);
+          acc += fromBase(p.L_m, 'm', LENGTH_UNITS);
+          const endX = X(acc);
+          const seg = segs[i];
+          if (!seg) return null;
+          return (
+            <DimLineH
+              key={`len${i}`}
+              x1={startX}
+              x2={endX}
+              y={barY + 54}
+              labelDy={13}
+              fontSize={9.5}
+              color="var(--gray-soft)"
+              value={seg.L}
+              unit={seg.LUnit}
+              boxW={50}
+              onChange={onEditSeg ? (v) => onEditSeg(i, 'L', v) : undefined}
+            />
+          );
+        });
+      })()}
     </svg>
   );
 }

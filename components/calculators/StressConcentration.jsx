@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder, DiagramSkipNote } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 // CH.2-5 Stress Concentration — 원본 renderStressConcentration()의 React 버전.
 
@@ -55,7 +56,7 @@ export default function StressConcentration() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <PlateSVG s={s} />
+        <PlateSVG s={s} onEditNum={setNum} />
         {res.valid ? (
           <ResultGrid>
             <ResultCard label="순단면적 A_net" value={`${fmt1(res.Anet / areaScale, 2)} ${s.dimUnit}²`} />
@@ -111,11 +112,12 @@ function Steps({ s, res }) {
 }
 
 // 구멍 뚫린 판 — 구멍 옆(순단면)에서 응력선이 촘촘해지는 모습을 선 굵기로 표현
-function PlateSVG({ s }) {
-  const w = 300, h = 180, plateW = 220, plateH = 90, cx = w / 2, cy = h / 2;
+function PlateSVG({ s, onEditNum }) {
+  // 좌우/아래에 치수선 자리를 두려고 그림을 조금 키웠다(원래 300×180).
+  const w = 340, h = 236, plateW = 220, plateH = 90, cx = w / 2, cy = 92;
   const holeR = Math.min(30, plateW * 0.5 * Math.min(0.8, s.d / s.b));
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 340, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - plateW / 2} y={cy - plateH / 2} width={plateW} height={plateH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.6" />
       <circle cx={cx} cy={cy} r={holeR} fill="#fff" stroke="var(--crimson)" strokeWidth="1.8" />
       <line x1={cx} y1={cy - plateH / 2 - 8} x2={cx} y2={cy + plateH / 2 + 8} stroke="var(--gray)" strokeWidth="1" strokeDasharray="3 2" />
@@ -131,6 +133,43 @@ function PlateSVG({ s }) {
       <text x={cx + plateW / 2 + 8} y={cy} fontSize="10" fill="var(--crimson)" fontWeight="800">σ_max</text>
       <line x1={cx - plateW / 2 - 24} y1={cy} x2={cx - plateW / 2 - 6} y2={cy} stroke="#51626F" strokeWidth="2" />
       <line x1={cx + plateW / 2 + 6} y1={cy} x2={cx + plateW / 2 + 24} y2={cy} stroke="#51626F" strokeWidth="2" />
+
+      {/* 치수 — 판 폭 b, 구멍 지름 d, 판 두께 t. 숫자를 클릭하면 그 자리에서 고칠 수 있다.
+          (그림의 구멍 크기는 b 대비 비율로만 그리므로 숫자가 실제 값이다) */}
+      <DimLineH
+        x1={cx - holeR}
+        x2={cx + holeR}
+        y={cy + plateH / 2 + 14}
+        labelDy={14}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.d}
+        unit={s.dimUnit}
+        prefix="d = "
+        boxW={54}
+        onChange={onEditNum('d')}
+      />
+      <DimLineV
+        x={cx - plateW / 2 - 14}
+        y1={cy - plateH / 2}
+        y2={cy + plateH / 2}
+        fontSize={10.5}
+        value={s.b}
+        unit={s.dimUnit}
+        prefix="b = "
+        boxW={54}
+        onChange={onEditNum('b')}
+      />
+      <Dim
+        x={cx}
+        y={cy + plateH / 2 + 46}
+        fontSize={10.5}
+        value={s.t}
+        unit={s.dimUnit}
+        prefix="판 두께 t = "
+        boxW={54}
+        onChange={onEditNum('t')}
+      />
     </svg>
   );
 }
