@@ -123,6 +123,10 @@ header{
   max-width:1600px; margin:56px auto; padding:0 64px; gap:36px;
   align-items:start;
 }
+/* 그리드/플렉스 자식은 기본이 min-width:auto라, 안에 든 콘텐츠(특히 1920px짜리 미리보기 GIF)의
+   고유 너비만큼 칸이 늘어나 1fr을 밀어내고 가로 스크롤이 생긴다. 0으로 낮춰서 칸이 먼저
+   줄어들 수 있게 한다. */
+.board > *{ min-width:0; }
 .col-label{ font-size:22px; font-weight:600; color:var(--navy); margin-bottom:18px; text-transform:uppercase; }
 /* 이어서 학습하기 가로 스크롤 카드 — 스크롤바는 숨기고 대신 자체 진행바(진행바 색은 crimson)로 보여줌 */
 .hide-scrollbar{ scrollbar-width:none; -ms-overflow-style:none; }
@@ -191,13 +195,16 @@ header{
   display:none; gap:12px; align-items:center; justify-content:center;
   margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
 }
-/* object-fit은 cover가 아니라 scale-down —
-   cover는 칸(약 900×300)을 꽉 채우려고 원본을 강제로 확대·크롭해서, 400×198짜리 GIF 같은
-   작은 원본이 2배 이상 늘어나 뭉개졌다. scale-down은 "칸보다 크면 줄이고, 작으면 원본 그대로"라
-   작은 이미지는 선명하게 나오고 큰 이미지는 칸에 맞게 줄어든다. 칸 높이(300px)는 그대로 둬서
-   목록의 줄 높이는 변하지 않는다. */
+/* 미리보기 칸은 항상 16:9(1920×1080 같은 비율이 딱 맞게 들어가는 모양).
+   높이를 px로 박지 않고 aspect-ratio로 폭에서 자동 계산하므로, 장수에 따라 알아서 나뉜다:
+     - 1장: 가로 전체를 쓰는 큰 16:9 한 칸
+     - 2장: flex가 가로를 반씩 나눠 갖고, 높이도 그 절반 폭의 9/16으로 같이 작아짐
+   object-fit은 cover가 아니라 scale-down — cover는 칸을 채우려고 원본을 강제로 확대·크롭해서
+   작은 원본(예: 400×198 GIF)이 뭉개졌다. scale-down은 "칸보다 크면 줄이고, 작으면 원본 그대로"라
+   16:9 원본은 칸을 꽉 채우고, 그보다 작은 원본은 확대되지 않아 선명함을 유지한다. */
 .subtopic-preview-imgs img{
-  flex:1 1 0; min-width:0; height:300px;
+  flex:1 1 0; min-width:0;
+  aspect-ratio:16 / 9; height:auto;
   object-fit:scale-down; border:1px solid var(--line); background:var(--bg);
 }
 .subtopic:hover .subtopic-preview-imgs{ display:flex; }
