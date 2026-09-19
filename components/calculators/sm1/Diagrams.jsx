@@ -2,6 +2,7 @@
 
 import { fmt1 } from '@/lib/calc/units1';
 import EditableText from '@/components/EditableText';
+import { DimLineH } from '../EditableDim';
 
 // 구조역학 1에서 여러 소주제가 공용으로 쓰는 그림들.
 // 원본 프로토타입의 axisPlaneNoteSVG() / axialForceDiagramBlock() / axialFBDBlock() / stepDiagramSVG()를
@@ -37,19 +38,31 @@ export function AxisPlaneNote() {
 }
 
 // 축력도 N(x) — 축하중만 받는 부재는 전 구간에서 N(x)=P로 일정하다.
-export function AxialForceDiagram({ signedP, L, unitP, unitL }) {
-  const w = 440, h = 170, padL = 46, padR = 20, padT = 16, padB = 30;
+export function AxialForceDiagram({ signedP, L, unitP, unitL, onEditL }) {
+  // 아래쪽에 부재 길이 치수선을 넣을 자리를 두려고 높이를 170에서 늘렸다.
+  const w = 440, h = 196, padL = 46, padR = 20, padT = 16, padB = 56;
   const plotW = w - padL - padR, plotH = h - padT - padB, zeroY = padT + plotH / 2;
   const amp = signedP === 0 ? 0 : (signedP > 0 ? -1 : 1) * plotH * 0.36;
   const lineY = zeroY + amp;
   const color = signedP >= 0 ? TEAL : CRIMSON;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '8px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '8px auto 0', display: 'block', overflow: 'visible' }}>
       <line x1={padL} y1={zeroY} x2={w - padR} y2={zeroY} stroke="#8A97A2" strokeWidth="1.2" />
       <line x1={padL} y1={padT} x2={padL} y2={h - padB} stroke="#8A97A2" strokeWidth="1.2" />
-      <text x={(padL + w - padR) / 2} y={h - 8} fontSize="10.5" fill={GRAY} textAnchor="middle">
-        위치 x (0 → L = {fmt1(L, 2)} {unitL})
-      </text>
+      {/* 부재 길이 L 치수 — 글씨로만 적던 걸 치수선으로 바꾸고, 클릭해서 고칠 수 있게 했다. */}
+      <DimLineH
+        x1={padL}
+        x2={w - padR}
+        y={h - padB + 20}
+        labelDy={14}
+        fontSize={10.5}
+        color={GRAY}
+        value={L}
+        unit={unitL}
+        prefix="L = "
+        boxW={56}
+        onChange={onEditL}
+      />
       <text x="14" y={padT + 10} fontSize="10.5" fill={GRAY}>N(x)</text>
       <line x1={padL} y1={lineY} x2={w - padR} y2={lineY} stroke={color} strokeWidth="2.6" />
       <line x1={padL} y1={zeroY} x2={padL} y2={lineY} stroke={color} strokeWidth="1.2" strokeDasharray="3 2" />
@@ -61,11 +74,11 @@ export function AxialForceDiagram({ signedP, L, unitP, unitL }) {
   );
 }
 
-export function AxialForceDiagramBlock({ signedP, L, unitP, unitL }) {
+export function AxialForceDiagramBlock({ signedP, L, unitP, unitL, onEditL }) {
   return (
     <>
       <h3 style={{ marginTop: 20 }}>축력도 N(x) — Axial Force Diagram</h3>
-      <AxialForceDiagram signedP={signedP} L={L} unitP={unitP} unitL={unitL} />
+      <AxialForceDiagram signedP={signedP} L={L} unitP={unitP} unitL={unitL} onEditL={onEditL} />
       <EditableText
         as="div"
         className="hint"

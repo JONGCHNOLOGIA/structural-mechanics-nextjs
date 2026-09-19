@@ -8,6 +8,7 @@ import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { BeamSchematic, CurveDiagram } from './sm1/BeamDiagrams';
+import { DimLineH } from './EditableDim';
 
 // CH.4-2 SFD & BMD — Simply Supported Beam with Point Load(s). 원본 renderPointLoadSFDBMD()의 React 버전.
 
@@ -79,7 +80,7 @@ export default function PointLoadSFDBMD() {
             </ResultGrid>
 
             <h3 style={{ marginTop: 20 }}>단면법 (Method of Sections) — V, M 노출</h3>
-            <CutFBD res={res} />
+            <CutFBD res={res} cutDisp={s.cutX} lengthUnit={s.LUnit} onEditCut={setNum('cutX')} />
             <CutCheck res={res} />
 
             <h3 style={{ marginTop: 20 }}>SFD — V(x)</h3>
@@ -160,8 +161,9 @@ function Steps({ s, res }) {
 }
 
 // 왼쪽 조각(0~x)만 남긴 자유물체도 — 잘려나간 오른쪽은 점선으로만 표시한다.
-function CutFBD({ res }) {
-  const w = 460, h = 200, padL = 50, padR = 50, barY = 90;
+function CutFBD({ res, cutDisp, lengthUnit, onEditCut }) {
+  // 아래쪽에 절단 위치 치수선을 넣을 자리를 두려고 높이를 200에서 늘렸다.
+  const w = 460, h = 230, padL = 50, padR = 50, barY = 90;
   const Ldisp = m(res.L), xDisp = m(res.cutX);
   const X = (x) => padL + (x / Ldisp) * (w - padL - padR - 40);
   const cutX = X(xDisp);
@@ -172,7 +174,7 @@ function CutFBD({ res }) {
   const mR = 16;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '8px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '8px auto 0', display: 'block', overflow: 'visible' }}>
       <line x1={X(0)} y1={barY} x2={cutX} y2={barY} stroke="var(--ink)" strokeWidth="5" />
       <line x1={cutX} y1={barY} x2={X(Ldisp)} y2={barY} stroke="#C3C3C3" strokeWidth="2" strokeDasharray="4 3" />
 
@@ -215,9 +217,21 @@ function CutFBD({ res }) {
       <text x={cutX - 10 + mR / 2} y={barY - 34} fontSize="9.5" fontWeight="800" fill="var(--crimson)" textAnchor="middle">
         M={fmt1(M, 2)}
       </text>
-      <text x={cutX} y={barY + 50} fontSize="9" fill="var(--gray)" textAnchor="middle">
-        x={fmt1(xDisp, 2)}
-      </text>
+      {/* 절단 위치 x 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있고, 자유물체도가 바로 따라간다.
+          (min을 null로 두는 건 x=0에서 자르는 것도 의미가 있어서다) */}
+      <DimLineH
+        x1={X(0)}
+        x2={cutX}
+        y={barY + 62}
+        labelDy={13}
+        fontSize={9.5}
+        value={cutDisp}
+        unit={lengthUnit}
+        prefix="x = "
+        boxW={52}
+        min={null}
+        onChange={onEditCut}
+      />
     </svg>
   );
 }

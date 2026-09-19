@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { computeTorsionDesign, HOLLOW_K } from '@/lib/calc/torsion';
-import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
+import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, UnitSelect, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.3-3 Allowable Torque & Required Diameter Design — 원본 renderTorsionDesign()의 React 버전.
 
@@ -132,6 +133,7 @@ export default function TorsionDesign() {
         <h3>VISUALIZER</h3>
         {res.valid ? (
           <>
+            <ShaftSVG s={s} res={res} onEditNum={setNum} onEditDim={setDim} />
             <GoverningBars s={s} res={res} />
             <Results s={s} res={res} />
             <EditableText as="div" className="ai-hint" contentKey="calc.TorsionDesign.aiHint"
@@ -153,6 +155,60 @@ export default function TorsionDesign() {
 
       <AiTutorPanel question="두 조건이 정확히 같아지는 지름은 어떻게 찾나요?" />
     </>
+  );
+}
+
+// 설계 대상 축의 모양 — 원래는 두 조건 비교 막대만 있고 축 그림이 없었다.
+// 지름과 길이를 치수로 적어 두고, 입력값인 것만 클릭해서 고칠 수 있게 한다.
+// (필요 지름을 역산하는 모드에서는 지름이 결과라 고칠 수 없다)
+function ShaftSVG({ s, res, onEditNum, onEditDim }) {
+  const w = 460, h = 214, xL = 80, xR = 380, cy = 86;
+  const isTorqueMode = res.mode === 'maxTorque';
+  const dInput = s.sectionType === 'solid_circular' ? s.dims.d : s.dims.d_outer;
+  const dShown = isTorqueMode ? dInput : fromBase(res.governing, s.dimUnit, LENGTH_UNITS);
+  const dMM = toBase(dShown || 0, s.dimUnit, LENGTH_UNITS) * 1000;
+  const ry = scaledPx(dMM, 150, 16, 46) / 2;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto 8px', display: 'block', overflow: 'visible' }}>
+      {/* 고정단 해칭 */}
+      <line x1={xL} y1={cy - ry - 8} x2={xL} y2={cy + ry + 8} stroke="#51626F" strokeWidth="2.2" />
+      {Array.from({ length: 7 }).map((_, i) => {
+        const yy = cy - ry - 6 + i * ((2 * ry + 12) / 7);
+        return <line key={i} x1={xL} y1={yy} x2={xL - 9} y2={yy + 7} stroke="#8A97A2" strokeWidth="1.1" />;
+      })}
+
+      {/* 축 몸통 */}
+      <rect x={xL} y={cy - ry} width={xR - xL} height={ry * 2} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.5" />
+      <ellipse cx={xR} cy={cy} rx="9" ry={ry} fill="#fff" stroke="var(--crimson)" strokeWidth="1.6" />
+      <text x={xR + 26} y={cy + 4} fontSize="11" fontWeight="800" fill="var(--crimson)">T</text>
+
+      {/* 치수 — 길이 L은 늘 입력값이고, 지름은 토크를 구하는 모드에서만 입력값이다. */}
+      <DimLineV
+        x={xL - 30}
+        y1={cy - ry}
+        y2={cy + ry}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={dShown}
+        unit={s.dimUnit}
+        prefix={isTorqueMode ? 'd = ' : 'd_required = '}
+        boxW={54}
+        onChange={isTorqueMode ? onEditDim(s.sectionType === 'solid_circular' ? 'd' : 'd_outer') : undefined}
+      />
+      <DimLineH
+        x1={xL}
+        x2={xR}
+        y={cy + ry + 32}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.L}
+        unit={s.LUnit}
+        prefix="L = "
+        boxW={54}
+        onChange={onEditNum('L')}
+      />
+    </svg>
   );
 }
 

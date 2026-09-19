@@ -85,7 +85,7 @@ export default function SpringConstant() {
               {res.sign >= 0 ? '인장' : '압축'}: 지지부 반력과 하중이 서로 반대방향으로 작용해 평형(ΣF=0)을 이루고, 부재를 가상으로 자르면 어느
               위치에서나 내부 축력 N이 동일하게 노출됩니다.
             </div>
-            <AxialForceDiagramBlock signedP={res.sign * s.P} L={s.L} unitP={s.PUnit} unitL={s.LUnit} />
+            <AxialForceDiagramBlock signedP={res.sign * s.P} L={s.L} unitP={s.PUnit} unitL={s.LUnit} onEditL={setNum('L')} />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { computeShearCircularOrFlow } from '@/lib/calc/beamStresses';
-import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, VOLUME3_UNITS, IN4_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
+import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, VOLUME3_UNITS, IN4_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
