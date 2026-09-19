@@ -85,7 +85,8 @@ export default function MohrsCircle() {
   );
 }
 
-function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r }) {
+// Plane Stress 화면에서도 같은 원을 접어서 보여주므로 export 한다.
+export function MohrCircleSVG({ sigmaX, sigmaY, tauXY, theta, r }) {
   const w = 480, h = 420, cx = 240, cy = 210;
   const scale = r.R > 0 ? 130 / r.R : 1;
 
