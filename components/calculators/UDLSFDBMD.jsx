@@ -47,10 +47,13 @@ export default function UDLSFDBMD() {
         {res.valid ? (
           <>
             <BeamSchematic
-              L={res.L}
-              supports={[{ pos: 0, type: 'pin' }, { pos: res.L, type: 'roller' }]}
-              udls={[{ start: res.qStart, end: res.qEnd, q: fromBase(res.q, 'kN/m', QINTENSITY_UNITS) }]}
-              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: res.L, R: kN(res.RB) }]}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              qUnit={s.qUnit}
+              supports={[{ pos: 0, type: 'pin' }, { pos: s.L, type: 'roller' }]}
+              udls={[{ start: s.qStart, end: s.qEnd, q: s.q }]}
+              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: s.L, R: kN(res.RB) }]}
+              edit={{ L: setNum('L'), udlQ: (i, v) => set({ q: v }) }}
             />
             <ResultGrid>
               <ResultCard label="R_A" value={`${fmt1(kN(res.RA), 3)} kN`} />

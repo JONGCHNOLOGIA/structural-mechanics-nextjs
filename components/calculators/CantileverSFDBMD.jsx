@@ -52,11 +52,20 @@ export default function CantileverSFDBMD() {
         {res.valid ? (
           <>
             <BeamSchematic
-              L={res.L}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              forceUnit={s.PUnit}
+              qUnit={s.qUnit}
               supports={[{ pos: 0, type: 'fixed' }]}
-              pointLoads={res.P > 0 ? [{ pos: res.a, P: kN(res.P) }] : []}
-              udls={res.q > 0 ? [{ start: 0, end: res.L, q: fromBase(res.q, 'kN/m', QINTENSITY_UNITS) }] : []}
+              pointLoads={s.P > 0 ? [{ pos: s.a, P: s.P }] : []}
+              udls={s.q > 0 ? [{ start: 0, end: s.L, q: s.q }] : []}
               reactions={[{ pos: 0, R: kN(res.R) }]}
+              edit={{
+                L: setNum('L'),
+                pointLoadP: (i, v) => set({ P: v }),
+                pointLoadPos: (i, v) => set({ a: v }),
+                udlQ: (i, v) => set({ q: v }),
+              }}
             />
             <ResultGrid>
               <ResultCard label="고정단 반력 R" value={`${fmt1(kN(res.R), 3)} kN`} />

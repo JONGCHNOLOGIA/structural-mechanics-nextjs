@@ -47,10 +47,17 @@ export default function OverhangSFDBMD() {
         {res.valid ? (
           <>
             <BeamSchematic
-              L={res.L}
-              supports={[{ pos: 0, type: 'pin' }, { pos: res.Lb, type: 'roller' }]}
-              pointLoads={[{ pos: res.a, P: kN(res.P) }]}
-              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: res.Lb, R: kN(res.RB) }]}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              forceUnit={s.PUnit}
+              supports={[{ pos: 0, type: 'pin' }, { pos: s.Lb, type: 'roller' }]}
+              pointLoads={[{ pos: s.a, P: s.P }]}
+              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: s.Lb, R: kN(res.RB) }]}
+              edit={{
+                L: setNum('L'),
+                pointLoadP: (i, v) => set({ P: v }),
+                pointLoadPos: (i, v) => set({ a: v }),
+              }}
             />
             <ResultGrid>
               <ResultCard label="R_A" value={`${fmt1(kN(res.RA), 3)} kN`} tone={res.RA < 0 ? 'comp' : 'tens'} />

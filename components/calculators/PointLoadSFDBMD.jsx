@@ -55,11 +55,22 @@ export default function PointLoadSFDBMD() {
         <h3>VISUALIZER</h3>
         {res.valid ? (
           <>
+            {/* 그림에 적히는 치수는 SETTING MENU에서 고른 단위 그대로다 — 숫자를 클릭하면 바로 고쳐진다.
+                (하중 두 개는 각자 단위를 따로 고를 수 있어서 P마다 unit을 같이 넘긴다) */}
             <BeamSchematic
-              L={res.L}
-              supports={[{ pos: 0, type: 'pin' }, { pos: res.L, type: 'roller' }]}
-              pointLoads={res.pointLoads.map((p) => ({ pos: p.pos, P: kN(p.P) }))}
-              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: res.L, R: kN(res.RB) }]}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              supports={[{ pos: 0, type: 'pin' }, { pos: s.L, type: 'roller' }]}
+              pointLoads={[
+                { pos: s.a1, P: s.P1, unit: s.P1Unit },
+                { pos: s.a2, P: s.P2, unit: s.P2Unit },
+              ]}
+              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: s.L, R: kN(res.RB) }]}
+              edit={{
+                L: setNum('L'),
+                pointLoadP: (i, v) => set(i === 0 ? { P1: v } : { P2: v }),
+                pointLoadPos: (i, v) => set(i === 0 ? { a1: v } : { a2: v }),
+              }}
             />
             <ResultGrid>
               <ResultCard label="R_A" value={`${fmt1(kN(res.RA), 3)} kN`} />

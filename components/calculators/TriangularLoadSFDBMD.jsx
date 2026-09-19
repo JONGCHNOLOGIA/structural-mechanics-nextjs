@@ -71,10 +71,13 @@ export default function TriangularLoadSFDBMD() {
         {res.valid ? (
           <>
             <BeamSchematic
-              L={res.L}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              qUnit={s.qUnit}
               supports={supports}
-              udls={[{ start: 0, end: res.L, q1: 0, q2: fromBase(res.q0, 'kN/m', QINTENSITY_UNITS) }]}
+              udls={[{ start: 0, end: s.L, q1: 0, q2: s.q0 }]}
               reactions={reactionsDisp}
+              edit={{ L: setNum('L') }}
             />
             <Results mode={s.mode} res={res} />
 

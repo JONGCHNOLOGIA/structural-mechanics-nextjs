@@ -1,6 +1,7 @@
 'use client';
 
 import { fmt1 } from '@/lib/calc/units1';
+import { Dim, DimLineH } from '../EditableDim';
 
 // CH.4 소주제들이 공용으로 쓰는 보 그림들 — 원본의 beamDiagramSVG()/curveDiagramSVG()를 옮긴 것.
 
@@ -10,12 +11,28 @@ const TEAL = 'var(--teal)';
 
 // 보 개략도: 지점 기호 + 하중 화살표 + 반력 값.
 // supports의 type은 'pin' | 'roller' | 'fixed' | 'slide'.
-export function BeamSchematic({ L, supports = [], pointLoads = [], udls = [], appliedMoments = [], reactions = [] }) {
-  const w = 460, h = 170, padL = 40, padR = 40, beamY = 90;
+//
+// L과 각 pos는 "왼쪽 SETTING MENU에서 고른 길이 단위 기준의 값"을 그대로 받는다 — 그림은 비율만
+// 쓰므로 어떤 단위든 상관없고, 대신 치수 숫자를 그 단위 그대로 보여주고 고칠 수 있다.
+// edit에 콜백을 넘긴 값만 클릭해서 수정할 수 있고, 안 넘긴 값(반력처럼 계산 결과인 것)은 글씨로만 나온다.
+export function BeamSchematic({
+  L,
+  lengthUnit = '',
+  forceUnit = '',
+  qUnit = '',
+  momentUnit = '',
+  supports = [],
+  pointLoads = [],
+  udls = [],
+  appliedMoments = [],
+  reactions = [],
+  edit = {},
+}) {
+  const w = 460, h = 206, padL = 40, padR = 40, beamY = 90;
   const X = (x) => padL + (x / L) * (w - padL - padR);
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 460, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={X(0)} y1={beamY} x2={X(L)} y2={beamY} stroke={GRAY} strokeWidth="4" />
 
       {supports.map((sp, i) => {
@@ -66,9 +83,17 @@ export function BeamSchematic({ L, supports = [], pointLoads = [], udls = [], ap
           <g key={`pl${i}`}>
             <line x1={x} y1={beamY - 40} x2={x} y2={beamY - 6} stroke={CRIMSON} strokeWidth="2.4" />
             <polygon points={`${x},${beamY - 4} ${x - 6},${beamY - 14} ${x + 6},${beamY - 14}`} fill={CRIMSON} />
-            <text x={x} y={beamY - 46} fontSize="10" fontWeight="800" fill={CRIMSON} textAnchor="middle">
-              P={fmt1(p.P, 1)}
-            </text>
+            <Dim
+              x={x}
+              y={beamY - 46}
+              color={CRIMSON}
+              fontSize={10}
+              value={p.P}
+              unit={p.unit || forceUnit}
+              prefix="P = "
+              boxW={56}
+              onChange={edit.pointLoadP ? (v) => edit.pointLoadP(i, v) : undefined}
+            />
           </g>
         );
       })}
@@ -96,9 +121,23 @@ export function BeamSchematic({ L, supports = [], pointLoads = [], udls = [], ap
                 </g>
               );
             })}
-            <text x={(x1 + x2) / 2} y={Math.min(topY(q1), topY(q2)) - 6} fontSize="9.5" fill={TEAL} textAnchor="middle" fontWeight="800">
-              {qLabel}
-            </text>
+            {u.q1 !== undefined ? (
+              <text x={(x1 + x2) / 2} y={Math.min(topY(q1), topY(q2)) - 6} fontSize="9.5" fill={TEAL} textAnchor="middle" fontWeight="800">
+                {qLabel}
+              </text>
+            ) : (
+              <Dim
+                x={(x1 + x2) / 2}
+                y={Math.min(topY(q1), topY(q2)) - 6}
+                color={TEAL}
+                fontSize={9.5}
+                value={u.q}
+                unit={qUnit}
+                prefix="q = "
+                boxW={60}
+                onChange={edit.udlQ ? (v) => edit.udlQ(i, v) : undefined}
+              />
+            )}
           </g>
         );
       })}
@@ -108,9 +147,18 @@ export function BeamSchematic({ L, supports = [], pointLoads = [], udls = [], ap
         return (
           <g key={`mo${i}`}>
             <path d={`M ${x - 14} ${beamY} A 14 14 0 1 1 ${x + 14} ${beamY}`} fill="none" stroke={CRIMSON} strokeWidth="2" />
-            <text x={x} y={beamY - 20} fontSize="10" fill={CRIMSON} textAnchor="middle" fontWeight="800">
-              M₀={fmt1(mo.M, 1)}
-            </text>
+            <Dim
+              x={x}
+              y={beamY - 20}
+              color={CRIMSON}
+              fontSize={10}
+              value={mo.M}
+              unit={momentUnit}
+              prefix="M₀ = "
+              boxW={60}
+              min={null}
+              onChange={edit.moment ? (v) => edit.moment(i, v) : undefined}
+            />
           </g>
         );
       })}
@@ -121,10 +169,38 @@ export function BeamSchematic({ L, supports = [], pointLoads = [], udls = [], ap
         </text>
       ))}
 
-      <text x={X(0)} y={beamY + 56} fontSize="9" fill="var(--gray-soft)" textAnchor="start">x=0</text>
-      <text x={X(L)} y={beamY + 56} fontSize="9" fill="var(--gray-soft)" textAnchor="end">
-        x=L={fmt1(L, 2)}
-      </text>
+      {/* 하중이 어디에 걸려 있는지도 치수로 적어준다 — 스팬 치수선 바로 위 줄에 둔다. */}
+      {pointLoads.map((p, i) =>
+        p.pos > 0 && p.pos < L ? (
+          <g key={`plpos${i}`}>
+            <line x1={X(p.pos)} y1={beamY + 26} x2={X(p.pos)} y2={beamY + 52} stroke="var(--gray-soft)" strokeWidth="0.8" strokeDasharray="3 3" />
+            <Dim
+              x={X(p.pos) / 2 + X(0) / 2}
+              y={beamY + 48}
+              fontSize={9}
+              color="var(--gray-soft)"
+              value={p.pos}
+              unit={lengthUnit}
+              boxW={52}
+              onChange={edit.pointLoadPos ? (v) => edit.pointLoadPos(i, v) : undefined}
+            />
+          </g>
+        ) : null
+      )}
+
+      <text x={X(0)} y={beamY + 70} fontSize="9" fill="var(--gray-soft)" textAnchor="start">x=0</text>
+      <DimLineH
+        x1={X(0)}
+        x2={X(L)}
+        y={beamY + 76}
+        labelDy={14}
+        fontSize={10}
+        value={L}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={56}
+        onChange={edit.L}
+      />
     </svg>
   );
 }

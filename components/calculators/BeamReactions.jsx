@@ -71,12 +71,26 @@ export default function BeamReactions() {
         {res.valid ? (
           <>
             <BeamSchematic
-              L={res.L}
-              supports={[{ pos: 0, type: 'pin' }, { pos: res.L, type: 'roller' }]}
-              pointLoads={[{ pos: res.a1, P: kN(res.P1) }, { pos: res.a2, P: kN(res.P2) }].filter((p) => p.P > 0)}
-              udls={res.q > 0 ? [{ start: res.qStart, end: res.qEnd, q: fromBase(res.q, 'kN/m', QINTENSITY_UNITS) }] : []}
-              appliedMoments={res.M0 !== 0 ? [{ pos: res.L / 2, M: fromBase(res.M0, 'kN·m', TORQUE_UNITS) }] : []}
-              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: res.L, R: kN(res.RB) }]}
+              L={s.L}
+              lengthUnit={s.LUnit}
+              qUnit={s.qUnit}
+              momentUnit={s.M0Unit}
+              supports={[{ pos: 0, type: 'pin' }, { pos: s.L, type: 'roller' }]}
+              pointLoads={[
+                { pos: s.a1, P: s.P1, unit: s.P1Unit, key: 'P1' },
+                { pos: s.a2, P: s.P2, unit: s.P2Unit, key: 'P2' },
+              ].filter((p) => p.P > 0)}
+              udls={s.q > 0 ? [{ start: s.qStart, end: s.qEnd, q: s.q }] : []}
+              appliedMoments={s.M0 !== 0 ? [{ pos: s.L / 2, M: s.M0 }] : []}
+              reactions={[{ pos: 0, R: kN(res.RA) }, { pos: s.L, R: kN(res.RB) }]}
+              edit={{
+                L: setNum('L'),
+                // P₁이 0이면 목록에서 빠지므로, 화면상의 순번이 아니라 어느 입력칸인지(key)로 되돌린다.
+                pointLoadP: (i, v) => set({ [i === 0 && s.P1 > 0 ? 'P1' : 'P2']: v }),
+                pointLoadPos: (i, v) => set({ [i === 0 && s.P1 > 0 ? 'a1' : 'a2']: v }),
+                udlQ: (i, v) => set({ q: v }),
+                moment: (i, v) => set({ M0: v }),
+              }}
             />
             <ResultGrid>
               <ResultCard label="반력 R_A" value={`${fmt1(kN(res.RA), 3)} kN`} />
