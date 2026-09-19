@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computeMaxBeamStress } from '@/lib/calc/maxBeamStress';
-import FormulaSection, { Tip } from './FormulaSection';
+import FormulaSection, { Tip, Collapsible } from './FormulaSection';
+import BeamStressPanels from './BeamStressPanels';
+import StressContour from './StressContour';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
@@ -20,6 +22,10 @@ export default function MaxBeamStress() {
   const [V, setV] = useState(2000 * 4.448222);
   const [y, setY] = useState(0);
   const [activeField, setActiveField] = useState('width');
+  // 아래 Stress Contour 전용 — 단면 하나가 아니라 "보 전체"를 그리는 그림이라
+  // 경간(L)과 그림을 자르는 각도(θ)가 따로 필요하다.
+  const [contourTheta, setContourTheta] = useState(0);
+  const [span, setSpan] = useState(6);
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
@@ -93,7 +99,72 @@ export default function MaxBeamStress() {
               onEditHeight={(v) => setHeight(v * lenF)}
               onEditY={(v) => setY(v * lenF)}
             />
-            <div className="steps">
+
+            {/* 참고 이미지 그대로 — 단면 / 굽힘응력(직선) / 전단응력(포물선)을 나란히.
+                σx가 최대인 곳(위아래 끝)과 τ가 최대인 곳(중립축)이 반대라는 게 요지다. */}
+            <h3 style={{ marginTop: 18, marginBottom: 6 }}>깊이에 따른 응력 분포</h3>
+            <BeamStressPanels
+              width={width}
+              height={height}
+              M={M}
+              V={V}
+              stressF={stressF}
+              unitStress={units.stress}
+              lenUnit={units.length}
+              lenF={lenF}
+              compact
+            />
+
+            <div className="steps" style={{ marginTop: 16 }}>
+              <Collapsible title="Stress Contour — 보 전체의 응력 분포" hint="교재 p.13">
+                <EditableText
+                  as="div"
+                  contentKey="calc.MaxBeamStress.contourNote"
+                  defaultText="가운데에 하중을 받는 단순지지보의 옆면 전체에 응력이 어떻게 퍼지는지예요. 위쪽은 눌리고(압축) 아래쪽은 늘어나며(인장), 하중점에서 멀어질수록 옅어집니다. **각도 θ를 돌리면** 같은 보라도 어느 방향으로 자르느냐에 따라 분포가 달라지는 것을 볼 수 있어요."
+                  style={{ fontSize: 11.5, color: 'var(--gray-soft)', lineHeight: 1.7, marginBottom: 10 }}
+                />
+                <StressContour width={width} height={height} P={V * 2} L={span} thetaDeg={contourTheta} />
+                <div className="field" style={{ marginTop: 10 }}>
+                  <label>자르는 각도 θ — {contourTheta}°</label>
+                  <input
+                    type="range"
+                    min="-90"
+                    max="90"
+                    step="1"
+                    value={contourTheta}
+                    onChange={(e) => setContourTheta(parseFloat(e.target.value))}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div className="field">
+                  <label>경간 L — {fmt(span)} m (그림 전용)</label>
+                  <input type="range" min="1" max="20" step="0.5" value={span} onChange={(e) => setSpan(parseFloat(e.target.value))} style={{ width: '100%' }} />
+                </div>
+                <p style={{ fontSize: 10.5, color: 'var(--gray-soft)', lineHeight: 1.7, marginTop: 4 }}>
+                  원본(교재 p.13)은 유한요소해석 결과이고, 여기서는 보 이론(σ=−My/I, τ=VQ/Ib)으로 계산했습니다.
+                  모양은 거의 같지만 하중이 찍히는 바로 아래처럼 보 이론이 맞지 않는 국소 영역은 원본과 다릅니다.
+                </p>
+              </Collapsible>
+
+              <Collapsible title="지점마다 응력이 어떻게 다른가 (Example 8-3)" hint="교재 p.16·17">
+                <EditableText
+                  as="div"
+                  contentKey="calc.MaxBeamStress.ex83Note"
+                  defaultText="한 단면을 위에서 아래로 훑으면서 다섯 응력이 어떻게 변하는지 나란히 놓은 그림이에요. **σx는 위아래 끝에서 최대·중립축에서 0**, **τxy는 그 반대**입니다. 그런데 τmax(주응력 기준)는 위아래 끝에서도 0이 아니라는 점을 같이 보세요."
+                  style={{ fontSize: 11.5, color: 'var(--gray-soft)', lineHeight: 1.7, marginBottom: 10 }}
+                />
+                <BeamStressPanels
+                  width={width}
+                  height={height}
+                  M={M}
+                  V={V}
+                  stressF={stressF}
+                  unitStress={units.stress}
+                  lenUnit={units.length}
+                  lenF={lenF}
+                />
+              </Collapsible>
+
               <FormulaSection title="위치별 응력·주응력">
                 <div className="step-formula">
                   <Tip title="굽힘응력">σx</Tip> = −<Frac num="My" den="I" /> &nbsp; <Tip title="전단응력">τ</Tip> = <Frac num="VQ" den="Ib" /> &nbsp; Q=<Frac num="b" den="2" />(<Frac num="h²" den="4" />−y²)
