@@ -195,24 +195,18 @@ header{
   display:none; gap:12px; align-items:center; justify-content:center;
   margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
 }
-/* 미리보기 칸은 항상 16:9(1920×1080 같은 비율이 딱 맞게 들어가는 모양).
-   높이를 px로 박지 않고 aspect-ratio로 폭에서 자동 계산하므로, 장수에 따라 알아서 나뉜다:
-     - 1장: 가로 전체를 쓰는 큰 16:9 한 칸
-     - 2장: flex가 가로를 반씩 나눠 갖고, 높이도 그 절반 폭의 9/16으로 같이 작아짐
-   object-fit은 cover가 아니라 scale-down — cover는 칸을 채우려고 원본을 강제로 확대·크롭해서
-   작은 원본(예: 400×198 GIF)이 뭉개졌다. scale-down은 "칸보다 크면 줄이고, 작으면 원본 그대로"라
-   16:9 원본은 칸을 꽉 채우고, 그보다 작은 원본은 확대되지 않아 선명함을 유지한다. */
-.subtopic-preview-imgs img{
-  flex:1 1 0; min-width:0;
-  aspect-ratio:16 / 9; height:auto;
-  /* 넓은 모니터에서 가로를 다 차지하면 16:9라도 칸이 과하게 커지므로(폭 1100px → 높이 619px),
-     높이 450px에 해당하는 폭으로 상한을 둔다 → 한 칸은 최대 800×450.
-     좁아지면 폭이 먼저 줄고 높이는 aspect-ratio가 따라 줄여서 16:9는 항상 유지된다.
-     (컨테이너가 justify-content:center라 1장일 때는 가운데 정렬된다)
-     ※ 원본이 16:9보다 납작하면(예: 1920×953 = 2.01:1) 위아래에 띠가 생긴다 — 잘리는 것보다
-       낫다고 판단해서 그대로 두는 쪽으로 정함. 1920×1080으로 녹화하면 띠 없이 꽉 찬다. */
-  max-width:calc(450px * 16 / 9);
-  object-fit:scale-down; border:1px solid var(--line); background:var(--bg);
+/* 칸 비율을 16:9로 고정하지 않고 "올린 파일의 원래 비율"을 그대로 따른다 —
+   16:9로 고정하면 1920×953(2.01:1) 같은 원본에서 위아래 띠가 생기기 때문.
+   높이만 450px로 상한을 두고 폭은 원본 비율대로 따라오게 하면(width/height:auto),
+   어떤 비율을 올려도 띠 없이 딱 맞는다. 화면이 좁으면 max-width:100%가 먼저 걸려
+   폭이 줄고 높이가 비율대로 따라 줄어든다.
+   영상(mp4/webm)도 이미지와 똑같은 규칙으로 보이게 video에도 같이 적용. */
+.subtopic-preview-imgs img,
+.subtopic-preview-imgs video{
+  flex:0 1 auto; min-width:0;
+  max-width:100%; max-height:450px;
+  width:auto; height:auto;
+  border:1px solid var(--line); background:var(--bg);
 }
 .subtopic:hover .subtopic-preview-imgs{ display:flex; }
 
