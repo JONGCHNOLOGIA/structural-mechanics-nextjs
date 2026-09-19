@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import ElastoplasticBeam3D from './ElastoplasticBeam3D';
 import { DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
@@ -18,7 +19,19 @@ export default function ElastoplasticBending() {
   const [height, setHeight] = useState(6 * 0.0254);
   const [sigmaY, setSigmaY] = useState(36 * 6894.757);
   const [moment, setMoment] = useState(0);
+  // 소성은 되돌릴 수 없다 — 그래서 "지금 모멘트"와 별개로 "지금까지 겪은 최대 모멘트"를 기억한다.
+  // 모멘트를 다시 내려도 이 값은 안 내려가고, 초기화 버튼을 눌러야 0으로 돌아간다.
+  const [peakMoment, setPeakMoment] = useState(0);
   const [activeField, setActiveField] = useState('width');
+
+  function applyMoment(v) {
+    setMoment(v);
+    setPeakMoment((prev) => Math.max(prev, v));
+  }
+  function resetPlastic() {
+    setMoment(0);
+    setPeakMoment(0);
+  }
 
   const lenF = UNIT_OPTIONS.length[units.length];
   const stressF = UNIT_OPTIONS.stress[units.stress];
@@ -27,6 +40,36 @@ export default function ElastoplasticBending() {
 
   const r0 = useMemo(() => (width && height && sigmaY ? computeElastoplastic(width, height, sigmaY, 0) : null), [width, height, sigmaY]);
   const r = useMemo(() => (width && height && sigmaY ? computeElastoplastic(width, height, sigmaY, moment) : null), [width, height, sigmaY, moment]);
+  // 겪은 최대 모멘트 기준 상태 — 잔류변형은 "지금"이 아니라 "가장 심했을 때"가 결정한다
+  const rPeak = useMemo(
+    () => (width && height && sigmaY ? computeElastoplastic(width, height, sigmaY, peakMoment) : null),
+    [width, height, sigmaY, peakMoment]
+  );
+
+  // 곡률은 항복 시점 곡률(κy)을 1로 놓고 비로만 다룬다 (E가 없어도 비는 정해진다).
+  //   탄성 구간: κ/κy = M/My
+  //   탄소성 구간: κ/κy = c/e  (탄성코어가 얇아질수록 급격히 휜다)
+  // 최대 모멘트에서 힘을 빼면 탄성분만 되돌아오므로, 남는 것이 잔류 곡률이다:
+  //   κ잔류/κy = c/e(M최대) − M최대/My
+  // 한 번도 항복한 적이 없으면 c/e = 1, M/My = 1이라 잔류가 정확히 0이 된다.
+  const plastic = useMemo(() => {
+    if (!r || !rPeak || !(r.My > 0)) return { kappaRatio: 0, residualRatio: 0, yielded: false };
+    // 최대 모멘트에서의 곡률. 항복 전과 후가 다른 식이라는 게 중요하다 —
+    // 항복 전에는 e = c여서 c/e가 늘 1이 되므로, 탄성 구간에까지 c/e를 쓰면
+    // 아무 하중도 준 적 없는데 곡률이 1로 잡혀 잔류변형이 생긴 것처럼 보인다.
+    const peakKappa =
+      peakMoment <= rPeak.My
+        ? peakMoment / rPeak.My // 탄성: 모멘트에 그대로 비례
+        : rPeak.e > 0
+        ? rPeak.c / rPeak.e // 탄소성: 탄성코어가 얇아질수록 급격히 휜다
+        : 50; // 완전소성은 곡률이 발산하므로 화면용 상한으로 대신함
+    const residual = Math.max(0, peakKappa - peakMoment / rPeak.My);
+    return {
+      kappaRatio: moment / r.My,
+      residualRatio: residual,
+      yielded: peakMoment > rPeak.My,
+    };
+  }, [r, rPeak, moment, peakMoment]);
 
   const mpDisp = r0 ? disp(r0.Mp, momF) : 100;
 
@@ -69,7 +112,15 @@ export default function ElastoplasticBending() {
         {r0 && (
           <div className="field">
             <label>Moment M — 0 ~ Mp({fmt(mpDisp)} {units.moment})</label>
-            <input type="range" min="0" max={mpDisp} step={mpDisp / 200} value={disp(moment, momF)} onChange={(e) => setMoment(parseFloat(e.target.value) * momF)} style={{ width: '100%' }} />
+            <input type="range" min="0" max={mpDisp} step={mpDisp / 200} value={disp(moment, momF)} onChange={(e) => applyMoment(parseFloat(e.target.value) * momF)} style={{ width: '100%' }} />
+            {plastic.yielded && (
+              <p style={{ fontSize: 11, color: 'var(--crimson)', lineHeight: 1.6, marginTop: 6 }}>
+                이미 항복한 적이 있어요 (겪은 최대 모멘트 {fmt(disp(peakMoment, momF))} {units.moment}). 모멘트를 0으로 내려도 보는 휜 채로 남습니다.
+              </p>
+            )}
+            <button className="add-block" onClick={resetPlastic} style={{ marginTop: 8 }}>
+              ↺ 초기화 (소성 이전으로)
+            </button>
           </div>
         )}
       </div>
@@ -89,6 +140,31 @@ export default function ElastoplasticBending() {
               lenF={lenF}
               onEditWidth={(v) => setWidth(v * lenF)}
               onEditHeight={(v) => setHeight(v * lenF)}
+            />
+
+            {/* 3D — 모멘트를 키우면 실제로 휘고, 항복을 넘기면 표면부터 소성(붉은색)이 안으로 먹어 들어온다.
+                여기서 보여주려는 건 "소성은 되돌릴 수 없다"이므로, 모멘트를 0으로 내려도 휜 채로 남는다.
+                소성 영역(e)도 "지금" 모멘트가 아니라 "겪은 최대" 모멘트로 정한다 — 한 번 항복한 재료는
+                힘을 빼도 탄성으로 돌아가지 않기 때문이다. 올리는 동안에는 둘이 같고, 내릴 때만 갈린다. */}
+            <h3 style={{ marginTop: 18, marginBottom: 4 }}>보가 휘는 모습 (3D)</h3>
+            <ElastoplasticBeam3D
+              width={width}
+              height={height}
+              c={r.c}
+              e={rPeak ? rPeak.e : r.e}
+              kappaRatio={plastic.kappaRatio}
+              residualRatio={plastic.residualRatio}
+              stage={r.stage}
+            />
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', fontSize: 11, color: 'var(--gray-soft)', margin: '6px 0 4px' }}>
+              <span><span style={{ display: 'inline-block', width: 10, height: 10, background: 'var(--crimson)', marginRight: 5 }} />항복한 부분 (소성)</span>
+              <span><span style={{ display: 'inline-block', width: 10, height: 10, background: '#E1F2EF', border: '1px solid #1E7F72', marginRight: 5 }} />아직 탄성인 코어</span>
+            </div>
+            <EditableText
+              as="div"
+              contentKey="calc.ElastoplasticBending.plastic3dNote"
+              defaultText="모멘트를 **항복모멘트 My보다 크게** 올렸다가 다시 0으로 내려보세요. 탄성 범위 안에서만 움직였다면 보는 원래대로 펴지지만, 한 번이라도 항복하고 나면 **휜 채로 남습니다**. 이것이 소성변형이 되돌릴 수 없다는 뜻이에요. 왼쪽 초기화 버튼을 누르면 겪은 이력이 지워집니다."
+              style={{ fontSize: 11.5, color: 'var(--gray-soft)', lineHeight: 1.7, marginBottom: 14 }}
             />
             <div className="result-grid">
               <div className="result-card">
