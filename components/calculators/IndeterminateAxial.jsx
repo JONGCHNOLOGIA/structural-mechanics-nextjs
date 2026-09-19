@@ -8,6 +8,7 @@ import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
+import { Dim, DimLineH } from './EditableDim';
 
 // CH.2-3 Statically Indeterminate Axial Members — 원본 renderIndeterminate()의 React 버전.
 
@@ -88,7 +89,7 @@ export default function IndeterminateAxial() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        {isRigid ? <RigidBeamSVG s={s} res={res} /> : <FixedBarSVG s={s} res={res} />}
+        {isRigid ? <RigidBeamSVG s={s} res={res} onEditNum={setNum} /> : <FixedBarSVG s={s} res={res} onEditNum={setNum} />}
 
         {res.valid ? (
           <>
@@ -192,8 +193,9 @@ function Steps({ s, res }) {
 }
 
 // 양단이 벽에 물린 부재와, 중간 지점에 꽂히는 하중 P
-function FixedBarSVG({ s, res }) {
-  const w = 460, h = 180, x1 = 70, x2 = 390, barY = 90;
+function FixedBarSVG({ s, res, onEditNum }) {
+  // 아래쪽에 a·b 구간 치수선을 넣을 자리를 두려고 높이를 180에서 늘렸다.
+  const w = 460, h = 214, x1 = 70, x2 = 390, barY = 90;
   const totalLen = x2 - x1;
   const aFrac = res.valid ? res.a_m / res.L_m : 0.4;
   const cx = x1 + totalLen * aFrac;
@@ -216,9 +218,18 @@ function FixedBarSVG({ s, res }) {
       <circle cx={cx} cy={barY} r="4" fill="var(--ink)" />
       <line x1={cx} y1={barY - 40} x2={cx} y2={barY - 8} stroke="var(--crimson)" strokeWidth="2.4" />
       <polygon points={`${cx},${barY - 6} ${cx - 6},${barY - 16} ${cx + 6},${barY - 16}`} fill="var(--crimson)" />
-      <text x={cx} y={barY - 46} fontSize="11" fontWeight="800" fill="var(--crimson)" textAnchor="middle">
-        P{res.valid ? ` = ${fmt1(s.P, 1)} ${s.PUnit}` : ''}
-      </text>
+      <Dim
+        x={cx}
+        y={barY - 46}
+        color="var(--crimson)"
+        fontSize={11}
+        value={s.P}
+        unit={s.PUnit}
+        prefix="P = "
+        boxW={62}
+        min={null}
+        onChange={onEditNum('P')}
+      />
       {res.valid && (
         <>
           <text x={(x1 + cx) / 2} y={barY + 40} fontSize="10.5" fill="var(--teal)" textAnchor="middle">
@@ -229,15 +240,39 @@ function FixedBarSVG({ s, res }) {
           </text>
         </>
       )}
-      <text x={(x1 + cx) / 2} y={barY + 58} fontSize="10" fill="var(--gray)" textAnchor="middle">a</text>
-      <text x={(cx + x2) / 2} y={barY + 58} fontSize="10" fill="var(--gray)" textAnchor="middle">b</text>
+      {/* 구간 길이 a, b 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다. */}
+      <DimLineH
+        x1={x1}
+        x2={cx}
+        y={barY + 58}
+        labelDy={14}
+        fontSize={10}
+        value={s.a}
+        unit={s.LUnit}
+        prefix="a = "
+        boxW={52}
+        onChange={onEditNum('a')}
+      />
+      <DimLineH
+        x1={cx}
+        x2={x2}
+        y={barY + 58}
+        labelDy={14}
+        fontSize={10}
+        value={s.b}
+        unit={s.LUnit}
+        prefix="b = "
+        boxW={52}
+        onChange={onEditNum('b')}
+      />
     </svg>
   );
 }
 
 // 핀으로 지지된 강체보를 탄성기둥이 받치는 구조 — 세 힘(A_y, F_B, P)의 균형을 화살표로 보여준다.
-function RigidBeamSVG({ s, res }) {
-  const w = 460, h = 200, x0 = 60, xEnd = 420, beamY = 80, colBottom = 170;
+function RigidBeamSVG({ s, res, onEditNum }) {
+  // 아래쪽에 치수선을 넣을 자리를 두려고 높이를 200에서 늘렸다.
+  const w = 460, h = 246, x0 = 60, xEnd = 420, beamY = 80, colBottom = 170;
   const totalLen = xEnd - x0;
   const bFrac = res.valid ? res.b_m / res.L_m : 0.5;
   const xB = x0 + totalLen * bFrac;
@@ -274,12 +309,58 @@ function RigidBeamSVG({ s, res }) {
       )}
       <line x1={xC} y1={beamY - 38} x2={xC} y2={beamY - 6} stroke="var(--crimson)" strokeWidth="2.4" />
       <polygon points={`${xC},${beamY - 4} ${xC - 6},${beamY - 14} ${xC + 6},${beamY - 14}`} fill="var(--crimson)" />
-      <text x={xC} y={beamY - 44} fontSize="10.5" fontWeight="800" fill="var(--crimson)" textAnchor="middle">
-        P{res.valid ? ` = ${fmt1(s.rbP, 1)} ${s.rbPUnit}` : ''}
-      </text>
+      <Dim
+        x={xC}
+        y={beamY - 44}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.rbP}
+        unit={s.rbPUnit}
+        prefix="P = "
+        boxW={62}
+        min={null}
+        onChange={onEditNum('rbP')}
+      />
       <text x={x0} y={beamY + 62} fontSize="9.5" fill="var(--gray-soft)" textAnchor="middle">A</text>
       <text x={xB} y={beamY + 62} fontSize="9.5" fill="var(--gray-soft)" textAnchor="middle">B</text>
       <text x={xC} y={beamY + 62} fontSize="9.5" fill="var(--gray-soft)" textAnchor="middle">C</text>
+      {/* 치수 — A~B 거리 b, A~C 전체 길이 L, 기둥 길이 Lc. 숫자를 클릭하면 그 자리에서 고칠 수 있다. */}
+      <DimLineH
+        x1={x0}
+        x2={xB}
+        y={beamY + 76}
+        labelDy={13}
+        fontSize={9.5}
+        value={s.rbB}
+        unit="m"
+        prefix="b = "
+        boxW={52}
+        onChange={onEditNum('rbB')}
+      />
+      <DimLineH
+        x1={x0}
+        x2={xEnd}
+        y={beamY + 104}
+        labelDy={13}
+        fontSize={9.5}
+        value={s.rbL}
+        unit="m"
+        prefix="L = "
+        boxW={52}
+        onChange={onEditNum('rbL')}
+      />
+      <Dim
+        x={xB + 16}
+        y={(beamY + colBottom) / 2 + 16}
+        anchor="start"
+        color="var(--teal)"
+        fontSize={9.5}
+        value={s.rbLc}
+        unit={s.rbLcUnit}
+        prefix="L = "
+        boxW={52}
+        onChange={onEditNum('rbLc')}
+      />
       <text x={(x0 + xEnd) / 2} y={h - 8} fontSize="9.5" fill="var(--gray)" textAnchor="middle">
         ΣFy=0: A_y + F_B − P = 0 (화살표 방향·크기로 확인)
       </text>

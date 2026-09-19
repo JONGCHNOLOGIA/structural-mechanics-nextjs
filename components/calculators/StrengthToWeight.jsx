@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH } from './EditableDim';
 
 // CH.3-5 Strength-to-Weight Ratio (Hollow vs Solid) — 원본 renderStrengthToWeight()의 React 버전.
 
@@ -41,7 +42,7 @@ export default function StrengthToWeight() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <CompareSVG s={s} />
+        <CompareSVG s={s} onEditNum={setNum} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -114,20 +115,35 @@ function Steps({ s, res }) {
 }
 
 // 같은 외경의 두 단면을 나란히 — 중공축 안쪽 빈 부분이 k에 따라 커진다.
-function CompareSVG({ s }) {
-  const w = 320, h = 200, cy = 92;
+function CompareSVG({ s, onEditNum }) {
+  // 아래쪽에 외경 치수선 자리를 두려고 높이를 200에서 늘렸다.
+  const w = 320, h = 236, cy = 88;
   // 원 크기는 입력 단위와 무관하게 실제 mm 기준으로 정한다.
   const dMM = toBase(s.D || 0, s.DUnit, LENGTH_UNITS) * 1000;
   const r = scaledPx(dMM, 300, 40, 75);
   const kSafe = s.k > 0 && s.k < 1 ? s.k : 0;
   const cxH = w * 0.28, cxS = w * 0.72;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <circle cx={cxH} cy={cy} r={r} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
       <circle cx={cxH} cy={cy} r={r * kSafe} fill="var(--bg)" stroke="var(--teal)" strokeWidth="1.4" strokeDasharray="3 2" />
       <text x={cxH} y={cy + r + 20} fontSize="11" fill="var(--teal)" textAnchor="middle" fontWeight="800">중공축 (Hollow)</text>
       <circle cx={cxS} cy={cy} r={r} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.6" />
       <text x={cxS} y={cy + r + 20} fontSize="11" fill="var(--crimson)" textAnchor="middle" fontWeight="800">중실축 (Solid)</text>
+      {/* 외경 D 치수 — 두 축이 같은 값이라 한 번만 적고, 클릭해서 고치면 양쪽 그림이 함께 바뀐다. */}
+      <DimLineH
+        x1={cxS - r}
+        x2={cxS + r}
+        y={cy + r + 34}
+        labelDy={14}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.D}
+        unit={s.DUnit}
+        prefix="D = "
+        boxW={54}
+        onChange={onEditNum('D')}
+      />
       <text x={w / 2} y={h - 8} fontSize="10" fill="var(--gray)" textAnchor="middle">
         외경 D는 동일 — 중공축은 안쪽 k·D 만큼을 덜어낸 단면
       </text>

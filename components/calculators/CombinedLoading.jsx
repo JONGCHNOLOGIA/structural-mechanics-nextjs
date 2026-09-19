@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.5-5 Combined Loading (Axial + Bending / Eccentric Load) — 원본 renderCombined()의 React 버전.
 
@@ -76,7 +77,7 @@ export default function CombinedLoading() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <CombinedSectionSVG s={s} res={res} />
+        <CombinedSectionSVG s={s} res={res} onEditNum={setNum} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -145,8 +146,9 @@ function Steps({ s, res }) {
 }
 
 // 단면을 위/아래로 나눠 색으로 인장(teal)·압축(crimson)을 보여주고, 옆에 합성 응력 분포를 직선으로 그린다.
-function CombinedSectionSVG({ s, res }) {
-  const w = 300, h = 210, cx = 110, cy = h / 2;
+function CombinedSectionSVG({ s, res, onEditNum }) {
+  // 왼쪽 높이 치수선과 아래 폭 치수선 자리를 두려고 그림을 키웠다(원래 300×210, cx=110).
+  const w = 330, h = 252, cx = 128, cy = 100;
   const bMM = toBase(s.b || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const hMM = toBase(s.h || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const shapeW = scaledPx(bMM, 300, 50, 100);
@@ -154,8 +156,33 @@ function CombinedSectionSVG({ s, res }) {
 
   if (!res.valid) {
     return (
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto', display: 'block' }}>
+      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 330, margin: '0 auto', display: 'block', overflow: 'visible' }}>
         <rect x={cx - shapeW / 2} y={cy - shapeH / 2} width={shapeW} height={shapeH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.2" />
+
+      {/* 단면 치수 b, h — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
+      <DimLineV
+        x={cx - shapeW / 2 - 14}
+        y1={cy - shapeH / 2}
+        y2={cy + shapeH / 2}
+        fontSize={10.5}
+        value={s.h}
+        unit={s.dimUnit}
+        prefix="h = "
+        boxW={54}
+        onChange={onEditNum('h')}
+      />
+      <DimLineH
+        x1={cx - shapeW / 2}
+        x2={cx + shapeW / 2}
+        y={cy + shapeH / 2 + 14}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.b}
+        unit={s.dimUnit}
+        prefix="b = "
+        boxW={54}
+        onChange={onEditNum('b')}
+      />
       </svg>
     );
   }
@@ -175,7 +202,7 @@ function CombinedSectionSVG({ s, res }) {
   const yBot = cy + shapeH / 2;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 330, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - shapeW / 2} y={yTop} width={shapeW} height={shapeH / 2}
         fill={top >= 0 ? 'var(--teal-soft)' : 'var(--crimson-soft)'} stroke="#8A97A2" strokeWidth="1.2" />
       <rect x={cx - shapeW / 2} y={cy} width={shapeW} height={shapeH / 2}
@@ -185,6 +212,32 @@ function CombinedSectionSVG({ s, res }) {
       <line x1={armX} y1={yTop} x2={armX} y2={yBot} stroke="#8A97A2" strokeWidth="1" />
       <line x1={armX} y1={yTop} x2={armX + dirTop * lenTop} y2={yTop} stroke={colTop} strokeWidth="2" />
       <line x1={armX} y1={yBot} x2={armX + dirBot * lenBot} y2={yBot} stroke={colBot} strokeWidth="2" />
+
+      {/* 단면 치수 b, h — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
+      <DimLineV
+        x={cx - shapeW / 2 - 14}
+        y1={cy - shapeH / 2}
+        y2={cy + shapeH / 2}
+        fontSize={10.5}
+        value={s.h}
+        unit={s.dimUnit}
+        prefix="h = "
+        boxW={54}
+        onChange={onEditNum('h')}
+      />
+      <DimLineH
+        x1={cx - shapeW / 2}
+        x2={cx + shapeW / 2}
+        y={cy + shapeH / 2 + 14}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.b}
+        unit={s.dimUnit}
+        prefix="b = "
+        boxW={54}
+        onChange={onEditNum('b')}
+      />
+
       <line x1={armX + dirTop * lenTop} y1={yTop} x2={armX + dirBot * lenBot} y2={yBot} stroke="var(--gray)" strokeWidth="1.6" />
 
       <text x={armX + dirTop * lenTop} y={yTop - 6} fontSize="9.5" fontWeight="800" fill={colTop} textAnchor="middle">
