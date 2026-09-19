@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.5-2 Section Modulus & Beam Design — 원본 renderSectionModulus()의 React 버전.
 
@@ -67,7 +68,7 @@ export default function SectionModulusDesign() {
         <h3>VISUALIZER</h3>
         {res.valid ? (
           <>
-            <DesignedSectionSVG s={s} dimOut={dimOut} isRect={isRect} />
+            <DesignedSectionSVG onEditB={setNum('bFixed')} s={s} dimOut={dimOut} isRect={isRect} />
             <ResultGrid>
               <ResultCard label="필요 단면계수 S_required" value={`${fmt1(res.S_required * 1e9, 2)} mm³`} />
               <ResultCard
@@ -133,24 +134,49 @@ function Steps({ s, res }) {
 }
 
 // 역산된 치수로 만들어진 단면 — 값이 바뀌면 그림도 같은 비율로 커진다.
-function DesignedSectionSVG({ s, dimOut, isRect }) {
-  const w = 260, h = 200, cx = w / 2, cy = h / 2;
+function DesignedSectionSVG({ s, dimOut, isRect, onEditB }) {
+  // 왼쪽/아래에 치수선을 넣을 자리를 두려고 그림을 조금 키웠다(원래 260×200).
+  const w = 300, h = 226, cx = w / 2 + 6, cy = 96;
   const outMM = toBase(dimOut || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const bMM = toBase(s.bFixed || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const shapeH = scaledPx(outMM, 300, 40, 140);
   const shapeW = isRect ? scaledPx(bMM, 300, 40, 110) : shapeH;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {isRect ? (
         <rect x={cx - shapeW / 2} y={cy - shapeH / 2} width={shapeW} height={shapeH} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
       ) : (
         <circle cx={cx} cy={cy} r={shapeH / 2} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
       )}
       <line x1={cx - shapeW / 2 - 6} y1={cy} x2={cx + shapeW / 2 + 6} y2={cy} stroke="var(--gray)" strokeWidth="1" strokeDasharray="3 2" />
-      <text x={cx} y={cy + shapeH / 2 + 22} fontSize="10.5" fill="var(--teal)" textAnchor="middle" fontWeight="800">
-        {isRect ? `b=${fmt1(s.bFixed, 1)} × h=${fmt1(dimOut, 2)} ${s.dimUnit}` : `d=${fmt1(dimOut, 2)} ${s.dimUnit}`}
-      </text>
+      {/* 치수 — 높이 h(원형이면 지름 d)는 계산 결과라 숫자만 보여주고, 입력값인 폭 b만
+          클릭해서 고칠 수 있다. */}
+      <DimLineV
+        x={cx - shapeW / 2 - 14}
+        y1={cy - shapeH / 2}
+        y2={cy + shapeH / 2}
+        color="var(--teal)"
+        fontSize={10.5}
+        value={dimOut}
+        unit={s.dimUnit}
+        prefix={isRect ? 'h = ' : 'd = '}
+      />
+      {isRect && (
+        <DimLineH
+          x1={cx - shapeW / 2}
+          x2={cx + shapeW / 2}
+          y={cy + shapeH / 2 + 12}
+          labelDy={14}
+          color="var(--teal)"
+          fontSize={10.5}
+          value={s.bFixed}
+          unit={s.dimUnit}
+          prefix="b = "
+          boxW={52}
+          onChange={onEditB}
+        />
+      )}
       <text x={cx} y={h - 6} fontSize="9.5" fill="var(--gray)" textAnchor="middle">
         허용응력을 딱 만족하는 최소 단면
       </text>

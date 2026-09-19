@@ -138,7 +138,7 @@ export default function SectionProperties() {
         <h3>
           VISUALIZER
         </h3>
-        <SectionShapeDiagram shape={shape} d={clamped} ybar={r.ybar} />
+        <SectionShapeDiagram shape={shape} d={clamped} ybar={r.ybar} onEditDim={setDim} />
 
         <div className="result-grid">
           <div className="result-card">

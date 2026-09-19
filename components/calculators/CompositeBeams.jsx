@@ -9,6 +9,7 @@ import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import BeamElevation3D from './BeamElevation3D';
 import BeamElevationSVG from './BeamElevationSVG';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 /*
   프로토타입의 renderCompositeBeams()/cbBuildVizSVGs()/cbCalcSection() 등을 React로 그대로 옮긴 버전.
@@ -715,49 +716,6 @@ function ApproxBody({ snapshot }) {
   );
 }
 
-// VISUALIZER의 치수 라벨(예: "1.00 in.")을 클릭하면 그 자리에 바로 입력칸이 뜨는 컴포넌트.
-// SVG 안이라 <input>을 직접 못 쓰고 <foreignObject>로 감싸서 띄움.
-function EditableDimText({ editing, x, y, textAnchor, fill, fontSize, fontWeight, displayText, currentValue, boxW, boxH, onStartEdit, onCommit, onCancel }) {
-  if (editing) {
-    const boxX = textAnchor === 'end' ? x - boxW : textAnchor === 'middle' ? x - boxW / 2 : x;
-    return (
-      <foreignObject x={boxX} y={y - boxH / 2 - 2} width={boxW} height={boxH} style={{ overflow: 'visible' }}>
-        <input
-          type="number"
-          step="any"
-          autoFocus
-          defaultValue={fmtInput(currentValue)}
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize,
-            fontWeight,
-            color: fill,
-            border: `1.3px solid ${fill}`,
-            borderRadius: 0,
-            textAlign: 'center',
-            padding: '0 2px',
-            fontFamily: "'JetBrains Mono',monospace",
-            background: '#fff',
-            boxSizing: 'border-box',
-          }}
-          onClick={(e) => e.stopPropagation()}
-          onBlur={(e) => onCommit(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.target.blur();
-            if (e.key === 'Escape') onCancel();
-          }}
-        />
-      </foreignObject>
-    );
-  }
-  return (
-    <text x={x} y={y} fontSize={fontSize} fill={fill} textAnchor={textAnchor} fontWeight={fontWeight} style={{ cursor: 'pointer' }} onClick={onStartEdit}>
-      {displayText}
-    </text>
-  );
-}
-
 // 단면 + 응력 다이어그램 + 보 측면도. 프로토타입의 cbBuildVizSVGs()와 로직은 동일.
 function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const lenF = UNIT_OPTIONS.length[units.length];
@@ -765,7 +723,6 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const momF = UNIT_OPTIONS.moment[units.moment];
   const disp = (base, factor) => base / factor;
   const [elevation3D, setElevation3D] = useState(false);
-  const [editingTarget, setEditingTarget] = useState(null); // { index, field } | null
 
   const svgW = 920;
   const svgH = 700;
@@ -785,7 +742,6 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
   const axisOy = 8;
 
   const widestBlock = result.blocks.reduce((a, b) => (b.width > a.width ? b : a), result.blocks[0]);
-  const wLabel = `${fmt(disp(widestBlock.width, lenF))} ${units.length}.`;
   const dimY = yToPx(0) + 20;
   const xLeft = centerX - (maxWidth * scale) / 2;
   const xRight = centerX + (maxWidth * scale) / 2;
@@ -844,80 +800,47 @@ function VisualizerSVGs({ result, units, moment, onEditDim }) {
           const yBottomPx = yToPx(b.yBottom);
           const hPx = b.height * scale;
           const labelY = yTopPx + hPx / 2;
-          const hLabel = `${fmt(disp(b.height, lenF))} ${units.length}.`;
-          const wLabelForBlock = `${fmt(disp(b.width, lenF))} ${units.length}. wide`;
           return (
             <g key={i}>
               <rect x={x} y={yTopPx} width={wPx} height={hPx} fill={c.fill} stroke={c.stroke} strokeWidth="1.4" />
               <text x={centerX + (maxWidth * scale) / 2 + 10} y={labelY + 3.5} fontSize="13.5" fontWeight="800" fill={c.stroke}>
                 {c.name}
               </text>
-              <EditableDimText
-                editing={editingTarget && editingTarget.index === i && editingTarget.field === 'width'}
+              <Dim
                 x={centerX + (maxWidth * scale) / 2 + 10}
                 y={labelY + 20}
-                textAnchor="start"
-                fill={c.stroke}
-                fontSize="12"
-                fontWeight="700"
-                displayText={wLabelForBlock}
-                currentValue={disp(b.width, lenF)}
+                anchor="start"
+                color={c.stroke}
+                fontSize={12}
+                value={disp(b.width, lenF)}
+                unit={`${units.length}.`}
+                suffix=" wide"
                 boxW={68}
-                boxH={20}
-                onStartEdit={() => setEditingTarget({ index: i, field: 'width' })}
-                onCommit={(v) => {
-                  onEditDim(b.colorId, 'width', v);
-                  setEditingTarget(null);
-                }}
-                onCancel={() => setEditingTarget(null)}
+                onChange={(v) => onEditDim(b.colorId, 'width', v)}
               />
-              <line x1={leftDimX} y1={yTopPx} x2={leftDimX} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
-              <line x1={leftDimX - 4} y1={yTopPx} x2={leftDimX + 4} y2={yTopPx} stroke={c.stroke} strokeWidth="1" />
-              <line x1={leftDimX - 4} y1={yBottomPx} x2={leftDimX + 4} y2={yBottomPx} stroke={c.stroke} strokeWidth="1" />
-              <EditableDimText
-                editing={editingTarget && editingTarget.index === i && editingTarget.field === 'height'}
-                x={leftDimX - 7}
-                y={labelY + 4.5}
-                textAnchor="end"
-                fill={c.stroke}
-                fontSize="13"
-                fontWeight="700"
-                displayText={hLabel}
-                currentValue={disp(b.height, lenF)}
+              <DimLineV
+                x={leftDimX}
+                y1={yTopPx}
+                y2={yBottomPx}
+                color={c.stroke}
+                value={disp(b.height, lenF)}
+                unit={`${units.length}.`}
                 boxW={64}
-                boxH={20}
-                onStartEdit={() => setEditingTarget({ index: i, field: 'height' })}
-                onCommit={(v) => {
-                  onEditDim(b.colorId, 'height', v);
-                  setEditingTarget(null);
-                }}
-                onCancel={() => setEditingTarget(null)}
+                onChange={(v) => onEditDim(b.colorId, 'height', v)}
               />
             </g>
           );
         })}
 
-        <line x1={xLeft} y1={dimY} x2={xRight} y2={dimY} stroke="#51626F" strokeWidth="1" />
-        <line x1={xLeft} y1={dimY - 4} x2={xLeft} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
-        <line x1={xRight} y1={dimY - 4} x2={xRight} y2={dimY + 4} stroke="#51626F" strokeWidth="1" />
-        <EditableDimText
-          editing={editingTarget && editingTarget.index === 'widest' && editingTarget.field === 'width'}
-          x={(xLeft + xRight) / 2}
-          y={dimY + 16}
-          textAnchor="middle"
-          fill="#51626F"
-          fontSize="13"
-          fontWeight="700"
-          displayText={wLabel}
-          currentValue={disp(widestBlock.width, lenF)}
+        <DimLineH
+          x1={xLeft}
+          x2={xRight}
+          y={dimY}
+          labelDy={16}
+          value={disp(widestBlock.width, lenF)}
+          unit={`${units.length}.`}
           boxW={68}
-          boxH={20}
-          onStartEdit={() => setEditingTarget({ index: 'widest', field: 'width' })}
-          onCommit={(v) => {
-            onEditDim(widestBlock.colorId, 'width', v);
-            setEditingTarget(null);
-          }}
-          onCancel={() => setEditingTarget(null)}
+          onChange={(v) => onEditDim(widestBlock.colorId, 'width', v)}
         />
 
         <line

@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.5-1 Flexure Formula (Normal Stress in Beams) — 원본 renderFlexure()의 React 버전.
 
@@ -60,7 +61,7 @@ export default function FlexureFormula() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <SectionStressSVG s={s} res={res} />
+        <SectionStressSVG s={s} res={res} onEditDim={setDim} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -132,8 +133,9 @@ function Steps({ s, res }) {
 }
 
 // 단면 옆에 응력 분포를 막대로 — 중립축에서 0, 연단에서 최대인 선형 분포.
-function SectionStressSVG({ s, res }) {
-  const w = 280, h = 220, cx = w / 2, cy = h / 2;
+function SectionStressSVG({ s, res, onEditDim }) {
+  // 아래쪽에 폭(지름) 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
+  const w = 280, h = 244, cx = w / 2, cy = 110;
   const isRect = s.sectionType === 'rectangular';
   // 그림 크기는 입력 단위와 무관하게 실제 mm 기준으로 정한다.
   const hMM = toBase(isRect ? s.dims.h : s.dims.d, s.dimUnit, LENGTH_UNITS) * 1000;
@@ -146,7 +148,7 @@ function SectionStressSVG({ s, res }) {
   const N = 6;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 280, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 280, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {isRect ? (
         <rect x={cx - shapeW / 2} y={cy - shapeH / 2} width={shapeW} height={shapeH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.4" />
       ) : (
@@ -165,6 +167,47 @@ function SectionStressSVG({ s, res }) {
       })}
       <text x={armX} y={cy - shapeH / 2 - 10} fontSize="9.5" fill="var(--crimson)" textAnchor="middle">−σ (압축, 상단)</text>
       <text x={armX} y={cy + shapeH / 2 + 18} fontSize="9.5" fill="var(--teal)" textAnchor="middle">+σ (인장, 하단)</text>
+
+      {/* 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다. 단위는 SETTING MENU의 길이 단위를 따른다.
+          원형 단면은 높이/폭이 곧 지름이라 지름 하나만 적는다. */}
+      {isRect ? (
+        <>
+          <DimLineV
+            x={cx - shapeW / 2 - 14}
+            y1={cy - shapeH / 2}
+            y2={cy + shapeH / 2}
+            fontSize={10.5}
+            value={s.dims.h}
+            unit={s.dimUnit}
+            boxW={52}
+            onChange={(v) => onEditDim('h')(v)}
+          />
+          <DimLineH
+            x1={cx - shapeW / 2}
+            x2={cx + shapeW / 2}
+            y={cy + shapeH / 2 + 12}
+            labelDy={14}
+            fontSize={10.5}
+            value={s.dims.b}
+            unit={s.dimUnit}
+            boxW={52}
+            onChange={(v) => onEditDim('b')(v)}
+          />
+        </>
+      ) : (
+        <DimLineH
+          x1={cx - shapeH / 2}
+          x2={cx + shapeH / 2}
+          y={cy + shapeH / 2 + 12}
+          labelDy={14}
+          fontSize={10.5}
+          value={s.dims.d}
+          unit={s.dimUnit}
+          prefix="d = "
+          boxW={52}
+          onChange={(v) => onEditDim('d')(v)}
+        />
+      )}
     </svg>
   );
 }

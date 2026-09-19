@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ToggleRow, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.3-1 Torsional Deformation and Angle of Twist — 원본 renderTorsionalDeformation()의 React 버전.
 
@@ -74,7 +75,7 @@ export default function TorsionalDeformation() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <TwistSVG dir={s.dir} res={res} />
+        <TwistSVG dir={s.dir} res={res} s={s} onEditNum={setNum} onEditDim={setDim} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -152,8 +153,9 @@ function Steps({ s, res }) {
 // (숫자는 항상 실제값을 함께 적어 둔다). 확대 배율은 고정이라 슬라이더를 움직이면 비례해서 움직인다.
 const TWIST_VIEW_GAIN = 8; // 화면에 보이는 각도 = 실제 φ × 8 (최대 55°에서 잘림)
 
-function TwistSVG({ dir, res }) {
-  const w = 440, h = 200, xFix = 70, xFree = 380, cy = 100, ry = 34;
+function TwistSVG({ dir, res, s, onEditNum, onEditDim }) {
+  // 오른쪽에 지름 치수선, 아래에 길이 치수선을 넣을 자리를 두려고 그림을 키웠다(원래 440×200).
+  const w = 510, h = 238, xFix = 80, xFree = 390, cy = 100, ry = 34;
   const dirSign = dir === 'cw' ? 1 : -1;
   const phiDeg = res.valid ? (res.phi_rad * 180) / Math.PI : 0;
   const viewDeg = Math.max(-55, Math.min(55, dirSign * phiDeg * TWIST_VIEW_GAIN));
@@ -164,7 +166,7 @@ function TwistSVG({ dir, res }) {
   const midY = cy - ry * Math.cos(viewRad / 2);
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 510, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {/* 고정단 해칭 */}
       <line x1={xFix} y1={cy - ry - 8} x2={xFix} y2={cy + ry + 8} stroke="#51626F" strokeWidth="2.4" />
       {Array.from({ length: 9 }).map((_, i) => {
@@ -197,7 +199,33 @@ function TwistSVG({ dir, res }) {
       <text x={xFree} y={cy - ry - 14} fontSize="11.5" fontWeight="800" fill="var(--teal)" textAnchor="middle">
         φ{res.valid ? ` = ${fmt1(phiDeg, 3)}°` : ''}
       </text>
-      <text x={(xFix + xFree) / 2} y={cy + ry + 28} fontSize="10" fill="var(--gray)" textAnchor="middle">
+      {/* 치수 — 축 길이 L과 지름 d. 숫자를 클릭하면 그 자리에서 고칠 수 있고,
+          단위는 왼쪽 SETTING MENU에서 고른 것을 그대로 쓴다. */}
+      <DimLineH
+        x1={xFix}
+        x2={xFree}
+        y={cy + ry + 22}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.L}
+        unit={s.LUnit}
+        prefix="L = "
+        boxW={56}
+        onChange={onEditNum('L')}
+      />
+      <DimLineV
+        x={xFree + 48}
+        y1={cy - ry}
+        y2={cy + ry}
+        side="right"
+        fontSize={10.5}
+        value={s.sectionType === 'solid_circular' ? s.dims.d : s.dims.d_outer}
+        unit={s.dimUnit}
+        prefix="d = "
+        boxW={56}
+        onChange={onEditDim(s.sectionType === 'solid_circular' ? 'd' : 'd_outer')}
+      />
+      <text x={(xFix + xFree) / 2} y={cy + ry + 58} fontSize="10" fill="var(--gray)" textAnchor="middle">
         비틀림각은 실제보다 {TWIST_VIEW_GAIN}배 확대해 그렸습니다 (숫자는 실제값)
       </text>
     </svg>

@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // CH.5-3 Shear Stress in Beams (Rectangular Section) — 원본 renderShearRect()의 React 버전.
 
@@ -46,7 +47,7 @@ export default function ShearStressRect() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <DistributionSVG s={s} res={res} />
+        <DistributionSVG s={s} res={res} onEditDim={setNum} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -105,8 +106,10 @@ function Steps({ s, res }) {
 }
 
 // 단면 옆에 τ(y)의 포물선 분포 — 중립축에서 가장 불룩하다.
-function DistributionSVG({ s, res }) {
-  const w = 260, h = 220, cx = w / 2, cy = h / 2 - 6;
+function DistributionSVG({ s, res, onEditDim }) {
+  // 왼쪽 높이 치수선 자리를 만들려고 그림 폭을, 아래 폭 치수선 자리를 만들려고 높이를 늘렸다
+  // (원래 260×220).
+  const w = 300, h = 244, cx = w / 2 + 6, cy = 104;
   // 그림 크기는 입력 단위와 무관하게 실제 mm 기준으로.
   const hMM = toBase(s.h || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const bMM = toBase(s.b || 0, s.dimUnit, LENGTH_UNITS) * 1000;
@@ -126,13 +129,37 @@ function DistributionSVG({ s, res }) {
   path += ` L ${x0} ${cy + shapeH / 2}`;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - shapeW / 2} y={cy - shapeH / 2} width={shapeW} height={shapeH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.4" />
       <path d={path} fill="var(--teal)" opacity="0.3" stroke="var(--teal)" strokeWidth="1.6" />
       <text x={x0 + bulgeMax + 18} y={cy} fontSize="9.5" fill="var(--teal)" fontWeight="800" textAnchor="middle">τ_max</text>
       <line x1={cx - shapeW / 2} y1={cy} x2={cx + shapeW / 2} y2={cy} stroke="var(--gray)" strokeWidth="1" strokeDasharray="3 2" />
-      <text x={cx} y={cy + shapeH / 2 + 22} fontSize="9.5" fill="var(--gray)" textAnchor="middle">
-        b={fmt1(s.b, 1)}, h={fmt1(s.h, 1)} {s.dimUnit} — τ(y) 포물선 분포
+      {/* 치수 — b와 h를 글씨로만 적던 걸 치수선 + 클릭해서 고칠 수 있는 숫자로 바꿨다. */}
+      <DimLineV
+        x={cx - shapeW / 2 - 14}
+        y1={cy - shapeH / 2}
+        y2={cy + shapeH / 2}
+        fontSize={10.5}
+        value={s.h}
+        unit={s.dimUnit}
+        prefix="h = "
+        boxW={52}
+        onChange={onEditDim('h')}
+      />
+      <DimLineH
+        x1={cx - shapeW / 2}
+        x2={cx + shapeW / 2}
+        y={cy + shapeH / 2 + 12}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.b}
+        unit={s.dimUnit}
+        prefix="b = "
+        boxW={52}
+        onChange={onEditDim('b')}
+      />
+      <text x={cx} y={cy + shapeH / 2 + 44} fontSize="9.5" fill="var(--gray)" textAnchor="middle">
+        τ(y) 포물선 분포
       </text>
     </svg>
   );

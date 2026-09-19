@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { Dim, DimLineH } from './EditableDim';
 
 // CH.3-2 Torsion Formula (Shear Stress Distribution) — 원본 renderTorsionFormula()의 React 버전.
 
@@ -55,7 +56,7 @@ export default function TorsionFormula() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        <DistributionSVG s={s} res={res} />
+        <DistributionSVG s={s} res={res} onEditDim={setDim} />
         {res.valid ? (
           <>
             <ResultGrid>
@@ -127,9 +128,10 @@ function Steps({ s, res }) {
 }
 
 // 단면 위 전단응력 분포 — 중심(또는 내경)에서 표면까지 화살표가 길어지는 선형 분포
-function DistributionSVG({ s, res }) {
+function DistributionSVG({ s, res, onEditDim }) {
   const dOuterVal = s.sectionType === 'solid_circular' ? s.dims.d : s.dims.d_outer;
-  const w = 280, h = 220, cx = w / 2, cy = h / 2 - 6;
+  // 아래에 지름 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
+  const w = 280, h = 254, cx = w / 2, cy = 98;
   // 그림 크기는 입력 단위와 무관하게 "실제 몇 mm인가"로 정해서, 단위를 바꿔도 원이 튀지 않게 한다.
   const dMM = toBase(dOuterVal || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const rOut = scaledPx(dMM, 150, 40, 85);
@@ -137,7 +139,7 @@ function DistributionSVG({ s, res }) {
   const N = 8;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 280, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 280, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <circle cx={cx} cy={cy} r={rOut} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.6" />
       {rIn > 0 && <circle cx={cx} cy={cy} r={rIn} fill="var(--bg)" stroke="var(--crimson)" strokeWidth="1.4" strokeDasharray="3 2" />}
       {Array.from({ length: N }).map((_, i) => {
@@ -155,7 +157,35 @@ function DistributionSVG({ s, res }) {
           </g>
         );
       })}
-      <text x={cx} y={cy + rOut + 26} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
+      {/* 치수 — 바깥지름은 아래 치수선으로, 속이 빈 단면이면 안지름도 가운데에 적는다.
+          숫자를 클릭하면 그 자리에서 고칠 수 있다. */}
+      {rIn > 0 && (
+        <Dim
+          x={cx}
+          y={cy + 4}
+          color="var(--crimson)"
+          fontSize={10}
+          value={s.dims.d_inner}
+          unit={s.dimUnit}
+          prefix="dᵢ = "
+          boxW={52}
+          onChange={onEditDim('d_inner')}
+        />
+      )}
+      <DimLineH
+        x1={cx - rOut}
+        x2={cx + rOut}
+        y={cy + rOut + 14}
+        labelDy={14}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={dOuterVal}
+        unit={s.dimUnit}
+        prefix={rIn > 0 ? 'dₒ = ' : 'd = '}
+        boxW={52}
+        onChange={onEditDim(s.sectionType === 'solid_circular' ? 'd' : 'd_outer')}
+      />
+      <text x={cx} y={cy + rOut + 44} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
         τ(ρ) = Tρ/Ip — 중심 0 → 표면 최대(선형)
       </text>
     </svg>

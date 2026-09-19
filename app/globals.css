@@ -400,6 +400,18 @@ input[type='range']::-moz-range-thumb{
 }
 .color-dot{ width:9px; height:9px; border-radius:0; display:inline-block; margin-right:6px; vertical-align:middle; }
 
+/* VISUALIZER 위의 치수 숫자(components/calculators/EditableDim.jsx) — 클릭하면 그 자리에서
+   고칠 수 있다는 걸 알 수 있게 점선 밑줄을 깔고, 마우스를 올리면 진하게 만든다.
+   SVG <text>라 text-decoration 대신 밑줄 굵기/색을 직접 지정해야 크롬에서 점선이 제대로 나온다. */
+.dim-label{
+  cursor:pointer;
+  text-decoration:underline dotted;
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+  opacity:0.9;
+}
+.dim-label:hover{ opacity:1; text-decoration:underline solid; }
+
 .viz-placeholder{
   height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px;
   border:1.5px dashed var(--line); border-radius:0; color:var(--gray-soft); font-size:13px; text-align:center; padding:20px;

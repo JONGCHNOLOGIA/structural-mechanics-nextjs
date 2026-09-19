@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입 renderMaxBeamStress() / mbBuildVisuals()를 React로 옮긴 버전.
 
@@ -81,7 +82,17 @@ export default function MaxBeamStress() {
         </h3>
         {r ? (
           <>
-            <MaxBeamStressSVG width={width} height={height} y={y} r={r} />
+            <MaxBeamStressSVG
+              width={width}
+              height={height}
+              y={y}
+              r={r}
+              lenUnit={units.length}
+              lenF={lenF}
+              onEditWidth={(v) => setWidth(v * lenF)}
+              onEditHeight={(v) => setHeight(v * lenF)}
+              onEditY={(v) => setY(v * lenF)}
+            />
             <div className="steps">
               <FormulaSection title="위치별 응력·주응력">
                 <div className="step-formula">
@@ -148,18 +159,55 @@ function StressElement({ cx, cy, size, sx, sy, txy, color, label }) {
   );
 }
 
-function MaxBeamStressSVG({ width, height, y, r }) {
+function MaxBeamStressSVG({ width, height, y, r, lenUnit, lenF, onEditWidth, onEditHeight, onEditY }) {
   const scale = 180 / height;
   const hPx = height * scale, wPx = Math.min(80, width * scale);
-  const cx = 110, cy = 140;
+  // 치수선을 왼쪽에 그을 자리를 두려고 단면을 오른쪽으로 조금 옮겼다(원래 cx=110).
+  const cx = 130, cy = 140;
   const yPx = cy - (y / height) * hPx;
   return (
-    <svg viewBox="0 0 460 300" style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block' }}>
+    <svg viewBox="0 0 460 320" style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - wPx / 2} y={cy - hPx / 2} width={wPx} height={hPx} fill="#F4F1E8" stroke="#51626F" strokeWidth="1.3" />
       <line x1={cx - wPx / 2 - 10} y1={cy} x2={cx + wPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
       <circle cx={cx} cy={yPx} r="5" fill="#C3002F" />
-      <text x={cx + wPx / 2 + 16} y={yPx + 4} fontSize="13" fill="#C3002F" fontWeight="800">현재 y</text>
+      <text x={cx + wPx / 2 + 16} y={yPx - 8} fontSize="13" fill="#C3002F" fontWeight="800">현재 y</text>
+      {/* 중립축에서 현재 지점까지의 거리 y도 치수로 적어두고 클릭해서 고칠 수 있게 한다 */}
+      <Dim
+        x={cx + wPx / 2 + 16}
+        y={yPx + 7}
+        anchor="start"
+        color="#C3002F"
+        fontSize={12}
+        value={y / lenF}
+        unit={lenUnit}
+        boxW={62}
+        min={null}
+        onChange={onEditY}
+      />
       <text x={cx} y={cy - hPx / 2 - 12} fontSize="13" fill="#8A97A2" textAnchor="middle">단면 (y 위치 표시)</text>
+
+      {/* 단면 치수 — 클릭하면 그 자리에서 값 수정 */}
+      <DimLineV
+        x={cx - wPx / 2 - 18}
+        y1={cy - hPx / 2}
+        y2={cy + hPx / 2}
+        fontSize={12}
+        value={height / lenF}
+        unit={lenUnit}
+        boxW={62}
+        onChange={onEditHeight}
+      />
+      <DimLineH
+        x1={cx - wPx / 2}
+        x2={cx + wPx / 2}
+        y={cy + hPx / 2 + 14}
+        labelDy={15}
+        fontSize={12}
+        value={width / lenF}
+        unit={lenUnit}
+        boxW={62}
+        onChange={onEditWidth}
+      />
       <StressElement cx={330} cy={140} size={100} sx={r.sigmaX} sy={0} txy={r.tau} color="#1E7F72" label="현재 y에서의 응력 요소" />
     </svg>
   );

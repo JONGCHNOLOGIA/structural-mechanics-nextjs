@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
+import { Dim, DimLineH } from './EditableDim';
 
 // CH.5-4 Shear Stress (Circular) and Shear Flow in Built-up Beams —
 // 원본 renderShearCircularFlow()의 React 버전.
@@ -75,6 +76,7 @@ export default function ShearFlowCircular() {
           <>
             {res.mode === 'circular' ? (
               <>
+                <CircularSectionSVG s={s} res={res} onEditD={setNum('d')} />
                 <ResultGrid>
                   <ResultCard label="단면2차모멘트 I" value={`${fmt1(res.I * 1e12, 2)} mm⁴`} />
                   <ResultCard label="단면적 A" value={`${fmt1(res.A * 1e6, 2)} mm²`} />
@@ -162,6 +164,60 @@ function Steps({ s, res }) {
         final={`s = ${fmt1(mm(res.spacing), 2)} mm 이하로 배치`}
       />
     </>
+  );
+}
+
+// 원형 단면과 전단응력 분포. 지름은 치수 숫자를 클릭해서 바로 고칠 수 있다
+// (원래는 그림 없이 결과 카드만 있었다).
+function CircularSectionSVG({ s, res, onEditD }) {
+  const w = 300, h = 216, cx = 104, cy = 96;
+  const dMM = toBase(s.d || 0, s.dimUnit, LENGTH_UNITS) * 1000;
+  const r = scaledPx(dMM, 300, 30, 70);
+  const N = 9;
+  const armX = cx + r + 10;
+  const maxLen = res.valid ? scaledPx(MPa(res.tauMax), 40, 20, 80) : 40;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 300, margin: '0 auto 6px', display: 'block', overflow: 'visible' }}>
+      <circle cx={cx} cy={cy} r={r} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.4" />
+      <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="var(--gray)" strokeWidth="1" strokeDasharray="3 2" />
+      <text x={cx - r - 6} y={cy - 5} fontSize="9.5" fill="var(--gray)" textAnchor="end">N.A.</text>
+
+      {/* 전단응력은 중립축에서 최대, 위아래 끝에서 0인 포물선 분포 */}
+      {Array.from({ length: N }).map((_, k) => {
+        const t = (k / (N - 1)) * 2 - 1; // −1(하단) ~ +1(상단)
+        const yy = cy - t * r;
+        const len = maxLen * (1 - t * t);
+        return <line key={k} x1={armX} y1={yy} x2={armX + len} y2={yy} stroke="var(--teal)" strokeWidth="2" />;
+      })}
+      <text x={armX + maxLen / 2} y={cy - r - 8} fontSize="9.5" fill="var(--teal)" fontWeight="800" textAnchor="middle">
+        τ(y) 분포
+      </text>
+      <Dim
+        x={armX + maxLen + 6}
+        y={cy + 4}
+        anchor="start"
+        color="var(--teal)"
+        fontSize={10}
+        value={MPa(res.tauMax)}
+        unit="MPa"
+        prefix="τ_max = "
+      />
+
+      {/* 지름 치수 — 클릭하면 그 자리에서 고칠 수 있다 */}
+      <DimLineH
+        x1={cx - r}
+        x2={cx + r}
+        y={cy + r + 14}
+        labelDy={14}
+        fontSize={10.5}
+        value={s.d}
+        unit={s.dimUnit}
+        prefix="d = "
+        boxW={52}
+        onChange={onEditD}
+      />
+    </svg>
   );
 }
 

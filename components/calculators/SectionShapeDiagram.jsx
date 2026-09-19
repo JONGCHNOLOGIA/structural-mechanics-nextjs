@@ -1,5 +1,7 @@
 'use client';
 
+import { Dim } from './EditableDim';
+
 // 단면 특성 계산기의 단면 도식. 모든 치수(mm)를 실제 비율 그대로 축척해서 그리고,
 // 도심(centroid) 위치를 점선으로 표시한다 (T형은 좌우대칭이 아니라 ȳ가 중앙이 아님).
 const COLOR = '#51626F';
@@ -10,7 +12,9 @@ function scaleFor(boundW, boundH) {
   return Math.min(MAX_PX / boundW, MAX_PX / boundH);
 }
 
-export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
+export default function SectionShapeDiagram({ shape, d, ybar, totalHeight, onEditDim }) {
+  // 치수 글씨를 클릭하면 그 자리에서 고칠 수 있게, DimLabel에 어떤 입력값인지(key)를 같이 넘긴다.
+  // 이 계산기는 단위가 mm로 고정이라 단위 선택은 없고 숫자만 바꾼다.
   const cx = 150;
   const cy = 140;
 
@@ -26,8 +30,8 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
     content = (
       <>
         <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
-        <DimLabel x={cx} y={cy - h / 2 - 8} text={`b = ${d.b} mm`} />
-        <DimLabel x={cx + w / 2 + 26} y={cy} text={`h = ${d.h} mm`} rotate />
+        <DimLabel x={cx} y={cy - h / 2 - 8} prefix="b = " value={d.b} dimKey="b" onEditDim={onEditDim} />
+        <DimLabel x={cx + w / 2 + 26} y={cy} prefix="h = " value={d.h} dimKey="h" onEditDim={onEditDim} rotate />
       </>
     );
   } else if (shape === 'circle') {
@@ -37,7 +41,7 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
     content = (
       <>
         <circle cx={cx} cy={cy} r={r} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
-        <DimLabel x={cx} y={cy - r - 8} text={`d = ${d.dia} mm`} />
+        <DimLabel x={cx} y={cy - r - 8} prefix="d = " value={d.dia} dimKey="dia" onEditDim={onEditDim} />
       </>
     );
   } else if (shape === 'hollowCircle') {
@@ -48,8 +52,8 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
       <>
         <circle cx={cx} cy={cy} r={ro} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
         <circle cx={cx} cy={cy} r={ri} fill="var(--bg, #FAF9F6)" stroke={COLOR} strokeWidth="1" />
-        <DimLabel x={cx} y={cy - ro - 8} text={`dₒ = ${d.diaOuter} mm`} />
-        <DimLabel x={cx} y={cy + 4} text={`dᵢ = ${d.diaInner}`} small />
+        <DimLabel x={cx} y={cy - ro - 8} prefix="dₒ = " value={d.diaOuter} dimKey="diaOuter" onEditDim={onEditDim} />
+        <DimLabel x={cx} y={cy + 4} prefix="dᵢ = " value={d.diaInner} dimKey="diaInner" onEditDim={onEditDim} unit="" small />
       </>
     );
   } else if (shape === 'hollowRect') {
@@ -61,8 +65,10 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
       <>
         <rect x={cx - W / 2} y={cy - H / 2} width={W} height={H} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
         <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} fill="var(--bg, #FAF9F6)" stroke={COLOR} strokeWidth="1" />
-        <DimLabel x={cx} y={cy - H / 2 - 8} text={`B = ${d.B}, H = ${d.H} mm`} />
-        <DimLabel x={cx} y={cy + 4} text={`b = ${d.b}, h = ${d.h}`} small />
+        <DimLabel x={cx - 34} y={cy - H / 2 - 8} prefix="B = " value={d.B} dimKey="B" onEditDim={onEditDim} unit="" />
+        <DimLabel x={cx + 34} y={cy - H / 2 - 8} prefix="H = " value={d.H} dimKey="H" onEditDim={onEditDim} />
+        <DimLabel x={cx - 30} y={cy + 4} prefix="b = " value={d.b} dimKey="b" onEditDim={onEditDim} unit="" small />
+        <DimLabel x={cx + 30} y={cy + 4} prefix="h = " value={d.h} dimKey="h" onEditDim={onEditDim} unit="" small />
       </>
     );
   } else if (shape === 'iBeam') {
@@ -76,8 +82,10 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
         <rect x={cx - bf / 2} y={top} width={bf} height={tf} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
         <rect x={cx - tw / 2} y={top + tf} width={tw} height={h - 2 * tf} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
         <rect x={cx - bf / 2} y={top + h - tf} width={bf} height={tf} fill="#F7E3E6" stroke={COLOR} strokeWidth="1.5" />
-        <DimLabel x={cx} y={top - 8} text={`bf = ${d.bf} mm`} />
-        <DimLabel x={cx + bf / 2 + 26} y={cy} text={`h = ${d.h} mm`} rotate />
+        <DimLabel x={cx} y={top - 8} prefix="bf = " value={d.bf} dimKey="bf" onEditDim={onEditDim} />
+        <DimLabel x={cx + bf / 2 + 26} y={cy} prefix="h = " value={d.h} dimKey="h" onEditDim={onEditDim} rotate />
+        <DimLabel x={cx + bf / 2 + 26} y={cy + 16} prefix="tf = " value={d.tf} dimKey="tf" onEditDim={onEditDim} rotate small />
+        <DimLabel x={cx + bf / 2 + 26} y={cy + 30} prefix="tw = " value={d.tw} dimKey="tw" onEditDim={onEditDim} rotate small />
       </>
     );
   } else if (shape === 'tSection') {
@@ -96,14 +104,16 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
         <text x={cx + bf / 2 + 14} y={centroidY + 4} fontSize="10" fontWeight="800" fill={CENTROID}>
           ȳ = {ybar.toFixed(1)}
         </text>
-        <DimLabel x={cx} y={top - 8} text={`bf = ${d.bf} mm`} />
-        <DimLabel x={cx - bf / 2 - 26} y={cy} text={`h = ${d.h} mm`} rotate />
+        <DimLabel x={cx} y={top - 8} prefix="bf = " value={d.bf} dimKey="bf" onEditDim={onEditDim} />
+        <DimLabel x={cx - bf / 2 - 30} y={cy} prefix="h = " value={d.h} dimKey="h" onEditDim={onEditDim} rotate />
+        <DimLabel x={cx - bf / 2 - 30} y={cy + 16} prefix="tf = " value={d.tf} dimKey="tf" onEditDim={onEditDim} rotate small />
+        <DimLabel x={cx - bf / 2 - 30} y={cy + 30} prefix="tw = " value={d.tw} dimKey="tw" onEditDim={onEditDim} rotate small />
       </>
     );
   }
 
   return (
-    <svg viewBox="0 0 300 260" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block' }}>
+    <svg viewBox="0 0 300 264" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {content}
       {shape !== 'tSection' && (
         <line x1={cx - 90} y1={cy} x2={cx + 90} y2={cy} stroke={CENTROID} strokeWidth="1" strokeDasharray="4 3" opacity="0.6" />
@@ -112,18 +122,21 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight }) {
   );
 }
 
-function DimLabel({ x, y, text, rotate, small }) {
+// 치수 하나. onEditDim이 오면 숫자를 클릭해서 그 자리에서 고칠 수 있다.
+// rotate는 도형 옆에 붙이는 라벨이라 가운데 정렬 대신 왼쪽 정렬로만 쓴다(이름은 원래대로 둠).
+function DimLabel({ x, y, prefix, value, unit = 'mm', dimKey, onEditDim, rotate, small }) {
   return (
-    <text
+    <Dim
       x={x}
       y={y}
+      value={value}
+      prefix={prefix}
+      unit={unit}
       fontSize={small ? 9.5 : 10.5}
-      fontWeight="700"
-      fill="#51626F"
-      textAnchor={rotate ? 'start' : 'middle'}
-      transform={rotate ? undefined : undefined}
-    >
-      {text}
-    </text>
+      fontWeight={700}
+      anchor={rotate ? 'start' : 'middle'}
+      boxW={54}
+      onChange={onEditDim ? (v) => onEditDim(dimKey, v) : undefined}
+    />
   );
 }

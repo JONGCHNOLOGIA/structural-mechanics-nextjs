@@ -9,6 +9,7 @@ import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import BeamElevationSVG from './BeamElevationSVG';
 import BeamElevation3D from './BeamElevation3D';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입의 renderTransformedSection()을 React로 옮긴 버전. 블록 편집 UI(슬라이더+3분할 타일,
 // 드래그 순서변경)는 CompositeBeams.jsx와 동일한 패턴으로 맞춤.
@@ -91,6 +92,22 @@ export default function TransformedSection() {
     const newVal = val * factor;
     const cid = blocks[index].colorId;
     setBlocks((prev) => prev.map((b) => (b.colorId === cid ? { ...b, [field]: newVal } : b)));
+  }
+
+  // VISUALIZER 치수 라벨에서 고칠 때 — SVG 쪽은 result.blocks만 갖고 있어서 index가 아니라
+  // colorId로 찾는다 (CompositeBeams와 같은 방식).
+  // field가 'width'면 사다리꼴이 아니라 직사각형이라는 뜻이라 위/아래 폭을 함께 바꾼다.
+  function updateBlockDimByColorId(colorId, field, value) {
+    const val = parseFloat(value);
+    if (isNaN(val) || val <= 0) return;
+    const base = val * lenF;
+    setBlocks((prev) =>
+      prev.map((b) => {
+        if (b.colorId !== colorId) return b;
+        if (field === 'width') return { ...b, topWidth: base, bottomWidth: base };
+        return { ...b, [field]: base };
+      })
+    );
   }
 
   function changeBlockEUnit(index, v) {
@@ -184,7 +201,7 @@ export default function TransformedSection() {
 
         {result ? (
           <>
-            <TransformedSVG result={result} refBlock={refBlock} />
+            <TransformedSVG result={result} refBlock={refBlock} units={units} onEditDim={updateBlockDimByColorId} />
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '14px 0' }}>
               <span style={{ fontSize: 13, color: 'var(--gray-soft)', fontWeight: 700 }}>
@@ -420,16 +437,21 @@ function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove,
 }
 
 // 원래 단면 | 환산 단면 | 응력 다이어그램, 세 구역을 한 SVG에 그림 (프로토타입 tsBuildVizSVG와 동일 로직)
-function TransformedSVG({ result, refBlock }) {
-  const svgW = 720,
-    svgH = 380;
+function TransformedSVG({ result, refBlock, units, onEditDim }) {
+  const lenF = UNIT_OPTIONS.length[units.length];
+  const dispLen = (v) => v / lenF;
+
+  // 원래 단면 좌우로 치수(왼쪽 높이, 오른쪽 폭)를 적을 자리를 만들려고 그림판을 넓히고
+  // 두 단면 사이 간격(zoneGap)도 벌렸다 — 원래는 720×380에 zoneGap 60이었다.
+  const svgW = 800,
+    svgH = 392;
   const padTop = 44,
-    padBottom = 44;
+    padBottom = 56;
   const drawH = svgH - padTop - padBottom;
   const scale = drawH / result.totalHeight;
 
   const zoneW = 150,
-    zoneGap = 60;
+    zoneGap = 130;
   const zoneA_cx = 90 + zoneW / 2;
   const zoneB_cx = 90 + zoneW + zoneGap + zoneW / 2;
   const diagCenterX = 90 + 2 * zoneW + zoneGap + 110;
@@ -466,7 +488,7 @@ function TransformedSVG({ result, refBlock }) {
   const sToPx = (s) => diagCenterX + (s / maxAbsStress) * diagHalfW;
 
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 720, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', maxWidth: 800, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <text x={zoneA_cx} y={padTop - 16} fontSize="14" fill="#8A97A2" textAnchor="middle" fontWeight="800">
         원래 단면
       </text>
@@ -482,6 +504,86 @@ function TransformedSVG({ result, refBlock }) {
           />
         );
       })}
+
+      {/* 치수 — 왼쪽에 블록별 높이, 오른쪽에 폭. 클릭하면 그 자리에서 값을 고칠 수 있다.
+          위/아래 폭이 같은(= 사다리꼴이 아닌) 블록은 폭 하나로만 적고, 고치면 둘 다 같이 바뀐다.
+          다른 경우에만 위/아래를 따로 적되, 위아래 블록의 라벨끼리 겹치지 않게 경계에서 안쪽으로 밀어 넣는다. */}
+      {result.blocks.map((b, i) => {
+        const c = blockColor(b);
+        const yT = yToPx(b.yTop);
+        const yB = yToPx(b.yBottom);
+        const wx = zoneA_cx + zoneW / 2 + 10;
+        const isRect = Math.abs(b.topWidth - b.bottomWidth) < 1e-9;
+        return (
+          <g key={`dim-${i}`}>
+            <DimLineV
+              x={zoneA_cx - zoneW / 2 - 16}
+              y1={yT}
+              y2={yB}
+              color={c.stroke}
+              fontSize={12}
+              value={dispLen(b.height)}
+              unit={units.length}
+              boxW={62}
+              onChange={(v) => onEditDim(b.colorId, 'height', v)}
+            />
+            {isRect ? (
+              <Dim
+                x={wx}
+                y={(yT + yB) / 2 + 4}
+                anchor="start"
+                color={c.stroke}
+                fontSize={12}
+                value={dispLen(b.topWidth)}
+                unit={units.length}
+                suffix=" wide"
+                boxW={62}
+                onChange={(v) => onEditDim(b.colorId, 'width', v)}
+              />
+            ) : (
+              <>
+                <Dim
+                  x={wx}
+                  y={yT + 13}
+                  anchor="start"
+                  color={c.stroke}
+                  fontSize={11.5}
+                  value={dispLen(b.topWidth)}
+                  unit={units.length}
+                  suffix=" (top)"
+                  boxW={58}
+                  onChange={(v) => onEditDim(b.colorId, 'topWidth', v)}
+                />
+                <Dim
+                  x={wx}
+                  y={yB - 5}
+                  anchor="start"
+                  color={c.stroke}
+                  fontSize={11.5}
+                  value={dispLen(b.bottomWidth)}
+                  unit={units.length}
+                  suffix=" (bot)"
+                  boxW={58}
+                  onChange={(v) => onEditDim(b.colorId, 'bottomWidth', v)}
+                />
+              </>
+            )}
+          </g>
+        );
+      })}
+      {/* 단면 맨 아래 폭 — 두 번째 스크린샷처럼 도형 밑에 치수선으로 한 번 더 적어준다. */}
+      <DimLineH
+        x1={zoneA_cx - (result.blocks[0].bottomWidth * scaleA) / 2}
+        x2={zoneA_cx + (result.blocks[0].bottomWidth * scaleA) / 2}
+        y={yToPx(0) + 14}
+        labelDy={15}
+        fontSize={12}
+        value={dispLen(result.blocks[0].bottomWidth)}
+        unit={units.length}
+        boxW={62}
+        onChange={(v) => onEditDim(result.blocks[0].colorId, 'bottomWidth', v)}
+      />
+
       <line x1={zoneA_cx - zoneW / 2 - 8} y1={naY} x2={zoneA_cx + zoneW / 2 + 8} y2={naY} stroke="#51626F" strokeWidth="1.1" strokeDasharray="5 4" />
 
       <line

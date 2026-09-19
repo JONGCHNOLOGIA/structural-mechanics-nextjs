@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입 renderElastoplastic() / epBuildVisuals()를 React로 옮긴 버전.
 
@@ -80,7 +81,15 @@ export default function ElastoplasticBending() {
         </h3>
         {r ? (
           <>
-            <ElastoplasticSVG width={width} height={height} r={r} />
+            <ElastoplasticSVG
+              width={width}
+              height={height}
+              r={r}
+              lenUnit={units.length}
+              lenF={lenF}
+              onEditWidth={(v) => setWidth(v * lenF)}
+              onEditHeight={(v) => setHeight(v * lenF)}
+            />
             <div className="result-grid">
               <div className="result-card">
                 <div className="l">현재 단계</div>
@@ -130,8 +139,9 @@ export default function ElastoplasticBending() {
   );
 }
 
-function ElastoplasticSVG({ width, height, r }) {
-  const w = 520, hh = 320, padTop = 30;
+function ElastoplasticSVG({ width, height, r, lenUnit, lenF, onEditWidth, onEditHeight }) {
+  // 왼쪽 높이 치수와 아래쪽 폭 치수를 적을 자리를 만들려고 그림판을 조금 넓혔다(원래 520×320).
+  const w = 560, hh = 352, padTop = 30;
   const scale = 220 / height;
   const bPx = width * scale, hPx = height * scale;
   const cx1 = 130, cy = padTop + hPx / 2;
@@ -154,6 +164,29 @@ function ElastoplasticSVG({ width, height, r }) {
       )}
       <line x1={cx1 - bPx / 2 - 10} y1={cy} x2={cx1 + bPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
       <text x={cx1} y={cy - hPx / 2 - 10} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">단면 (탄성코어 vs 소성영역)</text>
+
+      {/* 치수 — 숫자를 클릭하면 그 자리에서 폭/높이를 고칠 수 있다. 단위는 SETTING MENU 설정을 따른다. */}
+      <DimLineV
+        x={cx1 - bPx / 2 - 16}
+        y1={cy - hPx / 2}
+        y2={cy + hPx / 2}
+        fontSize={12}
+        value={height / lenF}
+        unit={lenUnit}
+        boxW={62}
+        onChange={onEditHeight}
+      />
+      <DimLineH
+        x1={cx1 - bPx / 2}
+        x2={cx1 + bPx / 2}
+        y={cy + hPx / 2 + 14}
+        labelDy={15}
+        fontSize={12}
+        value={width / lenF}
+        unit={lenUnit}
+        boxW={62}
+        onChange={onEditWidth}
+      />
 
       <line x1={diagCx} y1={padTop} x2={diagCx} y2={padTop + hPx} stroke="#8A97A2" strokeWidth="1.3" />
       <text x={diagCx - diagHalfW - 4} y={padTop - 8} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">압축(−)</text>
