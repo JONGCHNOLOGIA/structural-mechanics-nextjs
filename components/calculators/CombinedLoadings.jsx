@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { principalFromState } from '@/lib/calc/principalStress';
-import FormulaSection from './FormulaSection';
+import FormulaSection, { Collapsible } from './FormulaSection';
+import CombinedExampleView from './CombinedExampleView';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
@@ -83,6 +84,14 @@ export default function CombinedLoadings() {
             </div>
           </FormulaSection>
         </div>
+        {/* 교재 예제 8-4 ~ 8-7. 조합하중은 "어떤 하중이 어떤 응력이 되는가"를 한 번 제대로 따라가 보는
+            게 제일 빠른데, 그걸 스스로 하기 어려워서 예제를 단계별로 펴볼 수 있게 붙였다. */}
+        <div className="steps" style={{ marginTop: 18 }}>
+          <Collapsible title="교재 예제 풀어보기 (8-4 ~ 8-7)" hint="mmch8.pdf" defaultOpen>
+            <CombinedExampleView />
+          </Collapsible>
+        </div>
+
         <EditableText as="div" className="ai-hint" contentKey="calc.CombinedLoadings.aiHint" defaultText="💬 왜 평면 밖(out-of-plane) 전단까지 확인해야 하는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
       </div>
 
