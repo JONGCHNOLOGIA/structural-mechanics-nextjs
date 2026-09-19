@@ -1,38 +1,47 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { computeHookesLaw } from '@/lib/calc/hookesLaw';
-import FormulaSection, { Collapsible } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
-import Frac from '@/components/Frac';
 import StressStateCard from './StressStateCard';
-import { Dim } from './EditableDim';
-import PlateDeform3D from './PlateDeform3D';
 
-// 프로토타입 renderHookesLaw()를 React로 옮긴 버전.
+/*
+  평면응력에서 응력과 변형률의 관계.
+
+  이 화면이 보여주려는 건 딱 하나다 — **x·y·z 축이 서로 묶여 있다는 것**.
+  σx만 당겨도 y가 줄고(포아송) z도 줄어든다. 그 구조를 가장 정확하게 담고 있는 건
+  교재의 행렬이라, 행렬을 화면 가운데에 그대로 두고 값만 실시간으로 채운다.
+
+  행렬이 못 하는 게 하나 있다: ν가 "얼마나 세게" 작용하는지가 식만 봐서는 안 온다.
+  그래서 ν 슬라이더와 변형 그림만 곁들인다. 0에서 0.5로 끌면 세로가 줄어드는 정도가
+  눈에 띄게 달라지고, 행렬의 −ν 자리가 같이 바뀐다.
+
+  (예전에는 여기에 변형률 표, 응력↔변형률 모드 토글, 두께 입력, 얇은 판 3D까지 있었는데
+   한 화면에 너무 많아서 정작 행렬이 묻혔다. 전부 덜어내고 행렬 중심으로 되돌린 것)
+*/
+
+const CRIMSON = '#C3002F';
+const TEAL = '#1E7F72';
+const GOLD = '#B0790A';
+const GRAY = '#8A97A2';
+const INK = '#51626F';
 
 export default function HookesLaw() {
-  const [units, setUnits] = useState({ stress: 'psi', length: 'in' });
-  const [mode, setMode] = useState('stressToStrain');
+  const [units, setUnits] = useState({ stress: 'psi' });
   const [E, setE] = useState(30000 * 6894757);
   const [nu, setNu] = useState(0.3);
   const [sigmaX, setSigmaX] = useState(10000 * 6894.757);
   const [sigmaY, setSigmaY] = useState(-4000 * 6894.757);
   const [tauXY, setTauXY] = useState(3000 * 6894.757);
-  const [epsX, setEpsX] = useState(0.001);
-  const [epsY, setEpsY] = useState(-0.0003);
-  const [gammaXY, setGammaXY] = useState(0.0005);
-  const [thickness, setThickness] = useState(null);
 
   const stressF = UNIT_OPTIONS.stress[units.stress];
-  const lenF = UNIT_OPTIONS.length[units.length];
   const disp = (b, f) => b / f;
 
   const r = useMemo(
-    () => (E && nu !== null ? computeHookesLaw({ mode, E, nu, sigmaX, sigmaY, tauXY, epsX, epsY, gammaXY, thickness }) : null),
-    [mode, E, nu, sigmaX, sigmaY, tauXY, epsX, epsY, gammaXY, thickness]
+    () => (E && nu !== null ? computeHookesLaw({ mode: 'stressToStrain', E, nu, sigmaX, sigmaY, tauXY }) : null),
+    [E, nu, sigmaX, sigmaY, tauXY]
   );
 
   return (
@@ -42,44 +51,43 @@ export default function HookesLaw() {
         <h3>SETTING MENU</h3>
         <EditableText
           contentKey="calc.HookesLaw.intro"
-          defaultText="평면응력 상태에서 응력↔변형률을 서로 변환해요. 어느 쪽 값을 알고 있는지 선택하세요."
+          defaultText="응력을 주면 재료가 얼마나 변형되는지를 정하는 관계예요. 핵심은 **x·y·z가 따로 놀지 않는다**는 것 — 한 방향으로만 당겨도 나머지 두 방향이 같이 움직입니다."
           style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
         />
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-          <button className={'add-block' + (mode === 'stressToStrain' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setMode('stressToStrain')}>
-            응력 → 변형률
-          </button>
-          <button className={'add-block' + (mode === 'strainToStress' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setMode('strainToStress')}>
-            변형률 → 응력
-          </button>
-        </div>
+
         <div className="field">
-          <label>단위 (응력 / 길이)</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.stress} onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.stress).map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-            <select className="unit-inline" style={{ width: '100%' }} value={units.length} onChange={(e) => setUnits((p) => ({ ...p, length: e.target.value }))}>
-              {Object.keys(UNIT_OPTIONS.length).map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-          </div>
+          <label>응력 단위</label>
+          <select
+            className="unit-inline"
+            style={{ width: '100%' }}
+            value={units.stress}
+            onChange={(e) => setUnits((p) => ({ ...p, stress: e.target.value }))}
+          >
+            {Object.keys(UNIT_OPTIONS.stress).map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
         </div>
+
         <div className="field">
           <label>탄성계수 E — {fmt(disp(E, stressF))} {units.stress}</label>
-          <input type="number" defaultValue={fmtInput(disp(E, stressF))} onBlur={(e) => setE(parseFloat(e.target.value) * stressF)} />
+          <input
+            key={`E-${E}-${units.stress}`}
+            type="number"
+            defaultValue={fmtInput(disp(E, stressF))}
+            onBlur={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!isNaN(v) && v > 0) setE(v * stressF);
+            }}
+          />
         </div>
+
         <div className="field">
           <label>포아송비 ν — {nu}</label>
-          {/* 슬라이더를 같이 둔 이유: ν를 0 → 0.3 → 0.5로 훑으면 가로로 당길 때 세로가
-              얼마나 따라 줄어드는지(포아송 효과)가 그림에서 바로 보인다. */}
+          {/* 이 슬라이더가 이 페이지의 핵심 조작이다. 0 → 0.5로 끌면 가로로 당길 때
+              세로가 얼마나 따라 줄어드는지가 오른쪽 그림과 행렬에서 동시에 바뀐다. */}
           <input
             type="range"
             min="0"
@@ -89,57 +97,36 @@ export default function HookesLaw() {
             onChange={(e) => setNu(parseFloat(e.target.value))}
             style={{ width: '100%', marginBottom: 6 }}
           />
-          <input
-            key={`nu-${nu}`}
-            type="number"
-            step="0.01"
-            placeholder="0~0.5"
-            defaultValue={nu}
-            onBlur={(e) => {
-              const v = parseFloat(e.target.value);
-              if (!isNaN(v)) setNu(Math.max(0, Math.min(0.5, v)));
-            }}
-          />
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[0, 0.3, 0.5].map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={'add-block' + (Math.abs(nu - v) < 1e-9 ? ' active' : '')}
+                style={{ margin: 0, flex: 1, padding: '6px 0', fontSize: 11.5 }}
+                onClick={() => setNu(v)}
+              >
+                ν = {v}
+              </button>
+            ))}
+          </div>
         </div>
-        {mode === 'stressToStrain' ? (
-          <StressStateCard
-            sigmaX={sigmaX}
-            sigmaY={sigmaY}
-            tauXY={tauXY}
-            units={units}
-            onFieldChange={(field, value) => {
-              const val = parseFloat(value);
-              if (isNaN(val)) return;
-              const newVal = val * stressF;
-              if (field === 'sigmaX') setSigmaX(newVal);
-              else if (field === 'sigmaY') setSigmaY(newVal);
-              else if (field === 'tauXY') setTauXY(newVal);
-            }}
-            onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
-          />
-        ) : (
-          <StrainStateCard
-            epsX={epsX}
-            epsY={epsY}
-            gammaXY={gammaXY}
-            onFieldChange={(field, value) => {
-              const val = parseFloat(value);
-              if (isNaN(val)) return;
-              if (field === 'epsX') setEpsX(val);
-              else if (field === 'epsY') setEpsY(val);
-              else if (field === 'gammaXY') setGammaXY(val);
-            }}
-          />
-        )}
-        <div className="field">
-          <label>두께 t (선택, Δt 계산용){thickness !== null ? ` — ${fmt(disp(thickness, lenF))} ${units.length}` : ''}</label>
-          <input
-            type="number"
-            placeholder="값 입력"
-            defaultValue={thickness === null ? '' : fmt(disp(thickness, lenF))}
-            onBlur={(e) => setThickness(e.target.value === '' ? null : parseFloat(e.target.value) * lenF)}
-          />
-        </div>
+
+        <StressStateCard
+          sigmaX={sigmaX}
+          sigmaY={sigmaY}
+          tauXY={tauXY}
+          units={units}
+          onFieldChange={(field, value) => {
+            const val = parseFloat(value);
+            if (isNaN(val)) return;
+            const newVal = val * stressF;
+            if (field === 'sigmaX') setSigmaX(newVal);
+            else if (field === 'sigmaY') setSigmaY(newVal);
+            else if (field === 'tauXY') setTauXY(newVal);
+          }}
+          onUnitChange={(v) => setUnits((p) => ({ ...p, stress: v }))}
+        />
       </div>
 
       {/* ---------------- Visualizer ---------------- */}
@@ -147,71 +134,19 @@ export default function HookesLaw() {
         <h3>VISUALIZER</h3>
         {r ? (
           <>
-            <DeformSVG
-              r={r}
-              stressF={stressF}
-              unitStress={units.stress}
-              thickness={thickness === null ? null : disp(thickness, lenF)}
-              lengthUnit={units.length}
-              onEditThickness={(v) => setThickness(v * lenF)}
+            <DeformSVG r={r} />
+            <ComplianceMatrix r={r} nu={nu} E={E} stressF={stressF} unitStress={units.stress} />
+            <EditableText
+              as="div"
+              className="ai-hint"
+              contentKey="calc.HookesLaw.aiHint"
+              defaultText="💬 왜 εz가 σx, σy만으로 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요."
             />
-            <Collapsible
-              title="두께 방향 (εz) — 얇은 판 3D"
-              hint="평면응력인데 왜 z로도 변형되는가"
-            >
-              <EditableText
-                as="div"
-                contentKey="calc.HookesLaw.ezNote"
-                defaultText="평면응력은 **σz = 0**이라는 뜻이지, **εz = 0**이라는 뜻이 아니에요. σx와 σy가 옆으로 당기거나 미는 만큼 판은 두께 방향으로도 줄거나 늘어납니다 — εz = −(ν/E)(σx+σy). 아래 판을 보면 XY 방향으로만 힘을 줬는데도 두께가 바뀌는 게 보여요."
-                style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 10, lineHeight: 1.7 }}
-              />
-              <PlateDeform3D ex={r.ex} ey={r.ey} ez={r.ez} gxy={r.gxy} />
-            </Collapsible>
-            <div className="steps" style={{ marginTop: 12 }}>
-              {mode === 'stressToStrain' ? (
-                <FormulaSection title="응력 → 변형률">
-                  <div className="step-formula">
-                    εx = <Frac num="σx − ν·σy" den="E" /> &nbsp; εy = <Frac num="σy − ν·σx" den="E" /> &nbsp; γxy = <Frac num="τxy" den="G" />
-                  </div>
-                  <div className="step-row">
-                    G = <Frac num="E" den="2(1+ν)" /> = {fmtSci(r.G)} Pa
-                  </div>
-                  <div className="step-final">
-                    εx={r.ex.toExponential(3)} &nbsp; εy={r.ey.toExponential(3)} &nbsp; γxy={r.gxy.toExponential(3)}
-                  </div>
-                </FormulaSection>
-              ) : (
-                <FormulaSection title="변형률 → 응력">
-                  <div className="step-formula">
-                    σx = <Frac num="E" den="1−ν²" />·(εx + ν·εy) &nbsp; σy = <Frac num="E" den="1−ν²" />·(εy + ν·εx) &nbsp; τxy = G·γxy
-                  </div>
-                  <div className="step-final">
-                    σx={fmt(disp(r.sx, stressF))} {units.stress} &nbsp; σy={fmt(disp(r.sy, stressF))} {units.stress} &nbsp; τxy={fmt(disp(r.txy, stressF))} {units.stress}
-                  </div>
-                </FormulaSection>
-              )}
-              <FormulaSection title="두께변형 · 체적변형 · 변형에너지">
-                <div className="step-row">
-                  εz (두께방향) = −(<Frac num="ν" den="E" />)(σx+σy) = {r.ez.toExponential(3)}
-                </div>
-                <div className="step-row">체적변형(dilatation) e = εx+εy+εz = {r.e.toExponential(3)}</div>
-                <div className="step-row">변형에너지밀도 u = ½(σx·εx + σy·εy + τxy·γxy) = {fmtSci(r.u)} J/m³</div>
-                {r.deltaT !== null ? (
-                  <div className="step-final">두께 변화 Δt = εz × t = {fmtSci(r.deltaT)} m</div>
-                ) : (
-                  <EditableText
-                    as="div"
-                    contentKey="hookesLaw.thicknessHint"
-                    defaultText="두께(t)를 입력하면 Δt(두께 변화)도 계산돼요."
-                    style={{ fontSize: 11, color: 'var(--gray-soft)' }}
-                  />
-                )}
-              </FormulaSection>
-            </div>
-            <EditableText as="div" className="ai-hint" contentKey="calc.HookesLaw.aiHint" defaultText="💬 왜 εz가 σx, σy로만 결정되는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>
         ) : (
-          <div className="viz-placeholder" style={{ minHeight: 300 }}>E와 ν를 입력하면 계산 결과가 나타납니다.</div>
+          <div className="viz-placeholder" style={{ minHeight: 300 }}>
+            E와 ν를 입력하면 계산 결과가 나타납니다.
+          </div>
         )}
       </div>
 
@@ -220,88 +155,17 @@ export default function HookesLaw() {
   );
 }
 
-// StressStateCard와 같은 패턴이지만, εx/εy/γxy는 무차원(단위 없음)이라 단위 선택기가 없음.
-function StrainStateCard({ epsX, epsY, gammaXY, onFieldChange }) {
-  const [activeField, setActiveField] = useState('epsX');
-  const color = { fill: '#F7E3E6', stroke: '#C3002F' };
-  const range = [-0.01, 0.01, 0.0001];
+// 점선 = 변형 전, 실선 = 변형 후. 숫자는 아래 행렬이 맡고, 여기서는 모양만 보여준다.
+// 변형률이 1e-4 수준이라 실제 비율로는 아무 변화도 안 보이므로 크게 부풀려 그린다.
+function DeformSVG({ r }) {
+  const w = 440, h = 230;
+  const cx = 150, cy = 112, s0 = 68;
 
-  const FIELD_META = {
-    epsX: { label: 'εx', value: epsX },
-    epsY: { label: 'εy', value: epsY },
-    gammaXY: { label: 'γxy', value: gammaXY },
-  };
-  const active = FIELD_META[activeField];
-
-  return (
-    <div className="block-card">
-      <div className="block-title">
-        <span className="color-dot" style={{ background: color.stroke }} />
-        변형률 상태 (εx, εy, γxy)
-      </div>
-
-      <div className="block-active-field" style={{ background: color.fill, borderColor: color.stroke }}>
-        <div className="block-active-field-label" style={{ color: color.stroke }}>
-          변형률 · {active.label}
-        </div>
-        <div className="block-active-field-row">
-          <input
-            type="range"
-            min={range[0]}
-            max={range[1]}
-            step={range[2]}
-            value={active.value}
-            onChange={(e) => onFieldChange(activeField, e.target.value)}
-            style={{ flex: 1, accentColor: color.stroke }}
-          />
-        </div>
-      </div>
-
-      <div className="block-field-tiles">
-        {['epsX', 'epsY', 'gammaXY'].map((key) => {
-          const meta = FIELD_META[key];
-          const isActive = key === activeField;
-          return (
-            <div
-              key={key}
-              className={'block-field-tile' + (isActive ? ' active' : '')}
-              style={isActive ? { background: color.fill, borderColor: color.stroke } : undefined}
-              onClick={() => setActiveField(key)}
-            >
-              <div className="block-field-tile-label">{meta.label}</div>
-              <input
-                key={`${key}-${meta.value}`}
-                type="number"
-                step="any"
-                defaultValue={meta.value}
-                onFocus={() => setActiveField(key)}
-                onClick={(e) => e.stopPropagation()}
-                onBlur={(e) => onFieldChange(key, e.target.value)}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DeformSVG({ r, stressF, unitStress, thickness, lengthUnit, onEditThickness }) {
-  const w = 620, h = 330;
-  const cx = 190, cy = 148, s0 = 80; // 변형 전 반변
-
-  // 세 변형률 중 가장 큰 것이 반변의 55%만큼 움직이도록 배수를 정한다 —
-  // 어떤 입력이 와도 "보이긴 하되 화면을 뚫지는 않는" 크기가 된다.
   const maxStrain = Math.max(Math.abs(r.ex), Math.abs(r.ey), Math.abs(r.gxy), 1e-12);
-  const gain = 0.55 / maxStrain;
-  const ax = r.ex * gain;
-  const ay = r.ey * gain;
-  const sh = r.gxy * gain;
-
-  const hw = s0 * (1 + ax);
-  const hh = s0 * (1 + ay);
-  // 전단은 위쪽이 한쪽으로 밀리는 평행사변형으로 그린다 (γ는 두 변 사이 각의 변화)
-  const skew = s0 * sh;
+  const gain = 0.5 / maxStrain;
+  const hw = s0 * (1 + r.ex * gain);
+  const hh = s0 * (1 + r.ey * gain);
+  const skew = s0 * r.gxy * gain;
   const P = [
     [cx - hw - skew, cy - hh],
     [cx + hw - skew, cy - hh],
@@ -309,34 +173,19 @@ function DeformSVG({ r, stressF, unitStress, thickness, lengthUnit, onEditThickn
     [cx - hw + skew, cy + hh],
   ];
 
-  const CRIMSON = '#C3002F', TEAL = '#1E7F72', GRAY = '#8A97A2', INK = '#51626F';
-  const pct = (v) => {
-    const p2 = v * 100;
-    return (Math.abs(p2) < 0.001 ? p2.toExponential(2) : p2.toFixed(3)) + '%';
-  };
-
-  const rows = [
-    { name: 'εx', v: r.ex, color: CRIMSON, note: '가로 (x방향)' },
-    { name: 'εy', v: r.ey, color: TEAL, note: '세로 (y방향)' },
-    { name: 'γxy', v: r.gxy, color: '#4A5FBF', note: '기울어짐 (전단)' },
-    { name: 'εz', v: r.ez, color: '#B0790A', note: '두께 (z방향)' },
-  ];
-
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - s0} y={cy - s0} width={s0 * 2} height={s0 * 2} fill="none" stroke={GRAY} strokeWidth="1.3" strokeDasharray="5 4" />
-      <text x={cx - s0} y={cy - s0 - 10} fontSize="11" fill={GRAY}>변형 전</text>
-
       <polygon points={P.map((q) => q.join(',')).join(' ')} fill={INK} fillOpacity="0.14" stroke={INK} strokeWidth="1.8" />
 
-      {/* 어느 방향으로 당기고 미는지 */}
+      {/* 당기고 미는 방향 */}
       {[
         { x1: cx + hw, dir: r.sx >= 0 ? 1 : -1, key: 'rx' },
         { x1: cx - hw, dir: r.sx >= 0 ? -1 : 1, key: 'lx' },
       ].map((a) => (
         <g key={a.key}>
-          <line x1={a.x1} y1={cy} x2={a.x1 + a.dir * 30} y2={cy} stroke={CRIMSON} strokeWidth="2" />
-          <polygon points={`${a.x1 + a.dir * 30},${cy} ${a.x1 + a.dir * 22},${cy - 5} ${a.x1 + a.dir * 22},${cy + 5}`} fill={CRIMSON} />
+          <line x1={a.x1} y1={cy} x2={a.x1 + a.dir * 26} y2={cy} stroke={CRIMSON} strokeWidth="2" />
+          <polygon points={`${a.x1 + a.dir * 26},${cy} ${a.x1 + a.dir * 19},${cy - 4.5} ${a.x1 + a.dir * 19},${cy + 4.5}`} fill={CRIMSON} />
         </g>
       ))}
       {[
@@ -344,50 +193,133 @@ function DeformSVG({ r, stressF, unitStress, thickness, lengthUnit, onEditThickn
         { y1: cy + hh, dir: r.sy >= 0 ? 1 : -1, key: 'by' },
       ].map((a) => (
         <g key={a.key}>
-          <line x1={cx} y1={a.y1} x2={cx} y2={a.y1 + a.dir * 30} stroke={TEAL} strokeWidth="2" />
-          <polygon points={`${cx},${a.y1 + a.dir * 30} ${cx - 5},${a.y1 + a.dir * 22} ${cx + 5},${a.y1 + a.dir * 22}`} fill={TEAL} />
+          <line x1={cx} y1={a.y1} x2={cx} y2={a.y1 + a.dir * 26} stroke={TEAL} strokeWidth="2" />
+          <polygon points={`${cx},${a.y1 + a.dir * 26} ${cx - 4.5},${a.y1 + a.dir * 19} ${cx + 4.5},${a.y1 + a.dir * 19}`} fill={TEAL} />
         </g>
       ))}
-      <text x={cx + hw + 36} y={cy + 4} fontSize="11" fill={CRIMSON} fontWeight="800">σx</text>
-      <text x={cx + 8} y={cy - hh - 36} fontSize="11" fill={TEAL} fontWeight="800">σy</text>
+      <text x={cx + hw + 32} y={cy + 4} fontSize="11.5" fill={CRIMSON} fontWeight="800">σx</text>
+      <text x={cx + 7} y={cy - hh - 32} fontSize="11.5" fill={TEAL} fontWeight="800">σy</text>
+      <text x={cx - s0} y={cy - s0 - 10} fontSize="10.5" fill={GRAY}>변형 전</text>
 
-      <text x={cx} y={cy + s0 + 62} fontSize="10.5" fill={GRAY} textAnchor="middle">
-        변형은 실제보다 약 {gain >= 1e4 ? gain.toExponential(1) : Math.round(gain).toLocaleString('en-US')}배 부풀려 그렸습니다
-      </text>
-      <text x={cx} y={cy + s0 + 78} fontSize="10.5" fill={GRAY} textAnchor="middle">(오른쪽 숫자는 실제값)</text>
-
-      {rows.map((row, i) => {
-        const y = 46 + i * 36;
-        return (
-          <g key={row.name}>
-            <text x={396} y={y} fontSize="13" fill={row.color} fontWeight="800">{row.name}</text>
-            <text x={434} y={y} fontSize="12.5" fill="#3A3A3A" fontFamily="'JetBrains Mono',monospace">
-              {row.v.toExponential(3)}
-            </text>
-            <text x={434} y={y + 14} fontSize="10" fill={GRAY}>
-              {pct(row.v)} · {row.note}
-            </text>
-          </g>
-        );
-      })}
-      <line x1={392} y1={198} x2={604} y2={198} stroke="#E3E0D8" strokeWidth="1" />
-      <text x={396} y={218} fontSize="11" fill={GRAY}>σx = {fmt(r.sx / stressF)} {unitStress}</text>
-      <text x={396} y={236} fontSize="11" fill={GRAY}>σy = {fmt(r.sy / stressF)} {unitStress}</text>
-      <text x={396} y={254} fontSize="11" fill={GRAY}>τxy = {fmt(r.txy / stressF)} {unitStress}</text>
-      {thickness !== null && (
-        <Dim
-          x={396}
-          y={276}
-          anchor="start"
-          color={INK}
-          fontSize={11}
-          value={thickness}
-          unit={lengthUnit}
-          prefix="두께 t = "
-          boxW={58}
-          onChange={onEditThickness}
-        />
-      )}
+      {/* z방향은 그림에 그릴 수 없으므로(화면 밖으로 나가는 축) 글씨로 알려준다 */}
+      <g transform="translate(300 0)">
+        <text x="0" y="52" fontSize="11.5" fill={GOLD} fontWeight="800">z (두께) 방향</text>
+        <text x="0" y="70" fontSize="10.5" fill={GRAY}>화면 안쪽으로 들어가는 축</text>
+        <text x="0" y="94" fontSize="12" fill={GOLD} fontWeight="800">
+          {r.ez > 0 ? '두꺼워짐' : r.ez < 0 ? '얇아짐' : '변화 없음'}
+        </text>
+        <text x="0" y="112" fontSize="10.5" fill={GRAY}>σz = 0 인데도 그렇다</text>
+        <text x="0" y="150" fontSize="10" fill={GRAY}>변형은 실제보다</text>
+        <text x="0" y="164" fontSize="10" fill={GRAY}>
+          약 {gain >= 1e4 ? gain.toExponential(1) : Math.round(gain).toLocaleString('en-US')}배 부풀렸습니다
+        </text>
+      </g>
     </svg>
+  );
+}
+
+// 교재의 평면응력 컴플라이언스 행렬. ν가 들어가는 자리를 강조해서,
+// "x와 y가 −ν로 묶여 있다"가 식에서 바로 보이게 한다.
+function ComplianceMatrix({ r, nu, E, stressF, unitStress }) {
+  const cell = { padding: '6px 12px', textAlign: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: 12.5 };
+  const coupled = { ...cell, color: CRIMSON, fontWeight: 800, background: 'var(--crimson-soft)' };
+  const bracket = { fontSize: 46, color: INK, lineHeight: 1, fontWeight: 300 };
+
+  const Col = ({ rows, color }) => (
+    <table style={{ borderCollapse: 'collapse' }}>
+      <tbody>
+        {rows.map((t, i) => (
+          <tr key={i}>
+            <td style={{ ...cell, color: color || 'var(--ink)', fontWeight: 700, whiteSpace: 'nowrap' }}>{t}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  return (
+    <div style={{ marginTop: 6 }}>
+      <EditableText
+        as="div"
+        contentKey="calc.HookesLaw.matrixIntro"
+        defaultText="**x와 y가 −ν로 묶여 있는 게 보이시나요?** 붉은 칸이 그 자리예요. ν를 0으로 내리면 이 칸이 사라지고, 그 순간 가로로 당겨도 세로는 꿈쩍하지 않습니다."
+        style={{ fontSize: 11.5, color: 'var(--gray-soft)', lineHeight: 1.7, margin: '14px 0 10px' }}
+      />
+
+      <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, minWidth: 520 }}>
+          <span style={bracket}>⎡</span>
+          <Col rows={[r.ex.toExponential(3), r.ey.toExponential(3), r.gxy.toExponential(3)]} />
+          <span style={bracket}>⎤</span>
+
+          <span style={{ margin: '0 10px', fontSize: 16, color: INK }}>=</span>
+
+          <div style={{ textAlign: 'center', fontSize: 12.5, color: INK, fontFamily: "'JetBrains Mono',monospace" }}>
+            <div style={{ borderBottom: `1px solid ${INK}`, padding: '0 6px' }}>1</div>
+            <div style={{ padding: '0 6px' }}>E</div>
+          </div>
+
+          <span style={bracket}>⎡</span>
+          <table style={{ borderCollapse: 'collapse' }}>
+            <tbody>
+              <tr>
+                <td style={cell}>1</td>
+                <td style={coupled}>−{nu}</td>
+                <td style={cell}>0</td>
+              </tr>
+              <tr>
+                <td style={coupled}>−{nu}</td>
+                <td style={cell}>1</td>
+                <td style={cell}>0</td>
+              </tr>
+              <tr>
+                <td style={cell}>0</td>
+                <td style={cell}>0</td>
+                <td style={cell}>{fmt(2 * (1 + nu))}</td>
+              </tr>
+            </tbody>
+          </table>
+          <span style={bracket}>⎤</span>
+
+          <span style={bracket}>⎡</span>
+          <Col
+            rows={[
+              `${fmt(r.sx / stressF)}`,
+              `${fmt(r.sy / stressF)}`,
+              `${fmt(r.txy / stressF)}`,
+            ]}
+            color={GRAY}
+          />
+          <span style={bracket}>⎤</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 30, fontSize: 10.5, color: GRAY, marginTop: 2 }}>
+        <span>εx, εy, γxy</span>
+        <span>σx, σy, τxy ({unitStress})</span>
+      </div>
+
+      {/* z는 위 3×3에 안 들어가므로 따로 적는다 — 이 줄이 이 페이지에서 가장 중요한 줄이다 */}
+      <div
+        style={{
+          marginTop: 18,
+          padding: '14px 16px',
+          background: 'var(--bg)',
+          borderLeft: `3px solid ${GOLD}`,
+          fontSize: 12.5,
+          lineHeight: 1.9,
+        }}
+      >
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", color: GOLD, fontWeight: 800 }}>
+          εz = −(ν/E)(σx + σy) = {r.ez.toExponential(3)}
+        </div>
+        <EditableText
+          as="div"
+          contentKey="calc.HookesLaw.ezNote"
+          defaultText="평면응력은 **σz = 0**이라는 뜻이지 **εz = 0**이라는 뜻이 아니에요. z방향으로는 아무도 밀지 않는데도, x·y가 당겨지는 만큼 두께가 따라 변합니다. ν = 0으로 놓으면 이 값도 0이 됩니다."
+          style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginTop: 6, lineHeight: 1.7 }}
+        />
+      </div>
+    </div>
   );
 }
