@@ -136,6 +136,7 @@ export default function ElastoplasticBending() {
               width={width}
               height={height}
               r={r}
+              moment={moment}
               lenUnit={units.length}
               lenF={lenF}
               onEditWidth={(v) => setWidth(v * lenF)}
@@ -215,27 +216,37 @@ export default function ElastoplasticBending() {
   );
 }
 
-function ElastoplasticSVG({ width, height, r, lenUnit, lenF, onEditWidth, onEditHeight }) {
+function ElastoplasticSVG({ width, height, r, moment, lenUnit, lenF, onEditWidth, onEditHeight }) {
   // 왼쪽 높이 치수와 아래쪽 폭 치수를 적을 자리를 만들려고 그림판을 조금 넓혔다(원래 520×320).
   const w = 660, hh = 352, padTop = 30;
   const scale = 220 / height;
   const bPx = width * scale, hPx = height * scale;
   const cx1 = 200, cy = padTop + hPx / 2;
+  // ⚠️ r.e는 탄성코어의 "반높이"다 (중립축에서 위아래로 각각 e). 전체 높이가 아니다.
+  // 예전에는 이걸 전체 높이로 잘못 써서, 아직 항복하지 않은 탄성 상태(e = c = h/2)에서도
+  // 코어가 절반만 그려지고 나머지가 소성(빨강)으로 칠해졌다.
   const ePx = r.e * scale;
+  const coreTopY = cy - ePx;
+  const coreBotY = cy + ePx;
+  // 항복 전에는 e가 정확히 c(=h/2)라서 코어가 단면 전체를 채운다 — 그때는 소성 영역이 없다.
+  const yielded = ePx < hPx / 2 - 0.01;
 
   const diagCx = 430, diagHalfW = 110;
   const yTopPx = padTop, yBotPx = padTop + hPx;
-  const yMidTopPx = padTop + (hPx - ePx) / 2, yMidBotPx = padTop + (hPx + ePx) / 2;
   const sYpx = diagHalfW;
+  // 응력도의 표면 응력. 항복 후에는 코어 경계에서 σY에 닿지만, 항복 전에는 아직 σY에 못 미치므로
+  // 모멘트 비율(M/My)만큼만 뻗는다. (이게 없으면 M이 0이든 My든 응력도가 똑같이 그려졌다)
+  const surfRatio = yielded ? 1 : r.My > 0 ? Math.max(0, Math.min(1, (moment || 0) / r.My)) : 0;
+  const tipPx = sYpx * surfRatio;
 
   return (
     <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx1 - bPx / 2} y={cy - hPx / 2} width={bPx} height={hPx} fill="#F4F1E8" stroke="#51626F" strokeWidth="1.3" />
-      <rect x={cx1 - bPx / 2} y={cy - ePx / 2} width={bPx} height={ePx} fill="#E1F2EF" stroke="#1E7F72" strokeWidth="1.2" />
-      {ePx < hPx && (
+      <rect x={cx1 - bPx / 2} y={coreTopY} width={bPx} height={2 * ePx} fill="#E1F2EF" stroke="#1E7F72" strokeWidth="1.2" />
+      {yielded && (
         <>
-          <rect x={cx1 - bPx / 2} y={cy - hPx / 2} width={bPx} height={(hPx - ePx) / 2} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
-          <rect x={cx1 - bPx / 2} y={cy + ePx / 2} width={bPx} height={(hPx - ePx) / 2} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
+          <rect x={cx1 - bPx / 2} y={cy - hPx / 2} width={bPx} height={hPx / 2 - ePx} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
+          <rect x={cx1 - bPx / 2} y={coreBotY} width={bPx} height={hPx / 2 - ePx} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
         </>
       )}
       <line x1={cx1 - bPx / 2 - 10} y1={cy} x2={cx1 + bPx / 2 + 10} y2={cy} stroke="#51626F" strokeWidth="1" strokeDasharray="4 3" />
@@ -267,14 +278,14 @@ function ElastoplasticSVG({ width, height, r, lenUnit, lenF, onEditWidth, onEdit
       <line x1={diagCx} y1={padTop} x2={diagCx} y2={padTop + hPx} stroke="#8A97A2" strokeWidth="1.3" />
       <text x={diagCx - diagHalfW - 4} y={padTop - 8} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">압축(−)</text>
       <text x={diagCx + diagHalfW + 4} y={padTop - 8} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">인장(+)</text>
-      {ePx < hPx && (
+      {yielded && (
         <>
-          <rect x={diagCx - sYpx} y={yTopPx} width={sYpx} height={yMidTopPx - yTopPx} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
-          <rect x={diagCx} y={yMidBotPx} width={sYpx} height={yBotPx - yMidBotPx} fill="#E1F2EF" stroke="#1E7F72" strokeWidth="1.2" />
+          <rect x={diagCx - sYpx} y={yTopPx} width={sYpx} height={coreTopY - yTopPx} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.2" />
+          <rect x={diagCx} y={coreBotY} width={sYpx} height={yBotPx - coreBotY} fill="#E1F2EF" stroke="#1E7F72" strokeWidth="1.2" />
         </>
       )}
-      <line x1={diagCx - sYpx} y1={yMidTopPx} x2={diagCx} y2={cy} stroke="#C3002F" strokeWidth="1.8" />
-      <line x1={diagCx} y1={cy} x2={diagCx + sYpx} y2={yMidBotPx} stroke="#1E7F72" strokeWidth="1.8" />
+      <line x1={diagCx - tipPx} y1={coreTopY} x2={diagCx} y2={cy} stroke="#C3002F" strokeWidth="1.8" />
+      <line x1={diagCx} y1={cy} x2={diagCx + tipPx} y2={coreBotY} stroke="#1E7F72" strokeWidth="1.8" />
       <text x={diagCx} y={padTop + hPx + 20} fontSize="13" fill="#8A97A2" textAnchor="middle" fontWeight="700">STRESS DIAGRAM</text>
     </svg>
   );
