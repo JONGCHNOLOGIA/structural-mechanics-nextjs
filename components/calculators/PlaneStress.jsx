@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
 import { computePlaneStress } from '@/lib/calc/planeStress';
 import FormulaSection, { Tip, Collapsible } from './FormulaSection';
-import { MohrCircleSVG } from './MohrsCircle';
+import MohrCircleSVG from './MohrCircleSVG';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
