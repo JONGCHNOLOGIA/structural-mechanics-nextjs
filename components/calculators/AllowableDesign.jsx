@@ -17,6 +17,7 @@ import {
   InputNeededPlaceholder,
   DiagramSkipNote,
 } from './sm1/Controls';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxisPlaneNote, AxialFBD } from './sm1/Diagrams';
 
@@ -141,7 +142,7 @@ export default function AllowableDesign() {
         <h3>VISUALIZER</h3>
         {res.valid ? (
           <>
-            <SectionSVG s={s} dRequired={dReq} hRequired={hReq} />
+            <SectionSVG s={s} dRequired={dReq} hRequired={hReq} onEditDim={setDim} />
             {s.mode === 'A' && (
               <>
                 <ResultGrid>
@@ -336,17 +337,30 @@ function Gauge({ actual, allowable }) {
 }
 
 // Mode C에서는 역산된 치수(d_required / h_required)를 그림에 그대로 반영해서 보여준다.
-function SectionSVG({ s, dRequired, hRequired }) {
-  const w = 220, h = 200, cx = w / 2, cy = h / 2 - 6;
+function SectionSVG({ s, dRequired, hRequired, onEditDim }) {
+  // 치수 숫자는 클릭하면 그 자리에서 고칠 수 있다. 다만 역산해서 나온 값(d_required, h_required)은
+  // 계산 결과라 고칠 수 없고 숫자만 보여준다.
+  const w = 220, h = 236, cx = w / 2, cy = 94;
   let shape;
   if (s.sectionType === 'solid_circular') {
-    const r = scaledPx(dRequired !== undefined ? dRequired : s.dims.d, 150, 25, 85);
+    const isRequired = dRequired !== undefined;
+    const r = scaledPx(isRequired ? dRequired : s.dims.d, 150, 25, 85);
     shape = (
       <>
         <circle cx={cx} cy={cy} r={r} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
-        <text x={cx} y={cy + r + 26} fontSize="11" textAnchor="middle" fill="var(--gray)">
-          {dRequired !== undefined ? `d_required = ${fmt1(dRequired, 2)} ${s.dimUnit}` : `d = ${fmt1(s.dims.d, 2)} ${s.dimUnit}`}
-        </text>
+        <DimLineH
+          x1={cx - r}
+          x2={cx + r}
+          y={cy + r + 14}
+          labelDy={14}
+          color="var(--teal)"
+          fontSize={11}
+          value={isRequired ? dRequired : s.dims.d}
+          unit={s.dimUnit}
+          prefix={isRequired ? 'd_required = ' : 'd = '}
+          boxW={56}
+          onChange={isRequired ? undefined : onEditDim('d')}
+        />
       </>
     );
   } else if (s.sectionType === 'hollow_circular') {
@@ -356,9 +370,30 @@ function SectionSVG({ s, dRequired, hRequired }) {
       <>
         <circle cx={cx} cy={cy} r={rOut} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
         <circle cx={cx} cy={cy} r={rIn} fill="var(--bg)" stroke="var(--teal)" strokeWidth="1.4" strokeDasharray="3 2" />
-        <text x={cx} y={cy + rOut + 22} fontSize="11" textAnchor="middle" fill="var(--gray)">
-          d₂ = {fmt1(s.dims.d_outer, 2)} {s.dimUnit}
-        </text>
+        <DimLineH
+          x1={cx - rOut}
+          x2={cx + rOut}
+          y={cy + rOut + 14}
+          labelDy={14}
+          color="var(--teal)"
+          fontSize={11}
+          value={s.dims.d_outer}
+          unit={s.dimUnit}
+          prefix="d₂ = "
+          boxW={56}
+          onChange={onEditDim('d_outer')}
+        />
+        <Dim
+          x={cx}
+          y={cy + rOut + 42}
+          color="var(--teal)"
+          fontSize={11}
+          value={s.dims.d_inner || 0}
+          unit={s.dimUnit}
+          prefix="d₁ = "
+          boxW={56}
+          onChange={onEditDim('d_inner')}
+        />
       </>
     );
   } else {
@@ -368,14 +403,36 @@ function SectionSVG({ s, dRequired, hRequired }) {
     shape = (
       <>
         <rect x={rx} y={ry} width={rectW} height={rectH} fill="var(--teal-soft)" stroke="var(--teal)" strokeWidth="1.6" />
-        <text x={cx} y={ry + rectH + 22} fontSize="11" textAnchor="middle" fill="var(--gray)">
-          b = {fmt1(s.dims.b, 2)} {s.dimUnit}
-        </text>
+        <DimLineH
+          x1={rx}
+          x2={rx + rectW}
+          y={ry + rectH + 14}
+          labelDy={14}
+          color="var(--teal)"
+          fontSize={11}
+          value={s.dims.b}
+          unit={s.dimUnit}
+          prefix="b = "
+          boxW={56}
+          onChange={onEditDim('b')}
+        />
+        <DimLineV
+          x={rx - 12}
+          y1={ry}
+          y2={ry + rectH}
+          color="var(--teal)"
+          fontSize={11}
+          value={hRequired || s.dims.h}
+          unit={s.dimUnit}
+          prefix={hRequired ? 'h_required = ' : 'h = '}
+          boxW={56}
+          onChange={hRequired ? undefined : onEditDim('h')}
+        />
       </>
     );
   }
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {shape}
     </svg>
   );

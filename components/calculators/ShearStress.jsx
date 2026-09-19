@@ -16,6 +16,7 @@ import {
   InputNeededPlaceholder,
   DiagramSkipNote,
 } from './sm1/Controls';
+import { Dim, DimLineH } from './EditableDim';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
 // CH.1-4 Shear Stress and Strain — 원본 renderShearStress()의 React 버전.
@@ -83,8 +84,8 @@ export default function ShearStress() {
       {/* ---------------- Visualizer ---------------- */}
       <div className="panel">
         <h3>VISUALIZER</h3>
-        {(s.mode === 'single' || s.mode === 'double') && <BoltSVG s={s} nPlanes={s.mode === 'single' ? 1 : 2} />}
-        {s.mode === 'bearing' && <BearingSVG s={s} />}
+        {(s.mode === 'single' || s.mode === 'double') && <BoltSVG s={s} nPlanes={s.mode === 'single' ? 1 : 2} onEditNum={setNum} />}
+        {s.mode === 'bearing' && <BearingSVG s={s} onEditNum={setNum} />}
         {s.mode === 'strain' && <StrainSVG gammaDeg={s.gammaDeg} />}
 
         {res.valid ? (
@@ -205,8 +206,9 @@ function Steps({ s, res }) {
 }
 
 // 단일/이중 전단 — 겹친 판 사이를 지나는 볼트와, 붉은 점선으로 표시한 전단면
-function BoltSVG({ s, nPlanes }) {
-  const w = 440, h = 200, plateW = 110, gap = 6, cx = w / 2;
+function BoltSVG({ s, nPlanes, onEditNum }) {
+  // 아래쪽 치수선 자리를 두려고 높이를 200에서 늘렸다.
+  const w = 440, h = 248, plateW = 110, gap = 6, cx = w / 2, midY = 96;
   const boltR = scaledPx(s.d, 150, 12, 34);
   const plateH = Math.max(60, boltR * 5);
   const arrowLen = scaledPx(s.P, 200, 16, 42);
@@ -217,16 +219,30 @@ function BoltSVG({ s, nPlanes }) {
   if (nPlanes === 1) {
     return (
       <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
-        {plate(cx - plateW - gap, h / 2 - plateH / 2, plateW, plateH, 'l')}
-        {plate(cx + gap, h / 2 - plateH / 2, plateW, plateH, 'r')}
-        <circle cx={cx} cy={h / 2} r={boltR} fill="#D9DDE0" stroke="#51626F" strokeWidth="1.4" />
-        <line x1={cx} y1={h / 2 - plateH / 2} x2={cx} y2={h / 2 + plateH / 2} stroke="var(--crimson)" strokeWidth="2.4" strokeDasharray="5 3" />
-        <text x={cx} y={h / 2 - plateH / 2 - 10} fontSize="10.5" fill="var(--crimson)" textAnchor="middle" fontWeight="800">
-          전단면 1개 (d={fmt1(s.d, 1)}{s.dimUnit})
+        {plate(cx - plateW - gap, midY - plateH / 2, plateW, plateH, 'l')}
+        {plate(cx + gap, midY - plateH / 2, plateW, plateH, 'r')}
+        <circle cx={cx} cy={midY} r={boltR} fill="#D9DDE0" stroke="#51626F" strokeWidth="1.4" />
+        <line x1={cx} y1={midY - plateH / 2} x2={cx} y2={midY + plateH / 2} stroke="var(--crimson)" strokeWidth="2.4" strokeDasharray="5 3" />
+        <text x={cx} y={midY - plateH / 2 - 26} fontSize="10.5" fill="var(--crimson)" textAnchor="middle" fontWeight="800">
+          전단면 1개
         </text>
-        <line x1={cx - plateW - gap - arrowLen} y1={h / 2} x2={cx - plateW - gap} y2={h / 2} stroke="#51626F" strokeWidth="2" />
-        <line x1={cx + plateW + gap} y1={h / 2} x2={cx + plateW + gap + arrowLen} y2={h / 2} stroke="#51626F" strokeWidth="2" />
-        <text x={cx - plateW - gap - arrowLen - 6} y={h / 2 - 6} fontSize="9.5" fill="var(--gray)" textAnchor="end">P</text>
+        {/* 볼트 지름 치수 — 클릭하면 그 자리에서 고칠 수 있다 */}
+        <DimLineH
+          x1={cx - boltR}
+          x2={cx + boltR}
+          y={midY + plateH / 2 + 14}
+          labelDy={14}
+          color="var(--crimson)"
+          fontSize={10.5}
+          value={s.d}
+          unit={s.dimUnit}
+          prefix="d = "
+          boxW={54}
+          onChange={onEditNum('d')}
+        />
+        <line x1={cx - plateW - gap - arrowLen} y1={midY} x2={cx - plateW - gap} y2={midY} stroke="#51626F" strokeWidth="2" />
+        <line x1={cx + plateW + gap} y1={midY} x2={cx + plateW + gap + arrowLen} y2={midY} stroke="#51626F" strokeWidth="2" />
+        <text x={cx - plateW - gap - arrowLen - 6} y={midY - 6} fontSize="9.5" fill="var(--gray)" textAnchor="end">P</text>
       </svg>
     );
   }
@@ -234,25 +250,39 @@ function BoltSVG({ s, nPlanes }) {
   const midW = Math.max(30, boltR * 1.6);
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
-      {plate(cx - plateW - gap - midW / 2, h / 2 - plateH / 2, plateW, plateH, 'l')}
-      {plate(cx - midW / 2, h / 2 - plateH / 2 - 10, midW, plateH + 20, 'm')}
-      {plate(cx + gap + midW / 2, h / 2 - plateH / 2, plateW, plateH, 'r')}
-      <circle cx={cx} cy={h / 2} r={boltR * 0.9} fill="#D9DDE0" stroke="#51626F" strokeWidth="1.4" />
-      <line x1={cx - midW / 2} y1={h / 2 - plateH / 2} x2={cx - midW / 2} y2={h / 2 + plateH / 2} stroke="var(--crimson)" strokeWidth="2.2" strokeDasharray="5 3" />
-      <line x1={cx + midW / 2} y1={h / 2 - plateH / 2} x2={cx + midW / 2} y2={h / 2 + plateH / 2} stroke="var(--crimson)" strokeWidth="2.2" strokeDasharray="5 3" />
-      <text x={cx} y={h / 2 - plateH / 2 - 20} fontSize="10.5" fill="var(--crimson)" textAnchor="middle" fontWeight="800">
-        전단면 2개 (2A, d={fmt1(s.d, 1)}{s.dimUnit})
+      {plate(cx - plateW - gap - midW / 2, midY - plateH / 2, plateW, plateH, 'l')}
+      {plate(cx - midW / 2, midY - plateH / 2 - 10, midW, plateH + 20, 'm')}
+      {plate(cx + gap + midW / 2, midY - plateH / 2, plateW, plateH, 'r')}
+      <circle cx={cx} cy={midY} r={boltR * 0.9} fill="#D9DDE0" stroke="#51626F" strokeWidth="1.4" />
+      <line x1={cx - midW / 2} y1={midY - plateH / 2} x2={cx - midW / 2} y2={midY + plateH / 2} stroke="var(--crimson)" strokeWidth="2.2" strokeDasharray="5 3" />
+      <line x1={cx + midW / 2} y1={midY - plateH / 2} x2={cx + midW / 2} y2={midY + plateH / 2} stroke="var(--crimson)" strokeWidth="2.2" strokeDasharray="5 3" />
+      <text x={cx} y={midY - plateH / 2 - 30} fontSize="10.5" fill="var(--crimson)" textAnchor="middle" fontWeight="800">
+        전단면 2개 (2A)
       </text>
-      <line x1={cx - plateW - gap - midW / 2 - arrowLen} y1={h / 2} x2={cx - plateW - gap - midW / 2} y2={h / 2} stroke="#51626F" strokeWidth="2" />
-      <line x1={cx + plateW + gap + midW / 2} y1={h / 2} x2={cx + plateW + gap + midW / 2 + arrowLen} y2={h / 2} stroke="#51626F" strokeWidth="2" />
-      <text x={cx - plateW - gap - midW / 2 - arrowLen - 6} y={h / 2 - 6} fontSize="9.5" fill="var(--gray)" textAnchor="end">P</text>
+      <DimLineH
+        x1={cx - boltR * 0.9}
+        x2={cx + boltR * 0.9}
+        y={midY + plateH / 2 + 14}
+        labelDy={14}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.d}
+        unit={s.dimUnit}
+        prefix="d = "
+        boxW={54}
+        onChange={onEditNum('d')}
+      />
+      <line x1={cx - plateW - gap - midW / 2 - arrowLen} y1={midY} x2={cx - plateW - gap - midW / 2} y2={midY} stroke="#51626F" strokeWidth="2" />
+      <line x1={cx + plateW + gap + midW / 2} y1={midY} x2={cx + plateW + gap + midW / 2 + arrowLen} y2={midY} stroke="#51626F" strokeWidth="2" />
+      <text x={cx - plateW - gap - midW / 2 - arrowLen - 6} y={midY - 6} fontSize="9.5" fill="var(--gray)" textAnchor="end">P</text>
     </svg>
   );
 }
 
 // 지압응력 — 볼트가 판 구멍 벽을 누르는 "투영 접촉면적" d×t를 강조해서 보여준다.
-function BearingSVG({ s }) {
-  const w = 440, h = 200, plateW = 200, cx = w / 2, cy = h / 2;
+function BearingSVG({ s, onEditNum }) {
+  // 아래쪽 치수선 자리를 두려고 높이를 200에서 늘렸다.
+  const w = 440, h = 252, plateW = 200, cx = w / 2, cy = 96;
   const boltR = scaledPx(s.d, 150, 14, 40);
   const plateH = Math.max(70, boltR * 4.5);
   const barW = boltR * 2;
@@ -262,8 +292,34 @@ function BearingSVG({ s }) {
       <rect x={cx - plateW / 2} y={cy - plateH / 2} width={plateW} height={plateH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.4" />
       <circle cx={cx} cy={cy} r={boltR} fill="#D9DDE0" stroke="#51626F" strokeWidth="1.4" />
       <rect x={cx - barW / 2} y={cy - barH / 2} width={barW} height={barH} fill="var(--crimson)" opacity="0.35" stroke="var(--crimson)" strokeWidth="1.6" />
-      <text x={cx} y={cy + plateH / 2 + 22} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
-        투영 접촉면적 A_b = d×t = {fmt1(s.d, 1)}×{fmt1(s.t, 1)} {s.dimUnit} (강조된 영역)
+      {/* 투영 접촉면적 A_b = d×t — d와 t 모두 클릭해서 고칠 수 있다 */}
+      <DimLineH
+        x1={cx - barW / 2}
+        x2={cx + barW / 2}
+        y={cy + plateH / 2 + 14}
+        labelDy={14}
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.d}
+        unit={s.dimUnit}
+        prefix="d = "
+        boxW={54}
+        onChange={onEditNum('d')}
+      />
+      <Dim
+        x={cx + barW / 2 + 12}
+        y={cy + 4}
+        anchor="start"
+        color="var(--crimson)"
+        fontSize={10.5}
+        value={s.t}
+        unit={s.dimUnit}
+        prefix="t = "
+        boxW={54}
+        onChange={onEditNum('t')}
+      />
+      <text x={cx} y={cy + plateH / 2 + 44} fontSize="10.5" fill="var(--gray)" textAnchor="middle">
+        투영 접촉면적 A_b = d×t (강조된 영역)
       </text>
     </svg>
   );

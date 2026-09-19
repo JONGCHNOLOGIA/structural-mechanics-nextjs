@@ -16,6 +16,7 @@ import {
   ErrorBox,
   InputNeededPlaceholder,
 } from './sm1/Controls';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxisPlaneNote, AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
 
@@ -194,7 +195,7 @@ export default function NormalStress() {
         <h3>VISUALIZER</h3>
         <MemberSVG mode={s.mode} res={res} />
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
-          <SectionSVG s={s} />
+          <SectionSVG s={s} onEditDim={setDim} />
         </div>
         <AxisPlaneNote />
         {res.valid ? (
@@ -350,13 +351,10 @@ function MemberSVG({ mode, res }) {
 }
 
 // 지금 고른 단면 형상을 실제 입력 치수 비율에 맞춰 그린다.
-function SectionSVG({ s }) {
-  const w = 220, h = 200, cx = w / 2, cy = h / 2 - 6;
-  const label = (x, y, text, anchor = 'middle') => (
-    <text x={x} y={y} fontSize="11" textAnchor={anchor} fill="var(--gray)">
-      {text}
-    </text>
-  );
+function SectionSVG({ s, onEditDim }) {
+  // 치수 숫자를 클릭하면 그 자리에서 고칠 수 있다. 단위는 SETTING MENU에서 고른 길이 단위를 따른다.
+  // (원래는 글씨로만 적혀 있어서 고치려면 왼쪽 입력칸으로 가야 했다)
+  const w = 220, h = 236, cx = w / 2, cy = 94;
 
   let shape;
   if (s.sectionType === 'solid_circular') {
@@ -364,7 +362,18 @@ function SectionSVG({ s }) {
     shape = (
       <>
         <circle cx={cx} cy={cy} r={r} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.6" />
-        {label(cx, cy + r + 30, `d = ${fmt1(s.dims.d, 2)} ${s.dimUnit}`)}
+        <DimLineH
+          x1={cx - r}
+          x2={cx + r}
+          y={cy + r + 14}
+          labelDy={14}
+          fontSize={11}
+          value={s.dims.d}
+          unit={s.dimUnit}
+          prefix="d = "
+          boxW={56}
+          onChange={onEditDim('d')}
+        />
       </>
     );
   } else if (s.sectionType === 'hollow_circular') {
@@ -374,8 +383,28 @@ function SectionSVG({ s }) {
       <>
         <circle cx={cx} cy={cy} r={rOut} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.6" />
         <circle cx={cx} cy={cy} r={rIn} fill="var(--bg)" stroke="var(--crimson)" strokeWidth="1.4" strokeDasharray="3 2" />
-        {label(cx, cy + rOut + 22, `d₂ = ${fmt1(s.dims.d_outer, 2)} ${s.dimUnit}`)}
-        {label(cx, cy + rOut + 36, `d₁ = ${fmt1(s.dims.d_inner, 2)} ${s.dimUnit}`)}
+        <DimLineH
+          x1={cx - rOut}
+          x2={cx + rOut}
+          y={cy + rOut + 14}
+          labelDy={14}
+          fontSize={11}
+          value={s.dims.d_outer}
+          unit={s.dimUnit}
+          prefix="d₂ = "
+          boxW={56}
+          onChange={onEditDim('d_outer')}
+        />
+        <Dim
+          x={cx}
+          y={cy + rOut + 42}
+          fontSize={11}
+          value={s.dims.d_inner}
+          unit={s.dimUnit}
+          prefix="d₁ = "
+          boxW={56}
+          onChange={onEditDim('d_inner')}
+        />
       </>
     );
   } else {
@@ -385,14 +414,35 @@ function SectionSVG({ s }) {
     shape = (
       <>
         <rect x={rx} y={ry} width={rectW} height={rectH} fill="var(--crimson-soft)" stroke="var(--crimson)" strokeWidth="1.6" />
-        {label(cx, ry + rectH + 22, `b = ${fmt1(s.dims.b, 2)} ${s.dimUnit}`)}
-        {label(rx - 10, cy, `h = ${fmt1(s.dims.h, 2)} ${s.dimUnit}`, 'end')}
+        <DimLineH
+          x1={rx}
+          x2={rx + rectW}
+          y={ry + rectH + 14}
+          labelDy={14}
+          fontSize={11}
+          value={s.dims.b}
+          unit={s.dimUnit}
+          prefix="b = "
+          boxW={56}
+          onChange={onEditDim('b')}
+        />
+        <DimLineV
+          x={rx - 12}
+          y1={ry}
+          y2={ry + rectH}
+          fontSize={11}
+          value={s.dims.h}
+          unit={s.dimUnit}
+          prefix="h = "
+          boxW={56}
+          onChange={onEditDim('h')}
+        />
       </>
     );
   }
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {shape}
     </svg>
   );
