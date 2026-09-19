@@ -105,7 +105,18 @@ export default function DifferentialEquationMethod() {
         <h3>
           VISUALIZER
         </h3>
-        <DeflectionCurveSVG points={result.pts} L={L} support={isPropped ? 'propped' : 'fixed-fixed'} pointLoadAt={isPropped ? undefined : L / 2} />
+        <DeflectionCurveSVG
+          points={result.pts}
+          L={L}
+          support={isPropped ? 'propped' : 'fixed-fixed'}
+          pointLoadAt={isPropped ? undefined : L / 2}
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+          loadValue={isPropped ? disp(q, distF) : disp(P, forceF)}
+          loadUnit={isPropped ? units.distLoad : units.force}
+          onEditLoad={(v) => (isPropped ? setQ(v * distF) : setP(v * forceF))}
+        />
 
         {isPropped ? (
           <div className="result-grid">

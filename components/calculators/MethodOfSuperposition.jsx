@@ -98,7 +98,20 @@ export default function MethodOfSuperposition() {
         <h3>
           VISUALIZER
         </h3>
-        <DeflectionCurveSVG points={result.pts} L={L} support="simple" pointLoadAt={usePoint ? L / 2 : undefined} />
+        {/* 치수 라벨은 SETTING MENU에서 고른 단위로 보여주고, 클릭하면 그 자리에서 고칠 수 있다.
+            집중하중과 등분포하중을 같이 켠 경우 그림에는 집중하중 쪽만 표시된다. */}
+        <DeflectionCurveSVG
+          points={result.pts}
+          L={L}
+          support="simple"
+          pointLoadAt={usePoint ? L / 2 : undefined}
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+          loadValue={usePoint ? disp(P, forceF) : disp(q, distF)}
+          loadUnit={usePoint ? units.force : units.distLoad}
+          onEditLoad={(v) => (usePoint ? setP(v * forceF) : setQ(v * distF))}
+        />
         <div className="result-grid">
           <div className="result-card">
             <div className="l">θA (합산)</div>

@@ -132,7 +132,17 @@ export default function CastiglianosTheorem() {
         <h3>
           VISUALIZER
         </h3>
-        <DeflectionCurveSVG points={curvePts} L={L} support={isCantilever ? 'cantilever' : 'simple'} />
+        <DeflectionCurveSVG
+          points={curvePts}
+          L={L}
+          support={isCantilever ? 'cantilever' : 'simple'}
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+          loadValue={disp(q, distF)}
+          loadUnit={units.distLoad}
+          onEditLoad={(v) => setQ(v * distF)}
+        />
         {isCantilever ? (
           <div className="result-grid">
             <div className="result-card">

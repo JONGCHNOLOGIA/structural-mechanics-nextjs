@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Dim } from './EditableDim';
 
 // 보 빌더(Bending-Moment Equation)의 VISUALIZER — 지지단·하중 아이콘을 실제 위치에 그리고,
 // 드래그로 옮기거나(쓰레기통에 놓으면 삭제) 값 라벨을 클릭해서 바로 수정할 수 있게 함.
@@ -37,7 +38,6 @@ export default function BeamBuilderSVG({
 }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null); // { id, overTrash, px, py, ghostLabel }
-  const [editingId, setEditingId] = useState(null);
 
   const w = 680;
   const beamY = 140;
@@ -139,11 +139,8 @@ export default function BeamBuilderSVG({
         y={spanY + 16}
         text={`L = ${spanLabel}`}
         color="#8A97A2"
-        editing={editingId === '__L__'}
         editValue={onEditL ? spanValue : null}
-        onStartEdit={() => (onEditL ? setEditingId('__L__') : null)}
-        onCommit={(v) => { onEditL(v); setEditingId(null); }}
-        onCancel={() => setEditingId(null)}
+        onCommit={onEditL}
       />
 
       {/* 보 본체 */}
@@ -225,7 +222,6 @@ export default function BeamBuilderSVG({
         const opacity = isDragging ? 0.3 : 1;
         const label = labelFor ? labelFor(l) : '';
         const editVal = getEditValue ? getEditValue(l) : null;
-        const isEditing = editingId === l.id;
 
         if (l.kind === 'point') {
           const x = xToPx(l.x);
@@ -251,11 +247,8 @@ export default function BeamBuilderSVG({
                 y={labelY}
                 text={label}
                 color={stroke}
-                editing={isEditing}
                 editValue={editVal}
-                onStartEdit={() => setEditingId(l.id)}
-                onCommit={(v) => { onEditValue(l.id, v); setEditingId(null); }}
-                onCancel={() => setEditingId(null)}
+                onCommit={(v) => onEditValue(l.id, v)}
               />
               {/* 선택되어 있을 때만, 왼쪽 끝에서 하중 위치까지 치수선 표시 (분포하중 스팬 표시와 같은 느낌) */}
               {isSel && x > padL + 6 && (
@@ -332,11 +325,8 @@ export default function BeamBuilderSVG({
                 y={beamY - 6 - 34 - 10}
                 text={label}
                 color={stroke}
-                editing={isEditing}
-                editValue={editVal}
-                onStartEdit={() => (l.kind === 'udl' ? setEditingId(l.id) : null)}
-                onCommit={(v) => { onEditValue(l.id, v); setEditingId(null); }}
-                onCancel={() => setEditingId(null)}
+                editValue={l.kind === 'udl' ? editVal : null}
+                onCommit={(v) => onEditValue(l.id, v)}
               />
               {/* 선택되어 있을 때(또는 끝을 리사이즈하는 중일 때) 현재 span 길이를 치수선으로 표시 —
                   양 끝을 끌어서 줄이거나 늘리는 만큼 실시간으로 갱신된다. */}
@@ -400,11 +390,8 @@ export default function BeamBuilderSVG({
                 y={cy - r - 10}
                 text={label}
                 color={stroke}
-                editing={isEditing}
                 editValue={editVal}
-                onStartEdit={() => setEditingId(l.id)}
-                onCommit={(v) => { onEditValue(l.id, v); setEditingId(null); }}
-                onCancel={() => setEditingId(null)}
+                onCommit={(v) => onEditValue(l.id, v)}
               />
             </g>
           );
@@ -431,61 +418,24 @@ export default function BeamBuilderSVG({
   );
 }
 
-// 하중 값 라벨 — 클릭하면 바로 입력칸으로 바뀌는 작은 헬퍼 (CompositeBeams의 EditableDimText와 같은 패턴).
-function EditableLabel({ x, y, text, color, editing, editValue, onStartEdit, onCommit, onCancel }) {
-  const boxW = 96, boxH = 20;
-  if (editing && editValue !== null && editValue !== undefined) {
-    return (
-      <foreignObject x={x - boxW / 2} y={y - boxH / 2 - 2} width={boxW} height={boxH} style={{ overflow: 'visible' }}>
-        <input
-          type="number"
-          step="any"
-          autoFocus
-          defaultValue={editValue}
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize: 12.5,
-            fontWeight: 700,
-            color,
-            border: `1.3px solid ${color}`,
-            borderRadius: 0,
-            textAlign: 'center',
-            padding: '0 2px',
-            fontFamily: "'JetBrains Mono',monospace",
-            background: '#fff',
-            boxSizing: 'border-box',
-          }}
-          onClick={(e) => e.stopPropagation()}
-          onBlur={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) onCommit(v);
-            else onCancel();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.target.blur();
-            if (e.key === 'Escape') onCancel();
-          }}
-        />
-      </foreignObject>
-    );
-  }
-  const clickable = editValue !== null && editValue !== undefined;
+// 하중 값 라벨. 라벨 문자열은 부르는 쪽에서 이미 만들어 두므로(예: "q = 5.0 kN/m") 그대로 넘기고,
+// 클릭 → 입력칸 동작은 공용 치수 부품(EditableDim)에 맡긴다. editValue가 null이면 고칠 수 없는 값이라
+// 글씨로만 그린다.
+function EditableLabel({ x, y, text, color, editValue, onCommit }) {
+  const editable = editValue !== null && editValue !== undefined;
   return (
-    <text
+    <Dim
       x={x}
       y={y}
-      fontSize="13"
-      fontWeight="800"
-      fill={color}
-      textAnchor="middle"
-      style={{ cursor: clickable ? 'pointer' : 'default' }}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (clickable) onStartEdit();
-      }}
-    >
-      {text}
-    </text>
+      text={text}
+      value={editValue}
+      color={color}
+      fontSize={12.5}
+      fontWeight={700}
+      boxW={96}
+      min={null}
+      onChange={editable ? onCommit : undefined}
+    />
   );
 }
+

@@ -110,7 +110,17 @@ export default function IndeterminateSuperposition() {
         <h3>
           VISUALIZER
         </h3>
-        <DeflectionCurveSVG points={result.pts} L={L} support="propped" />
+        <DeflectionCurveSVG
+          points={result.pts}
+          L={L}
+          support="propped"
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+          loadValue={disp(q, distF)}
+          loadUnit={units.distLoad}
+          onEditLoad={(v) => setQ(v * distF)}
+        />
 
         <div className="result-grid">
           <div className="result-card">

@@ -1,7 +1,25 @@
+import { Dim, DimLineH } from './EditableDim';
+
 // Ch9 계산기들이 공유하는 처짐곡선 시각화. points: [{x, v}], x/v는 m 단위(v: 아래로 +).
 // support: 'simple'(양단 핀-롤러) | 'cantilever'(왼쪽 고정단)
-export default function DeflectionCurveSVG({ points, L, support = 'simple', pointLoadAt, momentAt }) {
-  const w = 620, h = 260;
+//
+// 치수 표기용 값(LDisp/loadValue)은 그림 축척과 무관하게 "화면에 적을 숫자"로만 쓴다 — 계산은
+// 계속 m/N 기준(L, points)으로 하고, 라벨만 SETTING MENU에서 고른 단위로 보여주기 위해서다.
+// onEditL/onEditLoad를 넘기면 그 숫자를 클릭해서 바로 고칠 수 있다.
+export default function DeflectionCurveSVG({
+  points,
+  L,
+  support = 'simple',
+  pointLoadAt,
+  momentAt,
+  LDisp,
+  lengthUnit = '',
+  onEditL,
+  loadValue,
+  loadUnit = '',
+  onEditLoad,
+}) {
+  const w = 620, h = 300;
   const padL = 40, padR = 40, padTop = 40, padBottom = 60;
   const drawW = w - padL - padR;
   const beamY = padTop;
@@ -14,7 +32,7 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xToPx(p.x).toFixed(2)} ${vToPx(p.v).toFixed(2)}`).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {/* 원래(변형 전) 보 */}
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke="#EAE7E0" strokeWidth="3" />
 
@@ -66,14 +84,35 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
         <g>
           <line x1={xToPx(pointLoadAt)} y1={beamY - 34} x2={xToPx(pointLoadAt)} y2={beamY - 4} stroke="#C3002F" strokeWidth="1.8" />
           <polygon points={`${xToPx(pointLoadAt)},${beamY} ${xToPx(pointLoadAt) - 5},${beamY - 9} ${xToPx(pointLoadAt) + 5},${beamY - 9}`} fill="#C3002F" />
-          <text x={xToPx(pointLoadAt)} y={beamY - 38} fontSize="13" fontWeight="800" fill="#C3002F" textAnchor="middle">P</text>
+          <Dim
+            x={xToPx(pointLoadAt)}
+            y={beamY - 38}
+            color="#C3002F"
+            fontSize={12.5}
+            value={loadValue}
+            unit={loadUnit}
+            prefix="P = "
+            boxW={64}
+            onChange={onEditLoad}
+          />
         </g>
       )}
       {momentAt !== undefined && (
         <g>
           <path d={`M ${xToPx(momentAt) - 12} ${beamY - 14} A 14 14 0 1 1 ${xToPx(momentAt) + 6} ${beamY - 22}`} fill="none" stroke="#4A5FBF" strokeWidth="1.8" />
           <polygon points={`${xToPx(momentAt) + 6},${beamY - 22} ${xToPx(momentAt) - 1},${beamY - 26} ${xToPx(momentAt) + 2},${beamY - 15}`} fill="#4A5FBF" />
-          <text x={xToPx(momentAt)} y={beamY - 30} fontSize="13" fontWeight="800" fill="#4A5FBF" textAnchor="middle">M₀</text>
+          <Dim
+            x={xToPx(momentAt)}
+            y={beamY - 30}
+            color="#4A5FBF"
+            fontSize={12.5}
+            value={loadValue}
+            unit={loadUnit}
+            prefix="M₀ = "
+            boxW={64}
+            min={null}
+            onChange={onEditLoad}
+          />
         </g>
       )}
       {pointLoadAt === undefined && momentAt === undefined && (
@@ -82,13 +121,37 @@ export default function DeflectionCurveSVG({ points, L, support = 'simple', poin
             const px = padL + i * 22;
             return <line key={i} x1={px} y1={beamY - 18} x2={px} y2={beamY - 2} stroke="#C3002F" strokeWidth="1.3" markerEnd="url(#arrow)" />;
           })}
-          <text x={padL + drawW / 2} y={beamY - 24} fontSize="13" fontWeight="800" fill="#C3002F" textAnchor="middle">q</text>
+          <Dim
+            x={padL + drawW / 2}
+            y={beamY - 24}
+            color="#C3002F"
+            fontSize={12.5}
+            value={loadValue}
+            unit={loadUnit}
+            prefix="q = "
+            boxW={68}
+            onChange={onEditLoad}
+          />
         </g>
       )}
 
       {/* 처짐곡선 (과장) */}
       <path d={pathD} fill="none" stroke="#1E7F72" strokeWidth="2.2" />
-      <text x={padL + drawW / 2} y={h - 16} fontSize="13" fill="#8A97A2" textAnchor="middle">
+
+      {/* 스팬 치수선 — 처짐곡선이 가장 많이 내려간 자리보다 아래에 긋는다. */}
+      <DimLineH
+        x1={padL}
+        x2={padL + drawW}
+        y={h - 52}
+        labelDy={15}
+        fontSize={12}
+        value={LDisp !== undefined ? LDisp : L}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={64}
+        onChange={onEditL}
+      />
+      <text x={padL + drawW / 2} y={h - 12} fontSize="13" fill="#8A97A2" textAnchor="middle">
         처짐곡선 (화면 표시를 위해 세로 방향으로 과장됨)
       </text>
     </svg>

@@ -30,6 +30,9 @@ export function Dim({
   unit = '',
   prefix = '',
   suffix = '',
+  // 이미 다른 데서 만들어 둔 라벨 문자열을 그대로 쓰고 싶을 때(예: "q = 5.0 kN/m").
+  // 넘기면 prefix/unit/suffix 대신 이 문자열을 그린다.
+  text: textOverride,
   anchor = 'middle',
   color = INK,
   fontSize = 13,
@@ -41,7 +44,7 @@ export function Dim({
   onChange,
 }) {
   const [editing, setEditing] = useState(false);
-  const text = `${prefix}${fmt(value)}${unit ? ` ${unit}` : ''}${suffix}`;
+  const text = textOverride !== undefined ? textOverride : `${prefix}${fmt(value)}${unit ? ` ${unit}` : ''}${suffix}`;
 
   function commit(raw) {
     setEditing(false);
