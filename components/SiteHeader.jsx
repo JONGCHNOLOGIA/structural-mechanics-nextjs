@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/UserProvider';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -15,15 +14,34 @@ export default function SiteHeader({ active = 'sm2' }) {
   const isProblemGenerator = active === 'problem-generator' || active === 'problem-generator-1' || active === 'problem-generator-2';
 
   const { userId, isAdmin } = useUser();
-  const router = useRouter();
 
+  // 로그아웃이 "눌러도 아무 일도 안 일어나는" 것처럼 보이는 경우가 있어서, 실패할 수 있는
+  // 지점을 하나씩 다 막아뒀다:
+  //  (1) signOut()은 기본이 global이라 서버에 요청을 보낸다 — 네트워크가 느리거나 토큰이 이미
+  //      만료돼 있으면 여기서 오래 매달리거나 예외가 난다. 3초로 끊는다.
+  //  (2) 그게 실패했어도 이 브라우저의 세션만은 확실히 지우도록 local scope로 한 번 더.
+  //  (3) 그래도 남아있으면 localStorage의 세션 키를 직접 지운다.
+  //  (4) router.replace()는 Next 서버에서 화면 데이터를 받아와야 해서, dev 서버가 꺼져 있거나
+  //      응답이 느리면 화면이 그대로 멈춘 것처럼 보인다. 하드 이동이면 그 상황에서도 확실히 나간다.
   async function handleLogout() {
     try {
-      await supabase.auth.signOut();
+      await Promise.race([supabase.auth.signOut(), new Promise((resolve) => setTimeout(resolve, 3000))]);
     } catch (e) {
-      // 세션이 이미 만료됐거나 네트워크가 끊겨도, 어쨌든 로그인 화면으로는 보내준다.
+      // 무시 — 아래에서 로컬 세션을 직접 정리한다.
     }
-    router.replace('/');
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (e) {
+      // 무시
+    }
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('sb-') && k.includes('auth-token'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      // 무시 (사파리 프라이빗 모드 등에서 localStorage 접근이 막힐 수 있음)
+    }
+    window.location.href = '/';
   }
 
   return (
