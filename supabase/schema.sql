@@ -46,15 +46,21 @@ create table if not exists user_progress (
   unique(user_id, topic_id)
 );
 
--- AI 튜터 대화 원문 (학생 본인 열람 + 교수자 리포트 재료)
+-- AI 튜터 대화 원문 (학생 본인 열람 + 교수자 통계 재료).
+-- topic_id는 예전 설계(topics 테이블) 흔적인데 그 테이블을 실제로 안 써서, topic_visits/
+-- problem_attempts와 똑같이 chapter_num 문자열(lib/chapters1.js·lib/chapters.js의 num,
+-- 예: 'CH.3')로 식별한다. topic_id는 지우지 않고 그냥 안 쓰는 채로 둔다.
 create table if not exists chat_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
   topic_id uuid references topics(id) on delete cascade,
+  chapter_num text,
   role text not null check (role in ('user','assistant')),
   content text not null,
   created_at timestamptz default now()
 );
+-- 이미 만들어져 있던 chat_logs에는 chapter_num 컬럼이 없을 수 있어서 안전하게 추가
+alter table chat_logs add column if not exists chapter_num text;
 
 -- 교수자용 AI 분석 리포트 캐시 (매번 새로 만들지 않도록)
 create table if not exists topic_reports (
@@ -135,6 +141,21 @@ drop policy if exists "본인 이름으로 대화 작성" on chat_logs;
 create policy "본인 이름으로 대화 작성" on chat_logs
   for insert with check (auth.uid() = user_id);
 
+-- 교수자(관리자) 통계 페이지용 — role='instructor'면 다른 학생들의 기록도 전체 조회 가능.
+-- 같은 테이블에 SELECT 정책이 여러 개면 OR로 합쳐지므로, 학생 본인용 정책은 그대로 둔 채
+-- "전체 열람" 정책만 추가하는 방식이다(하나를 고쳐 쓰는 게 아니라 나란히 놓는다).
+drop policy if exists "교수자는 전체 대화 조회 가능" on chat_logs;
+create policy "교수자는 전체 대화 조회 가능" on chat_logs
+  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+
+drop policy if exists "교수자는 전체 방문기록 조회 가능" on topic_visits;
+create policy "교수자는 전체 방문기록 조회 가능" on topic_visits
+  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+
+drop policy if exists "교수자는 전체 풀이기록 조회 가능" on problem_attempts;
+create policy "교수자는 전체 풀이기록 조회 가능" on problem_attempts
+  for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
+
 -- site_content: 문구는 누구나 읽을 수 있지만, 수정은 정해진 학번(22011031, demo-admin)만 가능.
 -- role='instructor' 전체로 허용하면 관계없는 instructor 계정도 실제 문구를 고칠 수 있게 되므로
 -- role이 아니라 student_id 화이트리스트로 지정함. demo-admin은 로그인 화면의
@@ -150,7 +171,7 @@ create policy "지정된 학번만 문구 수정" on site_content
   for update using (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')))
   with check (exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin')));
 
--- 교수자는 role 컬럼을 보고 별도 정책/뷰로 익명 열람 처리 (필요시 추가)
+-- 교수자 전체 열람 정책은 위 chat_logs/topic_visits/problem_attempts 섹션에 각각 추가해뒀음.
 
 -- SECTIONS 목록에서 소주제에 마우스를 올리면 보여줄 미리보기 이미지 저장용 버킷.
 -- 파일 자체는 여기 버킷에, 실제 URL은 site_content 테이블에 키(subtopic.CH.6.composite-beams.image.1)로 저장함.

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { recordAiTutorMessage } from '@/lib/aiTutorLog';
 
 // 소주제 계산기 페이지 우측(또는 FloatingActions의 떠있는 패널)에 항상 붙는 AI 튜터 채팅창.
 // URL의 "/ch3/" 같은 조각에서 챕터 번호를 뽑아 그 챕터의 강의자료를 근거로 답하도록
@@ -40,6 +41,8 @@ export default function AiTutorPanel({ question }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || '답변을 받아오지 못했어요.');
       setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
+      // 교수자 통계용 기록 — 실패해도 채팅 자체는 이미 끝났으니 조용히 무시한다.
+      recordAiTutorMessage(chapterNum, q, data.answer).catch(() => {});
     } catch (err) {
       setMessages((prev) => [...prev, { role: 'ai', text: `⚠ ${err.message}` }]);
     } finally {

@@ -14,7 +14,7 @@ const ECAMPUS_URL = 'https://ecampus.sejong.ac.kr/';
 export default function SiteHeader({ active = 'sm2' }) {
   const isProblemGenerator = active === 'problem-generator' || active === 'problem-generator-1' || active === 'problem-generator-2';
 
-  const { userId } = useUser();
+  const { userId, isAdmin } = useUser();
   const router = useRouter();
 
   async function handleLogout() {
@@ -46,6 +46,12 @@ export default function SiteHeader({ active = 'sm2' }) {
           <span className="site-nav-item disabled" title="준비중">
             커뮤니티
           </span>
+          {/* role='instructor' 계정("관리자로 시연" 데모 포함)에게만 보이는 통계 메뉴. */}
+          {isAdmin && (
+            <Link href="/admin/stats" className={'site-nav-item' + (active === 'admin-stats' ? ' active' : '')}>
+              통계
+            </Link>
+          )}
         </nav>
 
         <div className="header-right">

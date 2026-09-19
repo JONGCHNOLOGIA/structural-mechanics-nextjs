@@ -397,6 +397,15 @@ input[type='range']::-moz-range-thumb{
 }
 .badge.live{ color:var(--teal); background:var(--teal-soft); }
 
+/* 교수자 통계 화면(components/AdminStatsView.jsx)의 표 */
+.admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.admin-table th{
+  text-align:left; font-size:11px; color:var(--gray-soft); font-weight:800; text-transform:uppercase;
+  padding:8px 12px; border-bottom:1px solid var(--line);
+}
+.admin-table td{ padding:10px 12px; border-bottom:1px solid var(--line); color:var(--ink); }
+.admin-table tr:last-child td{ border-bottom:none; }
+
 .result-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
 .result-card{ background:var(--bg); border:1px solid var(--line); border-radius:0; padding:10px 12px; }
 .result-card .l{ font-size:11px; color:var(--gray-soft); font-weight:700; }
