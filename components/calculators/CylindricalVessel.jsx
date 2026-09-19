@@ -9,6 +9,7 @@ import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
 import { Dim, DimLineH, DimLineV } from './EditableDim';
+import VesselShell3D from './VesselShell3D';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -67,6 +68,16 @@ export default function CylindricalVessel() {
         </h3>
         {result ? (
           <>
+            {/* 3D — 구형과 같은 구성이되, 조각 위 화살표 길이가 방향마다 다르다.
+                둘레 방향(hoop)이 길이 방향의 두 배라서 그렇고, 이게 구형과 갈리는 지점이다. */}
+            <VesselShell3D shape="cylinder" hoopRatio={1} axialRatio={0.5} />
+            <p style={{ fontSize: 11, color: 'var(--gray-soft)', textAlign: 'center', margin: '2px 0 10px', lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--crimson)', fontWeight: 800 }}>빨강</span> = 안에서 미는 압력 ·{' '}
+              <span style={{ color: 'var(--teal)', fontWeight: 800 }}>청록</span> = 그걸 붙잡는 벽면 ·{' '}
+              <span style={{ color: '#B0790A', fontWeight: 800 }}>노랑</span> = 떠낸 조각
+              <br />
+              구형과 달리 <b>둘레 방향 화살표가 길이 방향보다 깁니다</b> — 둘레를 붙잡는 힘이 두 배로 큽니다.
+            </p>
             <CylindricalVesselSVG
               r={result}
               theta={theta}

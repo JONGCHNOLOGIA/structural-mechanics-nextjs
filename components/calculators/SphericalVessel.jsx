@@ -9,6 +9,7 @@ import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
 import { Dim, DimLineH, DimLineV } from './EditableDim';
+import VesselShell3D from './VesselShell3D';
 
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
@@ -72,6 +73,16 @@ export default function SphericalVessel() {
         </h3>
         {result ? (
           <>
+            {/* 3D — 반투명 껍데기 안에서 압력이 밖으로 밀고(붉은 화살표), 벽면이 그걸 붙잡는다(청록 화살표).
+                껍데기 한 곳을 노랗게 떠서, 아래 2D 그림의 네모가 "여기 조각"임을 알 수 있게 했다. */}
+            <VesselShell3D shape="sphere" />
+            <p style={{ fontSize: 11, color: 'var(--gray-soft)', textAlign: 'center', margin: '2px 0 10px', lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--crimson)', fontWeight: 800 }}>빨강</span> = 안에서 미는 압력 ·{' '}
+              <span style={{ color: 'var(--teal)', fontWeight: 800 }}>청록</span> = 그걸 붙잡는 벽면 ·{' '}
+              <span style={{ color: '#B0790A', fontWeight: 800 }}>노랑</span> = 떠낸 조각 (아래에서 확대)
+              <br />
+              드래그하면 돌려볼 수 있어요.
+            </p>
             <SphericalVesselSVG
               sigma={result.sigma}
               radius={disp(r, lenF)}
@@ -152,7 +163,7 @@ function SphericalVesselSVG({ sigma, radius, thickness, lengthUnit, onEditRadius
       {svgArrow(cx - s, cy, cx - s - sxo * L, cy, color, 'sv2')}
       {svgArrow(cx, cy - s, cx, cy - s - sxo * L, color, 'sv3')}
       {svgArrow(cx, cy + s, cx, cy + s + sxo * L, color, 'sv4')}
-      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">벽면 요소 (등이축 인장)</text>
+      <text x={cx} y={cy + s + 40} fontSize="13" fontWeight="800" fill={color} textAnchor="middle">떠낸 조각 — 사방으로 똑같이 당겨진다</text>
     </svg>
   );
 }
