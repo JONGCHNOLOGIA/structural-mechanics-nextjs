@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입 renderSphericalVessel() / svBuildVisuals()를 React로 옮긴 버전.
 
@@ -71,7 +72,14 @@ export default function SphericalVessel() {
         </h3>
         {result ? (
           <>
-            <SphericalVesselSVG sigma={result.sigma} />
+            <SphericalVesselSVG
+              sigma={result.sigma}
+              radius={disp(r, lenF)}
+              thickness={disp(t, lenF)}
+              lengthUnit={units.length}
+              onEditRadius={(v) => setR(v * lenF)}
+              onEditThickness={(v) => setT(v * lenF)}
+            />
             <div className="steps">
               <FormulaSection title="구형 압력용기 응력">
                 <div className="step-formula">
@@ -119,7 +127,7 @@ function svgArrow(x1, y1, x2, y2, color, key) {
   );
 }
 
-function SphericalVesselSVG({ sigma }) {
+function SphericalVesselSVG({ sigma, radius, thickness, lengthUnit, onEditRadius, onEditThickness }) {
   const arrows = [];
   for (let a = 0; a < 360; a += 30) {
     const rad = (a * Math.PI) / 180;
@@ -130,10 +138,14 @@ function SphericalVesselSVG({ sigma }) {
   const s = 45, L = 30, cx = 320, cy = 120, color = '#1E7F72';
   const sxo = sigma >= 0 ? 1 : -1;
   return (
-    <svg viewBox="0 0 420 260" style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block' }}>
+    <svg viewBox="0 0 420 260" style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <circle cx="120" cy="120" r="85" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       {arrows}
       <text x="120" y="225" fontSize="13" fill="#8A97A2" textAnchor="middle">내부압력 p</text>
+
+      {/* 치수 — 구의 반지름 r과 벽 두께 t. 숫자를 클릭하면 그 자리에서 고칠 수 있다. */}
+      <DimLineH x1={120} x2={205} y={120} labelDy={-6} value={radius} unit={lengthUnit} prefix="r = " fontSize={11.5} boxW={58} onChange={onEditRadius} />
+      <Dim x={120} y={202} value={thickness} unit={lengthUnit} prefix="t = " fontSize={11.5} boxW={58} onChange={onEditThickness} />
 
       <rect x={cx - s} y={cy - s} width={s * 2} height={s * 2} fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />
       {svgArrow(cx + s, cy, cx + s + sxo * L, cy, color, 'sv1')}

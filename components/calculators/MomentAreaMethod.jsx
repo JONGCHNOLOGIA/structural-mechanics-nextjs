@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { DimLineH } from './EditableDim';
 
 // 캔틸레버 보(고정단 A, 자유단 B)의 M/EI 다이어그램을 그려서,
 // 1st 정리(면적=처짐각), 2nd 정리(면적의 1차모멘트=처짐)를 눈으로 확인.
@@ -102,7 +103,14 @@ export default function MomentAreaMethod() {
         <h3>
           VISUALIZER
         </h3>
-        <MomentAreaSVG pts={result.pts} L={L} centroidFromB={result.centroidFromB} />
+        <MomentAreaSVG
+          pts={result.pts}
+          L={L}
+          centroidFromB={result.centroidFromB}
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+        />
         <div className="result-grid">
           <div className="result-card">
             <div className="l">θB (면적 = 1st 정리)</div>
@@ -139,8 +147,9 @@ export default function MomentAreaMethod() {
   );
 }
 
-function MomentAreaSVG({ pts, L, centroidFromB }) {
-  const w = 620, h = 260;
+function MomentAreaSVG({ pts, L, centroidFromB, LDisp, lengthUnit, onEditL }) {
+  // 아래에 스팬 치수선을 넣을 자리를 두려고 높이를 260에서 늘렸다.
+  const w = 620, h = 292;
   const padL = 50, padR = 40, padTop = 30, padBottom = 40;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
@@ -157,13 +166,26 @@ function MomentAreaSVG({ pts, L, centroidFromB }) {
   const centroidX = L - centroidFromB;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.6" />
       <line x1={xToPx(centroidX)} y1={padTop} x2={xToPx(centroidX)} y2={padTop + drawH} stroke="#4A5FBF" strokeWidth="1.4" strokeDasharray="5 4" />
       <text x={xToPx(centroidX)} y={padTop - 8} fontSize="13" fill="#4A5FBF" textAnchor="middle" fontWeight="800">도심</text>
       <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">A (고정단)</text>
       <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">B (자유단)</text>
+      {/* 스팬 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
+      <DimLineH
+        x1={padL}
+        x2={padL + drawW}
+        y={padTop + drawH + 44}
+        labelDy={15}
+        fontSize={12}
+        value={LDisp !== undefined ? LDisp : L}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={64}
+        onChange={onEditL}
+      />
       <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (빨간 음영 = 면적 = θB)</text>
     </svg>
   );

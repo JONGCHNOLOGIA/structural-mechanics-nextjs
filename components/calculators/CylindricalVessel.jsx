@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { Dim, DimLineH, DimLineV } from './EditableDim';
 
 // 프로토타입 renderCylindricalVessel() / cvBuildVisuals()를 React로 옮긴 버전.
 
@@ -66,7 +67,15 @@ export default function CylindricalVessel() {
         </h3>
         {result ? (
           <>
-            <CylindricalVesselSVG r={result} theta={theta} />
+            <CylindricalVesselSVG
+              r={result}
+              theta={theta}
+              radius={disp(r, lenF)}
+              thickness={disp(t, lenF)}
+              lengthUnit={units.length}
+              onEditRadius={(v) => setR(v * lenF)}
+              onEditThickness={(v) => setT(v * lenF)}
+            />
             <div className="steps">
               <FormulaSection title="원통형 압력용기 응력">
                 <div className="step-formula">
@@ -137,11 +146,16 @@ function StressElement({ cx, cy, size, sx, sy, txy, rotateDeg, color, label }) {
   );
 }
 
-function CylindricalVesselSVG({ r, theta }) {
+function CylindricalVesselSVG({ r, theta, radius, thickness, lengthUnit, onEditRadius, onEditThickness }) {
   return (
-    <svg viewBox="0 0 620 260" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block' }}>
+    <svg viewBox="0 0 620 260" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x="40" y="80" width="180" height="90" rx="45" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       <text x="130" y="65" fontSize="13" fill="#8A97A2" textAnchor="middle">원통 (길이방향 = x)</text>
+
+      {/* 치수 — 반지름 r은 중심선에서 벽까지, 두께 t는 벽 옆에 적는다.
+          그림은 비율대로 그리지 않지만(모양만 보여주는 그림) 숫자는 실제 입력값이고, 클릭해서 고칠 수 있다. */}
+      <DimLineV x={30} y1={80} y2={125} value={radius} unit={lengthUnit} prefix="r = " fontSize={11.5} boxW={58} onChange={onEditRadius} />
+      <Dim x={130} y={178} value={thickness} unit={lengthUnit} prefix="t = " fontSize={11.5} boxW={58} onChange={onEditThickness} />
       <StressElement cx={150} cy={200} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />
       <StressElement cx={460} cy={200} size={80} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ=${theta.toFixed(0)}° (용접선 방향)`} />
     </svg>

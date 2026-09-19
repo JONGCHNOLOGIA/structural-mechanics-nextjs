@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import InclinedLoads3D from './InclinedLoads3D';
+import { Dim } from './EditableDim';
 
 // 참고자료(mmch6.pdf) Example 6-6 그대로: 지붕 purlin(직사각형 단면)이 경사 α만큼 기울어진 채로
 // 얹혀 있고, 등분포하중 q(수직)가 그 기울어진 단면 기준 qy/qz로 분해되어 2축 굽힘(My, Mz)을 만듦.
@@ -34,7 +35,6 @@ export default function InclinedLoads() {
   const [qRangeOverrideBase, setQRangeOverrideBase] = useState(null);
   const [lRangeOverrideBase, setLRangeOverrideBase] = useState(null);
   const [elevation3D, setElevation3D] = useState(false);
-  const [editingField, setEditingField] = useState(null); // 'width' | 'height' | null — VISUALIZER 클릭 수정용
   const [calcState, setCalcState] = useState({ loads: 'idle', inertia: 'idle', stress: 'idle', na: 'idle' });
   const [calcSnapshot, setCalcSnapshot] = useState({ loads: null, inertia: null, stress: null, na: null });
 
@@ -247,8 +247,6 @@ export default function InclinedLoads() {
                 stressF={stressF}
                 unitStress={units.stress}
                 units={units}
-                editingField={editingField}
-                setEditingField={setEditingField}
                 onCommitDim={updateField}
               />
             )}
@@ -493,52 +491,10 @@ function SectionBody({ name, snapshot }) {
   return null;
 }
 
-// VISUALIZER의 폭/높이 라벨을 클릭하면 바로 입력칸이 뜨는 작은 헬퍼 (CompositeBeams의
-// EditableDimText와 같은 패턴, 여기선 단일 단면이라 colorId 없이 field 이름만으로 구분).
-function EditableDimLabel({ editing, x, y, textAnchor, fill, fontSize, fontWeight, displayText, currentValue, boxW, boxH, onStartEdit, onCommit, onCancel }) {
-  if (editing) {
-    const boxX = textAnchor === 'end' ? x - boxW : textAnchor === 'middle' ? x - boxW / 2 : x;
-    return (
-      <foreignObject x={boxX} y={y - boxH / 2 - 2} width={boxW} height={boxH} style={{ overflow: 'visible' }}>
-        <input
-          type="number"
-          step="any"
-          autoFocus
-          defaultValue={fmtInput(currentValue)}
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize,
-            fontWeight,
-            color: fill,
-            border: `1.3px solid ${fill}`,
-            borderRadius: 0,
-            textAlign: 'center',
-            padding: '0 2px',
-            fontFamily: "'JetBrains Mono',monospace",
-            background: '#fff',
-            boxSizing: 'border-box',
-          }}
-          onClick={(e) => e.stopPropagation()}
-          onBlur={(e) => onCommit(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.target.blur();
-            if (e.key === 'Escape') onCancel();
-          }}
-        />
-      </foreignObject>
-    );
-  }
-  return (
-    <text x={x} y={y} fontSize={fontSize} fill={fill} textAnchor={textAnchor} fontWeight={fontWeight} style={{ cursor: 'pointer' }} onClick={onStartEdit}>
-      {displayText}
-    </text>
-  );
-}
 
 // 중심을 지나는 고정 수직 기준선(0°) + 그 기준선에서 α만큼 돌아간 단면. D/E/F/G 코너와
 // 중립축(β)을 참고자료 도식 스타일로 표시. 폭/높이 라벨은 클릭해서 바로 수정 가능.
-function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStress, units, editingField, setEditingField, onCommitDim }) {
+function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStress, units, onCommitDim }) {
   const w = 460,
     hh = 360,
     cx = w / 2,
@@ -593,43 +549,27 @@ function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStres
         n
       </text>
 
-      <EditableDimLabel
-        editing={editingField === 'width'}
+      {/* 치수 — 폭 b와 높이 h. 숫자를 클릭하면 그 자리에서 고칠 수 있고, 단위는 SETTING MENU 설정을 따른다. */}
+      <Dim
         x={widthLabelPos.x}
         y={widthLabelPos.y}
-        textAnchor="middle"
-        fill="#51626F"
-        fontSize="12"
-        fontWeight="700"
-        displayText={`b = ${fmt(disp(b, lenF))} ${units.length}`}
-        currentValue={disp(b, lenF)}
+        fontSize={12}
+        value={disp(b, lenF)}
+        unit={units.length}
+        prefix="b = "
         boxW={70}
-        boxH={20}
-        onStartEdit={() => setEditingField('width')}
-        onCommit={(v) => {
-          onCommitDim('width', v);
-          setEditingField(null);
-        }}
-        onCancel={() => setEditingField(null)}
+        onChange={(v) => onCommitDim('width', v)}
       />
-      <EditableDimLabel
-        editing={editingField === 'height'}
+      <Dim
         x={heightLabelPos.x}
         y={heightLabelPos.y}
-        textAnchor="start"
-        fill="#51626F"
-        fontSize="12"
-        fontWeight="700"
-        displayText={`h = ${fmt(disp(h, lenF))} ${units.length}`}
-        currentValue={disp(h, lenF)}
+        anchor="start"
+        fontSize={12}
+        value={disp(h, lenF)}
+        unit={units.length}
+        prefix="h = "
         boxW={70}
-        boxH={20}
-        onStartEdit={() => setEditingField('height')}
-        onCommit={(v) => {
-          onCommitDim('height', v);
-          setEditingField(null);
-        }}
-        onCancel={() => setEditingField(null)}
+        onChange={(v) => onCommitDim('height', v)}
       />
 
       {corners.map((c) => {

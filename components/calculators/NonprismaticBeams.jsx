@@ -7,6 +7,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { DimLineH } from './EditableDim';
 
 // 캔틸레버 보인데 단면(I)이 중간(x=c)에서 바뀜 — 자유단(x=L)에 집중하중 P.
 // EI가 구간마다 다르니 M/EI 다이어그램을 구간별로 나눠 적분(수치적분)해서
@@ -100,7 +101,17 @@ export default function NonprismaticBeams() {
         <h3>
           VISUALIZER
         </h3>
-        <NonprismaticSVG pts={result.pts} L={L} c={cClamped} maxM={maxM} />
+        <NonprismaticSVG
+          pts={result.pts}
+          L={L}
+          c={cClamped}
+          maxM={maxM}
+          LDisp={disp(L, lenF)}
+          cDisp={disp(cClamped, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+          onEditC={(v) => setC(v * lenF)}
+        />
         <div className="result-grid">
           <div className="result-card">
             <div className="l">θB (구간별 적분 합)</div>
@@ -135,8 +146,9 @@ export default function NonprismaticBeams() {
   );
 }
 
-function NonprismaticSVG({ pts, L, c, maxM }) {
-  const w = 620, h = 260;
+function NonprismaticSVG({ pts, L, c, maxM, LDisp, cDisp, lengthUnit, onEditL, onEditC }) {
+  // 아래에 스팬·전환점 치수선을 넣을 자리를 두려고 높이를 260에서 늘렸다.
+  const w = 620, h = 316;
   const padL = 50, padR = 40, padTop = 30, padBottom = 40;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
@@ -150,13 +162,40 @@ function NonprismaticSVG({ pts, L, c, maxM }) {
     ` L ${xToPx(L)} ${padTop + drawH} Z`;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.6" />
       <line x1={xToPx(c)} y1={padTop} x2={xToPx(c)} y2={padTop + drawH} stroke="#1E7F72" strokeWidth="1.4" strokeDasharray="5 4" />
       <text x={xToPx(c)} y={padTop - 8} fontSize="13" fill="#1E7F72" textAnchor="middle" fontWeight="800">c (단면 전환점)</text>
       <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">A (고정단)</text>
       <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">B (자유단)</text>
+      {/* 치수 — 고정단에서 단면 전환점까지의 거리 c와 전체 스팬 L. 둘 다 클릭해서 고칠 수 있다. */}
+      <DimLineH
+        x1={padL}
+        x2={xToPx(c)}
+        y={padTop + drawH + 40}
+        labelDy={14}
+        fontSize={11.5}
+        color="#1E7F72"
+        value={cDisp}
+        unit={lengthUnit}
+        prefix="c = "
+        boxW={60}
+        onChange={onEditC}
+      />
+      {/* 스팬 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
+      <DimLineH
+        x1={padL}
+        x2={padL + drawW}
+        y={padTop + drawH + 68}
+        labelDy={15}
+        fontSize={12}
+        value={LDisp !== undefined ? LDisp : L}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={64}
+        onChange={onEditL}
+      />
       <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (c에서 꺾임)</text>
     </svg>
   );

@@ -8,6 +8,7 @@ import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import FieldBlockCard from './FieldBlockCard';
+import { DimLineH } from './EditableDim';
 
 // 캔틸레버 자유단에 P, M0가 작용할 때 굽힘이 저장하는 변형에너지 U = ∫M²/2EI dx.
 // a) P만  b) M0만  c) P와 M0 동시 — 세 경우를 토글로 비교.
@@ -99,7 +100,14 @@ export default function StrainEnergyOfBending() {
         <h3>
           VISUALIZER
         </h3>
-        <MomentDiagramSVG pts={diagramPts} L={L} maxAbsM={maxAbsM} />
+        <MomentDiagramSVG
+          pts={diagramPts}
+          L={L}
+          maxAbsM={maxAbsM}
+          LDisp={disp(L, lenF)}
+          lengthUnit={units.length}
+          onEditL={(v) => setL(v * lenF)}
+        />
         <div className="result-grid">
           <div className="result-card">
             <div className="l">총 변형에너지 U</div>
@@ -135,8 +143,9 @@ export default function StrainEnergyOfBending() {
   );
 }
 
-function MomentDiagramSVG({ pts, L, maxAbsM }) {
-  const w = 620, h = 220;
+function MomentDiagramSVG({ pts, L, maxAbsM, LDisp, lengthUnit, onEditL }) {
+  // 아래에 스팬 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
+  const w = 620, h = 252;
   const padL = 50, padR = 40, padTop = 30, padBottom = 40;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
@@ -149,11 +158,24 @@ function MomentDiagramSVG({ pts, L, maxAbsM }) {
     ` L ${xToPx(L)} ${padTop + drawH} Z`;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
       <path d={areaPath} fill="#E7E9F7" stroke="#4A5FBF" strokeWidth="1.6" />
       <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">B (자유단, s=0)</text>
       <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">A (고정단, s=L)</text>
+      {/* 스팬 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
+      <DimLineH
+        x1={padL}
+        x2={padL + drawW}
+        y={padTop + drawH + 44}
+        labelDy={15}
+        fontSize={12}
+        value={LDisp !== undefined ? LDisp : L}
+        unit={lengthUnit}
+        prefix="L = "
+        boxW={64}
+        onChange={onEditL}
+      />
       <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">굽힘모멘트 M(s) 다이어그램</text>
     </svg>
   );
