@@ -12,11 +12,11 @@ const TEAL = 0x1e7f72;
 const GRAY = 0x51626f;
 const INK = 0x3a3a3a;
 
-export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxSigma }) {
+export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxSigma, q, qMax }) {
   const mountRef = useRef(null);
-  const propsRef = useRef({ b, h, alphaRad, corners, betaRad, maxSigma });
+  const propsRef = useRef({ b, h, alphaRad, corners, betaRad, maxSigma, q, qMax });
   const rebuildRef = useRef(null);
-  propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma };
+  propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma, q, qMax };
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -41,8 +41,15 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxS
     const cornerDots = [];
 
     function rebuild() {
-      const { b, h, alphaRad, corners, betaRad, maxSigma } = propsRef.current;
+      const { b, h, alphaRad, corners, betaRad, maxSigma, q, qMax } = propsRef.current;
       if (beam) {
+        if (beam.userData.loadGroup) {
+          scene.remove(beam.userData.loadGroup);
+          beam.userData.loadGroup.traverse((o) => {
+            if (o.geometry) o.geometry.dispose();
+            if (o.material) o.material.dispose && o.material.dispose();
+          });
+        }
         scene.remove(beam);
         beam.traverse((o) => {
           if (o.geometry) o.geometry.dispose();
@@ -56,12 +63,70 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxS
       const bS = b * s,
         hS = h * s;
 
-      const beamGeo = new THREE.BoxGeometry(L, hS, bS);
+      // 하중을 올리면 실제로 처지는 게 보이도록 길이 방향으로 잘게 쪼갠다 (안 쪼개면 휘지 않는다)
+      const beamGeo = new THREE.BoxGeometry(L, hS, bS, 40, 1, 1);
       beam = new THREE.Mesh(beamGeo, beamMat);
       beam.rotation.x = alphaRad;
       scene.add(beam);
-      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo), new THREE.LineBasicMaterial({ color: GRAY }));
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo, 25), new THREE.LineBasicMaterial({ color: GRAY }));
       beam.add(edges);
+
+      // ---- 처짐 ----
+      // 기울어진 단면에서는 하중이 수직이어도 보가 수직으로 처지지 않는다. 실제 처짐은
+      // 중립축(n-n)에 수직인 방향으로 일어나며, 이게 이 단원의 핵심이다. 그래서 여기서도
+      // 중립축 각도 β에서 처짐 방향을 얻는다 — 중립축 방향이 (sinβ, cosβ)이므로 그 수직은
+      // (cosβ, -sinβ)이고, 하중이 누르는 쪽이라 부호를 뒤집어 (-cosβ, sinβ)로 쓴다.
+      // (α=0이면 β=0이라 (-1,0), 즉 평범하게 아래로 처진다)
+      const qLevel = qMax > 0 ? Math.max(-1, Math.min(1, (q || 0) / qMax)) : 0;
+      const maxDefl = 0.45 * qLevel;
+      const dy = -Math.cos(betaRad) * maxDefl;
+      const dz = Math.sin(betaRad) * maxDefl;
+      {
+        const pos = beamGeo.attributes.position;
+        const base = pos.array.slice();
+        for (let i = 0; i < pos.count; i++) {
+          const x = base[i * 3];
+          const t = x / (L / 2); // -1..1, 양 끝이 ±1
+          const shape = 1 - t * t; // 단순지지보처럼 양 끝은 0, 가운데가 최대
+          pos.array[i * 3 + 1] = base[i * 3 + 1] + dy * shape;
+          pos.array[i * 3 + 2] = base[i * 3 + 2] + dz * shape;
+        }
+        pos.needsUpdate = true;
+        beamGeo.computeVertexNormals();
+        edges.geometry.dispose();
+        edges.geometry = new THREE.EdgesGeometry(beamGeo, 25);
+      }
+
+      // ---- 등분포하중 화살표 ----
+      // 하중은 언제나 연직(중력) 방향이라 기울어진 보가 아니라 씬에 직접 붙인다 —
+      // "하중은 수직인데 단면만 기울어 있다"가 이 그림에서 읽혀야 하는 부분이다.
+      // 화살표 개수는 스팬을 일정 간격으로 나눈 값이고, 굵기·길이로 크기를 나타내지는 않는다.
+      if (Math.abs(qLevel) > 1e-6) {
+        const loadGroup = new THREE.Group();
+        const half = (hS * Math.abs(Math.cos(alphaRad)) + bS * Math.abs(Math.sin(alphaRad))) / 2;
+        const topY = half + 0.18;
+        const arrowLen = 0.55;
+        const mat = new THREE.MeshBasicMaterial({ color: CRIMSON });
+        const n = 9;
+        for (let i = 0; i < n; i++) {
+          const x = -L / 2 + (L * i) / (n - 1);
+          const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, arrowLen, 6), mat);
+          shaft.position.set(x, topY + arrowLen / 2 + 0.1, 0);
+          loadGroup.add(shaft);
+          const head = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 8), mat);
+          head.position.set(x, topY + 0.07, 0);
+          head.rotation.x = Math.PI;
+          loadGroup.add(head);
+        }
+        // 화살표 꼬리를 잇는 선 — 이게 있어야 "고르게 퍼진 하중"으로 읽힌다
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-L / 2, topY + arrowLen + 0.1, 0),
+          new THREE.Vector3(L / 2, topY + arrowLen + 0.1, 0),
+        ]);
+        loadGroup.add(new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: CRIMSON })));
+        beam.userData.loadGroup = loadGroup;
+        scene.add(loadGroup);
+      }
 
       // 응력 색상판 (D-F-E-G 사각형 둘레 순서) — 색 강도는 지금 이 순간의 최대 응력이 아니라
       // q 슬라이더 최댓값 기준 응력(maxSigma)으로 고정 정규화해서, 하중을 올릴수록 점점 진해지게 함.
@@ -195,9 +260,9 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxS
 
   // props가 바뀔 때마다(치수/각도/응력) 다시 지오메트리만 새로 그림 — 씬/카메라는 그대로 유지
   useEffect(() => {
-    propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma };
+    propsRef.current = { b, h, alphaRad, corners, betaRad, maxSigma, q, qMax };
     if (rebuildRef.current) rebuildRef.current();
-  }, [b, h, alphaRad, corners, betaRad, maxSigma]);
+  }, [b, h, alphaRad, corners, betaRad, maxSigma, q, qMax]);
 
   return (
     <div>

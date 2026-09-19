@@ -236,7 +236,7 @@ export default function InclinedLoads() {
               </button>
             </div>
             {elevation3D ? (
-              <InclinedLoads3D b={b} h={h} alphaRad={alphaRad} corners={r.corners} betaRad={r.betaRad} maxSigma={maxSigma} />
+              <InclinedLoads3D b={b} h={h} alphaRad={alphaRad} corners={r.corners} betaRad={r.betaRad} maxSigma={maxSigma} q={q} qMax={qMaxBase} />
             ) : (
               <InclinedLoadsSVG
                 b={b}
