@@ -41,6 +41,10 @@ export default function BeamBuilderSVG({
 
   const w = 680;
   const beamY = 140;
+  // 보의 반두께(px). 실제 단면 치수가 아니라 "보처럼 보이게" 하는 그림용 두께다.
+  const BEAM_HALF = 9;
+  // 드래그 과녁의 반지름(px). 보이는 아이콘과 별개로, 투명한 원을 덧대 여기까지 잡히게 한다.
+  const HIT_R = 14;
   const padL = 40, padR = 70;
   const drawW = w - padL - padR;
   const xToPx = (x) => padL + (x / L) * drawW;
@@ -68,9 +72,13 @@ export default function BeamBuilderSVG({
     return pt.matrixTransform(ctm.inverse());
   }
 
-  // 마우스 이벤트로 드래그 구현. window 리스너를 useEffect로 걸면 React가 실제로 등록하기 전에
-  // (특히 자동화 도구가 mousedown 직후 곧바로 mousemove/mouseup을 연달아 보내는 경우) 이벤트를
-  // 놓칠 수 있어서, mousedown 핸들러 안에서 즉시(동기적으로) 등록/해제한다.
+  // 포인터 이벤트로 드래그 구현 — 마우스 전용(onMouseDown)이던 걸 바꿨다. 태블릿·터치스크린에서
+  // 하중을 못 잡겠다는 얘기가 있었는데, 마우스 이벤트는 터치에서 브라우저가 흉내만 내주는 거라
+  // 놓치는 경우가 잦다. 포인터 이벤트는 마우스·터치·펜을 한 종류로 받는다.
+  //
+  // window 리스너를 useEffect로 걸면 React가 실제로 등록하기 전에 (특히 자동화 도구가 down 직후
+  // 곧바로 move/up을 연달아 보내는 경우) 이벤트를 놓칠 수 있어서, down 핸들러 안에서
+  // 즉시(동기적으로) 등록/해제한다.
   function computeFromClient(clientX, clientY) {
     const p = svgPoint(clientX, clientY);
     const dx = p.x - trashCx, dy = p.y - trashCy;
@@ -95,14 +103,16 @@ export default function BeamBuilderSVG({
     }
     function handleUp(ev) {
       const { x, overTrash } = computeFromClient(ev.clientX, ev.clientY);
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
       setDrag(null);
       if (overTrash) onRemoveItem(id);
       else onMoveX(id, x);
     }
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
   }
 
   // 분포하중(UDL/삼각형)의 양 끝을 잡아 span을 늘리거나 줄이는 리사이즈 드래그.
@@ -115,11 +125,13 @@ export default function BeamBuilderSVG({
       onResizeLoad(id, edge, x);
     }
     function handleUp() {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
     }
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
   }
 
   const isDraggingId = (id) => !!(drag && drag.id === id);
@@ -144,7 +156,18 @@ export default function BeamBuilderSVG({
       />
 
       {/* 보 본체 */}
-      <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke={GRAY} strokeWidth="4" />
+      {/* 보 본체 — 선 한 줄이 아니라 실제 보처럼 위아래로 두께를 준다.
+          두꺼워야 "보"로 보이기도 하고, 하중을 끌어다 놓을 과녁도 그만큼 넓어진다. */}
+      <rect
+        x={padL}
+        y={beamY - BEAM_HALF}
+        width={drawW}
+        height={BEAM_HALF * 2}
+        fill="#E7E4DC"
+        stroke={GRAY}
+        strokeWidth="1.4"
+      />
+      <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke="#B9C2C9" strokeWidth="1" strokeDasharray="5 4" />
 
       {/* 예상 처짐곡선 (점선, 실제 위치에 겹쳐서) */}
       {showDeflection && Array.isArray(momentPts) && momentPts.length > 1 && (
@@ -191,7 +214,8 @@ export default function BeamBuilderSVG({
         const opacity = isDragging ? 0.3 : 1;
         if (s.type === 'fixed') {
           return (
-            <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL.fixed)} style={{ cursor: 'grab' }}>
+            <g key={s.id} opacity={opacity} onPointerDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL.fixed)} style={{ cursor: 'grab' }}>
+              <rect x={x - HIT_R} y={beamY - HIT_R - 10} width={HIT_R * 2} height={HIT_R * 2 + 24} fill="transparent" />
               {ring}
               <rect x={x - 5} y={beamY - 22} width="10" height="44" fill={GRAY} />
               {Array.from({ length: 6 }).map((_, i) => (
@@ -201,7 +225,8 @@ export default function BeamBuilderSVG({
           );
         }
         return (
-          <g key={s.id} opacity={opacity} onMouseDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL[s.type])} style={{ cursor: 'grab' }}>
+          <g key={s.id} opacity={opacity} onPointerDown={(e) => startDrag(e, s.id, s.x, SUPPORT_GHOST_LABEL[s.type])} style={{ cursor: 'grab' }}>
+            <rect x={x - HIT_R} y={beamY - 8} width={HIT_R * 2} height={HIT_R * 2 + 14} fill="transparent" />
             {ring}
             <polygon points={`${x},${beamY} ${x - 10},${beamY + 17} ${x + 10},${beamY + 17}`} fill="none" stroke={GRAY} strokeWidth="1.6" />
             {s.type === 'roller' && (
@@ -231,7 +256,8 @@ export default function BeamBuilderSVG({
           const labelY = down ? y1 - 20 : y1 + 30;
           return (
             <g key={l.id} opacity={opacity}>
-              <g onMouseDown={(e) => startDrag(e, l.id, l.x, 'P')} style={{ cursor: 'grab' }}>
+              <g onPointerDown={(e) => startDrag(e, l.id, l.x, 'P')} style={{ cursor: 'grab' }}>
+                <rect x={x - HIT_R} y={Math.min(y1, y2) - 6} width={HIT_R * 2} height={Math.abs(y2 - y1) + 12} fill="transparent" />
                 <line x1={x} y1={y1} x2={x} y2={y2} stroke={stroke} strokeWidth="2" />
                 <polygon
                   points={
@@ -314,10 +340,14 @@ export default function BeamBuilderSVG({
               {/* 양 끝 리사이즈 핸들 — PPT 사각형처럼 잡고 끌면 xStart/xEnd가 바뀐다 (보 길이 안에서만) */}
               {onResizeLoad && (
                 <>
-                  <circle cx={xS} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ cursor: 'ew-resize' }}
-                    onMouseDown={(e) => startResizeDrag(e, l.id, 'start')} />
-                  <circle cx={xE} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ cursor: 'ew-resize' }}
-                    onMouseDown={(e) => startResizeDrag(e, l.id, 'end')} />
+                  {/* 손잡이는 작게 보이는 게 예쁘지만 그대로는 잡기가 너무 어렵다(지름 12px).
+                      보이는 원은 그대로 두고, 그 위에 투명한 큰 원을 덧대 과녁만 28px로 넓힌다. */}
+                  <circle cx={xS} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ pointerEvents: 'none' }} />
+                  <circle cx={xS} cy={handleY} r={HIT_R} fill="transparent" style={{ cursor: 'ew-resize' }}
+                    onPointerDown={(e) => startResizeDrag(e, l.id, 'start')} />
+                  <circle cx={xE} cy={handleY} r="6" fill="#fff" stroke={stroke} strokeWidth="1.8" style={{ pointerEvents: 'none' }} />
+                  <circle cx={xE} cy={handleY} r={HIT_R} fill="transparent" style={{ cursor: 'ew-resize' }}
+                    onPointerDown={(e) => startResizeDrag(e, l.id, 'end')} />
                 </>
               )}
               <EditableLabel
@@ -377,7 +407,8 @@ export default function BeamBuilderSVG({
           const tipAng = end + (ccw ? -0.5 : 0.5);
           return (
             <g key={l.id} opacity={opacity}>
-              <g onMouseDown={(e) => startDrag(e, l.id, l.x, 'M₀')} style={{ cursor: 'grab' }}>
+              <g onPointerDown={(e) => startDrag(e, l.id, l.x, 'M₀')} style={{ cursor: 'grab' }}>
+                <rect x={x - r - 4} y={cy - r - 4} width={(r + 4) * 2} height={r + 4 + (beamY - cy)} fill="transparent" />
                 <path d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 0 ${sweep} ${p2.x} ${p2.y}`} fill="none" stroke={stroke} strokeWidth="2" />
                 <polygon
                   points={`${p2.x},${p2.y} ${p2.x - 6 * Math.cos(tipAng - 0.4)},${p2.y - 6 * Math.sin(tipAng - 0.4)} ${p2.x - 6 * Math.cos(tipAng + 0.4)},${p2.y - 6 * Math.sin(tipAng + 0.4)}`}
