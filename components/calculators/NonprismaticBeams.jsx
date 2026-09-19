@@ -148,8 +148,8 @@ export default function NonprismaticBeams() {
 
 function NonprismaticSVG({ pts, L, c, maxM, LDisp, cDisp, lengthUnit, onEditL, onEditC }) {
   // 아래에 스팬·전환점 치수선을 넣을 자리를 두려고 높이를 260에서 늘렸다.
-  const w = 620, h = 316;
-  const padL = 50, padR = 40, padTop = 30, padBottom = 40;
+  const w = 620, h = 330;
+  const padL = 50, padR = 40, padTop = 30, padBottom = 110;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
 

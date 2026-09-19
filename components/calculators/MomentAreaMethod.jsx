@@ -149,8 +149,8 @@ export default function MomentAreaMethod() {
 
 function MomentAreaSVG({ pts, L, centroidFromB, LDisp, lengthUnit, onEditL }) {
   // 아래에 스팬 치수선을 넣을 자리를 두려고 높이를 260에서 늘렸다.
-  const w = 620, h = 292;
-  const padL = 50, padR = 40, padTop = 30, padBottom = 40;
+  const w = 620, h = 306;
+  const padL = 50, padR = 40, padTop = 30, padBottom = 86;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
   const maxM = Math.max(1e-12, ...pts.map((p) => p.m));

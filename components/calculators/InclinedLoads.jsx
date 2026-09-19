@@ -527,8 +527,12 @@ function InclinedLoadsSVG({ b, h, alphaRad, betaRad, corners, stressF, unitStres
     G: rot2(bPx / 2, -hPx / 2),
   };
 
-  const widthLabelPos = rot2(0, hPx / 2 + 22);
-  const heightLabelPos = rot2(bPx / 2 + 30, 0);
+  // 치수 라벨은 이 그림에서 가장 바깥까지 뻗는 것(중립축 선과 그 끝의 n 글씨)보다 더 바깥에 둔다.
+  // 단면 크기 기준으로만 띄우면(예전엔 22/30이었다) α를 돌릴 때 n이나 모서리(D·E·F·G) 글씨와
+  // 겹치는 각도가 생긴다. 중립축 길이(naLen)를 기준으로 잡으면 어떤 각도에서도 겹치지 않는다.
+  const labelRadius = naLen + 24;
+  const widthLabelPos = rot2(0, labelRadius);
+  const heightLabelPos = rot2(labelRadius, 0);
 
   return (
     <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 500, margin: '0 auto', display: 'block', overflow: 'visible' }}>

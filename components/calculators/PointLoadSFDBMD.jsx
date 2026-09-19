@@ -214,7 +214,10 @@ function CutFBD({ res, cutDisp, lengthUnit, onEditCut }) {
         stroke="var(--crimson)"
         strokeWidth="2"
       />
-      <text x={cutX - 10 + mR / 2} y={barY - 34} fontSize="9.5" fontWeight="800" fill="var(--crimson)" textAnchor="middle">
+      {/* M 라벨은 하중 P 라벨(barY-42)·V 라벨과 같은 높이대에 있어서 절단면이 하중에 가까우면
+          글씨끼리 겹쳤다. 두 라벨보다 위로 올리고, 아래 호까지 가는 얇은 안내선을 붙여 뒀다. */}
+      <line x1={cutX - 10 + mR / 2} y1={barY - 54} x2={cutX - 10 + mR / 2} y2={barY - 32} stroke="var(--crimson)" strokeWidth="0.8" strokeDasharray="2 2" />
+      <text x={cutX - 10 + mR / 2} y={barY - 58} fontSize="9.5" fontWeight="800" fill="var(--crimson)" textAnchor="middle">
         M={fmt1(M, 2)}
       </text>
       {/* 절단 위치 x 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있고, 자유물체도가 바로 따라간다.

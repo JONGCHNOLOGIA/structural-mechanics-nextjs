@@ -162,7 +162,7 @@ export default function TorsionDesign() {
 // 지름과 길이를 치수로 적어 두고, 입력값인 것만 클릭해서 고칠 수 있게 한다.
 // (필요 지름을 역산하는 모드에서는 지름이 결과라 고칠 수 없다)
 function ShaftSVG({ s, res, onEditNum, onEditDim }) {
-  const w = 460, h = 214, xL = 80, xR = 380, cy = 86;
+  const w = 460, h = 214, xL = 122, xR = 396, cy = 86;
   const isTorqueMode = res.mode === 'maxTorque';
   const dInput = s.sectionType === 'solid_circular' ? s.dims.d : s.dims.d_outer;
   const dShown = isTorqueMode ? dInput : fromBase(res.governing, s.dimUnit, LENGTH_UNITS);

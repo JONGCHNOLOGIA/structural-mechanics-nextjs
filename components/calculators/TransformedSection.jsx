@@ -444,7 +444,7 @@ function TransformedSVG({ result, refBlock, units, onEditDim }) {
   // 원래 단면 좌우로 치수(왼쪽 높이, 오른쪽 폭)를 적을 자리를 만들려고 그림판을 넓히고
   // 두 단면 사이 간격(zoneGap)도 벌렸다 — 원래는 720×380에 zoneGap 60이었다.
   const svgW = 800,
-    svgH = 392;
+    svgH = 404;
   const padTop = 44,
     padBottom = 56;
   const drawH = svgH - padTop - padBottom;
@@ -478,6 +478,8 @@ function TransformedSVG({ result, refBlock, units, onEditDim }) {
   }
 
   const naY = yToPx(result.ybar);
+  // 환산 화살표는 단면 아래 여백에 둔다 (자세한 이유는 화살표를 그리는 곳 주석 참고)
+  const arrowY = yToPx(0) + 46;
 
   const stressPts = [];
   result.blocks.forEach((b, i) => {
@@ -586,19 +588,21 @@ function TransformedSVG({ result, refBlock, units, onEditDim }) {
 
       <line x1={zoneA_cx - zoneW / 2 - 8} y1={naY} x2={zoneA_cx + zoneW / 2 + 8} y2={naY} stroke="#51626F" strokeWidth="1.1" strokeDasharray="5 4" />
 
+      {/* "원래 단면 → 환산 단면" 화살표. 두 단면 사이 높이 한가운데에 있었는데, 그 자리에 블록별
+          폭 치수가 들어오면서 글씨가 겹쳐서 단면 아래로 내렸다. 가리키는 방향은 그대로다. */}
       <line
-        x1={zoneA_cx + zoneW / 2 + 12}
-        y1={padTop + drawH / 2}
-        x2={zoneB_cx - zoneW / 2 - 20}
-        y2={padTop + drawH / 2}
+        x1={zoneA_cx + 40}
+        y1={arrowY}
+        x2={zoneB_cx - 48}
+        y2={arrowY}
         stroke="#C3002F"
         strokeWidth="1.6"
       />
       <polygon
-        points={`${zoneB_cx - zoneW / 2 - 12},${padTop + drawH / 2} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 - 5} ${zoneB_cx - zoneW / 2 - 20},${padTop + drawH / 2 + 5}`}
+        points={`${zoneB_cx - 40},${arrowY} ${zoneB_cx - 48},${arrowY - 5} ${zoneB_cx - 48},${arrowY + 5}`}
         fill="#C3002F"
       />
-      <text x={(zoneA_cx + zoneB_cx) / 2} y={padTop + drawH / 2 - 12} fontSize="13" fill="#C3002F" textAnchor="middle" fontWeight="800">
+      <text x={(zoneA_cx + zoneB_cx) / 2} y={arrowY - 8} fontSize="13" fill="#C3002F" textAnchor="middle" fontWeight="800">
         n = Eᵢ/E_ref
       </text>
 

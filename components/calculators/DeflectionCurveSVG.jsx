@@ -20,7 +20,7 @@ export default function DeflectionCurveSVG({
   onEditLoad,
 }) {
   const w = 620, h = 300;
-  const padL = 40, padR = 40, padTop = 40, padBottom = 60;
+  const padL = 40, padR = 40, padTop = 58, padBottom = 60;
   const drawW = w - padL - padR;
   const beamY = padTop;
 

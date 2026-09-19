@@ -135,7 +135,7 @@ function Steps({ s, res }) {
 // 단면 옆에 응력 분포를 막대로 — 중립축에서 0, 연단에서 최대인 선형 분포.
 function SectionStressSVG({ s, res, onEditDim }) {
   // 아래쪽에 폭(지름) 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
-  const w = 280, h = 244, cx = w / 2, cy = 110;
+  const w = 280, h = 262, cx = w / 2, cy = 106;
   const isRect = s.sectionType === 'rectangular';
   // 그림 크기는 입력 단위와 무관하게 실제 mm 기준으로 정한다.
   const hMM = toBase(isRect ? s.dims.h : s.dims.d, s.dimUnit, LENGTH_UNITS) * 1000;
@@ -185,7 +185,7 @@ function SectionStressSVG({ s, res, onEditDim }) {
           <DimLineH
             x1={cx - shapeW / 2}
             x2={cx + shapeW / 2}
-            y={cy + shapeH / 2 + 12}
+            y={cy + shapeH / 2 + 34}
             labelDy={14}
             fontSize={10.5}
             value={s.dims.b}
@@ -198,7 +198,7 @@ function SectionStressSVG({ s, res, onEditDim }) {
         <DimLineH
           x1={cx - shapeH / 2}
           x2={cx + shapeH / 2}
-          y={cy + shapeH / 2 + 12}
+          y={cy + shapeH / 2 + 34}
           labelDy={14}
           fontSize={10.5}
           value={s.dims.d}

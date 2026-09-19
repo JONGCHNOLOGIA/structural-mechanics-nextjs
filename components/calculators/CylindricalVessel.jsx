@@ -154,7 +154,7 @@ function CylindricalVesselSVG({ r, theta, radius, thickness, lengthUnit, onEditR
 
       {/* 치수 — 반지름 r은 중심선에서 벽까지, 두께 t는 벽 옆에 적는다.
           그림은 비율대로 그리지 않지만(모양만 보여주는 그림) 숫자는 실제 입력값이고, 클릭해서 고칠 수 있다. */}
-      <DimLineV x={30} y1={80} y2={125} value={radius} unit={lengthUnit} prefix="r = " fontSize={11.5} boxW={58} onChange={onEditRadius} />
+      <DimLineV x={232} y1={80} y2={125} side="right" value={radius} unit={lengthUnit} prefix="r = " fontSize={11.5} boxW={58} onChange={onEditRadius} />
       <Dim x={130} y={178} value={thickness} unit={lengthUnit} prefix="t = " fontSize={11.5} boxW={58} onChange={onEditThickness} />
       <StressElement cx={150} cy={200} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />
       <StressElement cx={460} cy={200} size={80} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ=${theta.toFixed(0)}° (용접선 방향)`} />

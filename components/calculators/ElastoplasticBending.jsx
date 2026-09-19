@@ -141,19 +141,19 @@ export default function ElastoplasticBending() {
 
 function ElastoplasticSVG({ width, height, r, lenUnit, lenF, onEditWidth, onEditHeight }) {
   // 왼쪽 높이 치수와 아래쪽 폭 치수를 적을 자리를 만들려고 그림판을 조금 넓혔다(원래 520×320).
-  const w = 560, hh = 352, padTop = 30;
+  const w = 660, hh = 352, padTop = 30;
   const scale = 220 / height;
   const bPx = width * scale, hPx = height * scale;
-  const cx1 = 130, cy = padTop + hPx / 2;
+  const cx1 = 200, cy = padTop + hPx / 2;
   const ePx = r.e * scale;
 
-  const diagCx = 340, diagHalfW = 110;
+  const diagCx = 430, diagHalfW = 110;
   const yTopPx = padTop, yBotPx = padTop + hPx;
   const yMidTopPx = padTop + (hPx - ePx) / 2, yMidBotPx = padTop + (hPx + ePx) / 2;
   const sYpx = diagHalfW;
 
   return (
-    <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 560, margin: '0 auto', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${hh}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx1 - bPx / 2} y={cy - hPx / 2} width={bPx} height={hPx} fill="#F4F1E8" stroke="#51626F" strokeWidth="1.3" />
       <rect x={cx1 - bPx / 2} y={cy - ePx / 2} width={bPx} height={ePx} fill="#E1F2EF" stroke="#1E7F72" strokeWidth="1.2" />
       {ePx < hPx && (

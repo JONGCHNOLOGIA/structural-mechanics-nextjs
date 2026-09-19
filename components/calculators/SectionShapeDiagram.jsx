@@ -113,7 +113,7 @@ export default function SectionShapeDiagram({ shape, d, ybar, totalHeight, onEdi
   }
 
   return (
-    <svg viewBox="0 0 300 264" style={{ width: '100%', maxWidth: 320, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+    <svg viewBox="0 0 390 264" style={{ width: '100%', maxWidth: 390, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       {content}
       {shape !== 'tSection' && (
         <line x1={cx - 90} y1={cy} x2={cx + 90} y2={cy} stroke={CENTROID} strokeWidth="1" strokeDasharray="4 3" opacity="0.6" />

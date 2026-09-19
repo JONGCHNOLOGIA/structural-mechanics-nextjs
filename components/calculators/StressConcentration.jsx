@@ -114,10 +114,10 @@ function Steps({ s, res }) {
 // 구멍 뚫린 판 — 구멍 옆(순단면)에서 응력선이 촘촘해지는 모습을 선 굵기로 표현
 function PlateSVG({ s, onEditNum }) {
   // 좌우/아래에 치수선 자리를 두려고 그림을 조금 키웠다(원래 300×180).
-  const w = 340, h = 236, plateW = 220, plateH = 90, cx = w / 2, cy = 92;
+  const w = 380, h = 236, plateW = 220, plateH = 90, cx = 214, cy = 92;
   const holeR = Math.min(30, plateW * 0.5 * Math.min(0.8, s.d / s.b));
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 340, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 380, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - plateW / 2} y={cy - plateH / 2} width={plateW} height={plateH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.6" />
       <circle cx={cx} cy={cy} r={holeR} fill="#fff" stroke="var(--crimson)" strokeWidth="1.8" />
       <line x1={cx} y1={cy - plateH / 2 - 8} x2={cx} y2={cy + plateH / 2 + 8} stroke="var(--gray)" strokeWidth="1" strokeDasharray="3 2" />

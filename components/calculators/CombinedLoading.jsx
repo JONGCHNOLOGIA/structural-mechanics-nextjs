@@ -148,7 +148,7 @@ function Steps({ s, res }) {
 // 단면을 위/아래로 나눠 색으로 인장(teal)·압축(crimson)을 보여주고, 옆에 합성 응력 분포를 직선으로 그린다.
 function CombinedSectionSVG({ s, res, onEditNum }) {
   // 왼쪽 높이 치수선과 아래 폭 치수선 자리를 두려고 그림을 키웠다(원래 300×210, cx=110).
-  const w = 330, h = 252, cx = 128, cy = 100;
+  const w = 360, h = 252, cx = 156, cy = 100;
   const bMM = toBase(s.b || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const hMM = toBase(s.h || 0, s.dimUnit, LENGTH_UNITS) * 1000;
   const shapeW = scaledPx(bMM, 300, 50, 100);
@@ -156,7 +156,7 @@ function CombinedSectionSVG({ s, res, onEditNum }) {
 
   if (!res.valid) {
     return (
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 330, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 360, margin: '0 auto', display: 'block', overflow: 'visible' }}>
         <rect x={cx - shapeW / 2} y={cy - shapeH / 2} width={shapeW} height={shapeH} fill="var(--bg)" stroke="#8A97A2" strokeWidth="1.2" />
 
       {/* 단면 치수 b, h — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
@@ -202,7 +202,7 @@ function CombinedSectionSVG({ s, res, onEditNum }) {
   const yBot = cy + shapeH / 2;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 330, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 360, margin: '0 auto', display: 'block', overflow: 'visible' }}>
       <rect x={cx - shapeW / 2} y={yTop} width={shapeW} height={shapeH / 2}
         fill={top >= 0 ? 'var(--teal-soft)' : 'var(--crimson-soft)'} stroke="#8A97A2" strokeWidth="1.2" />
       <rect x={cx - shapeW / 2} y={cy} width={shapeW} height={shapeH / 2}

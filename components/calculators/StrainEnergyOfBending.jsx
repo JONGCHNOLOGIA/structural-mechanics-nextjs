@@ -145,8 +145,8 @@ export default function StrainEnergyOfBending() {
 
 function MomentDiagramSVG({ pts, L, maxAbsM, LDisp, lengthUnit, onEditL }) {
   // 아래에 스팬 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
-  const w = 620, h = 252;
-  const padL = 50, padR = 40, padTop = 30, padBottom = 40;
+  const w = 620, h = 266;
+  const padL = 50, padR = 40, padTop = 30, padBottom = 86;
   const drawW = w - padL - padR;
   const drawH = h - padTop - padBottom;
   const xToPx = (s) => padL + (s / L) * drawW;
