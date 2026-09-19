@@ -205,11 +205,13 @@ header{
 .subtopic-preview-imgs img{
   flex:1 1 0; min-width:0;
   aspect-ratio:16 / 9; height:auto;
-  /* 넓은 모니터에서는 가로를 다 차지하면 16:9라도 칸이 과하게 커진다(폭 1100px → 높이 619px).
-     높이 300px에 해당하는 폭으로 상한을 둬서, 화면이 아무리 넓어도 한 칸은 533×300을 넘지 않게 한다.
+  /* 넓은 모니터에서 가로를 다 차지하면 16:9라도 칸이 과하게 커지므로(폭 1100px → 높이 619px),
+     높이 450px에 해당하는 폭으로 상한을 둔다 → 한 칸은 최대 800×450.
      좁아지면 폭이 먼저 줄고 높이는 aspect-ratio가 따라 줄여서 16:9는 항상 유지된다.
-     (컨테이너가 justify-content:center라 1장일 때는 가운데 정렬된다) */
-  max-width:calc(300px * 16 / 9);
+     (컨테이너가 justify-content:center라 1장일 때는 가운데 정렬된다)
+     ※ 원본이 16:9보다 납작하면(예: 1920×953 = 2.01:1) 위아래에 띠가 생긴다 — 잘리는 것보다
+       낫다고 판단해서 그대로 두는 쪽으로 정함. 1920×1080으로 녹화하면 띠 없이 꽉 찬다. */
+  max-width:calc(450px * 16 / 9);
   object-fit:scale-down; border:1px solid var(--line); background:var(--bg);
 }
 .subtopic:hover .subtopic-preview-imgs{ display:flex; }
