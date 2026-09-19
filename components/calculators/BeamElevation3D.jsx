@@ -130,10 +130,21 @@ export default function BeamElevation3D({ momentLabel, bend, blocks }) {
     }
     buildLayers();
 
+    // 절단면 카드는 아래에서 만들지만, applyBend()가 보와 같이 움직여줘야 해서 먼저 자리를 잡아둔다.
+    // (이게 없던 동안은 보만 휘고 카드는 y=0에 남아서, 모멘트를 키우면 카드가 보 밖으로 빠져나왔다.)
+    let cutPlane = null;
+    let outline = null;
+
     function applyBend() {
       // bend prop(-24~24px)은 2D 버전(SVG, y축이 아래로 증가)과 같은 스케일 — 양수(M>0, 새깅)는
       // 2D에서 가운데가 아래로 처지는 방향. Three.js는 y축이 위로 증가하므로 부호를 반대로 적용.
       const curveAmount = (bendRef.current / 24) * -0.55;
+
+      // 절단면은 x=0, 즉 휨 포물선의 꼭짓점에 있다. 거기선 기울기가 0이라 카드를 기울일 필요는 없고
+      // 보가 내려간(또는 올라간) 만큼 같이 옮겨주기만 하면 단면 위치에 계속 붙어 있는다.
+      if (cutPlane) cutPlane.position.y = curveAmount;
+      if (outline) outline.position.y = curveAmount;
+
       layerMeshes.forEach(({ mesh, geo, edges, baseY }) => {
         const pos = geo.attributes.position;
         const basePos = geo.userData.basePosition || (geo.userData.basePosition = pos.array.slice());
@@ -188,7 +199,7 @@ export default function BeamElevation3D({ momentLabel, bend, blocks }) {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-    const cutPlane = new THREE.Mesh(cutPlaneGeo, cutPlaneMat);
+    cutPlane = new THREE.Mesh(cutPlaneGeo, cutPlaneMat);
     cutPlane.rotation.y = Math.PI / 2;
     scene.add(cutPlane);
 
@@ -200,8 +211,9 @@ export default function BeamElevation3D({ momentLabel, bend, blocks }) {
       new THREE.Vector3(0, -half.w, half.d),
     ];
     const outlineGeo = new THREE.BufferGeometry().setFromPoints(outlinePts);
-    const outline = new THREE.LineLoop(outlineGeo, new THREE.LineBasicMaterial({ color: CRIMSON, linewidth: 2 }));
+    outline = new THREE.LineLoop(outlineGeo, new THREE.LineBasicMaterial({ color: CRIMSON, linewidth: 2 }));
     scene.add(outline);
+    applyBend(); // 카드가 만들어진 뒤라 이번 호출에서 카드 위치까지 같이 맞춰진다
 
     // ---- 카메라: 드래그로 회전, 안 건드리면 천천히 자동 회전 ----
     let theta = -0.55, phi = 1.15, radius = 8.5;

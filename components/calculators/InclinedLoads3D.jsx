@@ -116,7 +116,10 @@ export default function InclinedLoads3D({ b, h, alphaRad, corners, betaRad, maxS
     rebuildRef.current = rebuild;
     rebuild();
 
-    let theta = -0.6,
+    // 응력 색상판(= 우리가 계산하는 단면)은 보의 +x 끝에 붙어 있다. theta가 음수면 카메라가
+    // -x 쪽에 서게 되어 그 반대쪽 민짜 끝면을 보면서 시작했다. 부호를 뒤집어 처음부터
+    // 계산 단면이 정면으로 오게 한다. (가만히 두면 뒤에서 theta를 천천히 늘려 자동 회전한다)
+    let theta = 0.6,
       phi = 1.1,
       radius = 8.5;
     let dragging = false,
