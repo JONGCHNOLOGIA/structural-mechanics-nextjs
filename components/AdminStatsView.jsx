@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/components/UserProvider';
 import SiteHeader from '@/components/SiteHeader';
+import EditableText from '@/components/EditableText';
 import { chapters1 } from '@/lib/chapters1';
 import { chapters as chapters2 } from '@/lib/chapters';
 import { fetchWrongRateBySubtopic, fetchVisitCountsBySubtopic, fetchAiTutorStats } from '@/lib/adminStats';
@@ -40,10 +41,13 @@ export default function AdminStatsView() {
       <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
         <SiteHeader active="admin-stats" />
         <div style={{ maxWidth: 640, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
-          <h3 style={{ marginBottom: 10 }}>관리자(교수자) 계정만 볼 수 있는 페이지예요.</h3>
-          <p style={{ fontSize: 13, color: 'var(--gray)', marginBottom: 20 }}>
-            로그인 화면의 &quot;관리자로 시연&quot; 버튼으로 들어오면 확인할 수 있습니다.
-          </p>
+          <EditableText as="h3" contentKey="adminStats.deniedTitle" defaultText="관리자(교수자) 계정만 볼 수 있는 페이지예요." style={{ marginBottom: 10 }} />
+          <EditableText
+            as="p"
+            contentKey="adminStats.deniedBody"
+            defaultText='로그인 화면의 "관리자로 시연" 버튼으로 들어오면 확인할 수 있습니다.'
+            style={{ fontSize: 13, color: 'var(--gray)', marginBottom: 20 }}
+          />
           <Link href="/" className="btn-outline">
             홈으로
           </Link>
@@ -58,15 +62,18 @@ export default function AdminStatsView() {
 
       <div style={{ maxWidth: 1600, margin: '0 auto', padding: '48px 64px 64px' }}>
         <div style={{ fontSize: 34, fontWeight: 900, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: 10 }}>통계</div>
-        <p style={{ fontSize: 14, color: 'var(--gray)', marginBottom: 36 }}>
-          학생 이름·학번은 빼고, 소주제·챕터 단위로 집계한 값만 보여줍니다.
-        </p>
+        <EditableText
+          as="p"
+          contentKey="adminStats.intro"
+          defaultText="소주제·챕터 단위로 집계한 값을 보여줍니다."
+          style={{ fontSize: 14, color: 'var(--gray)', marginBottom: 36 }}
+        />
 
         <Section title="어떤 유형을 어려워하는지 — 소주제별 오답률">
           {wrongRates === null ? (
             <Loading />
           ) : wrongRates.length === 0 ? (
-            <Empty text="아직 문제를 3번 이상 풀어본 소주제가 없어요." />
+            <Empty contentKey="adminStats.wrongRateEmpty" defaultText="아직 문제를 3번 이상 풀어본 소주제가 없어요." />
           ) : (
             <table className="admin-table">
               <thead>
@@ -102,7 +109,7 @@ export default function AdminStatsView() {
           {visits === null ? (
             <Loading />
           ) : visits.length === 0 ? (
-            <Empty text="아직 방문 기록이 없어요." />
+            <Empty contentKey="adminStats.visitsEmpty" defaultText="아직 방문 기록이 없어요." />
           ) : (
             <table className="admin-table">
               <thead>
@@ -123,7 +130,7 @@ export default function AdminStatsView() {
                       </td>
                       <td>{name}</td>
                       <td>
-                        <VisitBar count={r.visitors} max={max} />
+                        <VisitBar count={r.visitors} max={max} studentIds={r.studentIds} />
                       </td>
                     </tr>
                   );
@@ -137,7 +144,7 @@ export default function AdminStatsView() {
           {aiStats === null ? (
             <Loading />
           ) : aiStats.byChapter.length === 0 ? (
-            <Empty text="아직 AI 튜터에게 물어본 기록이 없어요." />
+            <Empty contentKey="adminStats.aiTutorEmpty" defaultText="아직 AI 튜터에게 물어본 기록이 없어요." />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {aiStats.byChapter.map((c) => {
@@ -193,11 +200,18 @@ function Section({ title, children }) {
 }
 
 function Loading() {
-  return <div style={{ fontSize: 13, color: 'var(--gray-soft)' }}>불러오는 중...</div>;
+  return (
+    <EditableText
+      as="div"
+      contentKey="adminStats.loading"
+      defaultText="불러오는 중..."
+      style={{ fontSize: 13, color: 'var(--gray-soft)' }}
+    />
+  );
 }
 
-function Empty({ text }) {
-  return <div style={{ fontSize: 13, color: 'var(--gray-soft)' }}>{text}</div>;
+function Empty({ contentKey, defaultText }) {
+  return <EditableText as="div" contentKey={contentKey} defaultText={defaultText} style={{ fontSize: 13, color: 'var(--gray-soft)' }} />;
 }
 
 function WrongRateBar({ pct }) {
@@ -211,14 +225,18 @@ function WrongRateBar({ pct }) {
   );
 }
 
-function VisitBar({ count, max }) {
+// 막대에 마우스를 올리면 방문한 학생들의 학번을 title 툴팁으로 보여준다(브라우저 기본 툴팁 —
+// 새 UI를 안 만들어도 돼서 간단함). 학번이 없는 계정은 lib/adminStats.js에서 이미 "익명"으로
+// 채워져 있다.
+function VisitBar({ count, max, studentIds = [] }) {
   const pct = (count / max) * 100;
+  const tooltip = studentIds.length ? studentIds.join(', ') : undefined;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ width: 120, height: 8, background: 'var(--bg)', display: 'inline-block', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} title={tooltip}>
+      <span style={{ width: 120, height: 8, background: 'var(--bg)', display: 'inline-block', overflow: 'hidden', cursor: tooltip ? 'help' : 'default' }}>
         <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: 'var(--teal)' }} />
       </span>
-      <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)' }}>{count}명</span>
+      <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--teal)', cursor: tooltip ? 'help' : 'default' }}>{count}명</span>
     </div>
   );
 }

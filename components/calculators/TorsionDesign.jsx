@@ -67,7 +67,13 @@ export default function TorsionDesign() {
             <>
               <DualField label="외경 d₂" value={s.dims.d_outer} min={1} max={200} step={0.5} onChange={setDim('d_outer')}
                 unitMap={LENGTH_UNITS} unit={s.dimUnit} onUnitChange={(v) => set({ dimUnit: v })} invalid={!(s.dims.d_outer > 0)}
-                hint={`내경 d₁은 교재 예제와 동일하게 t = d₂/10, 즉 d₁ = ${HOLLOW_K}·d₂ 로 가정합니다.`} />
+                hint={
+                  <EditableText
+                    as="span"
+                    contentKey="torsionDesign.hollowD1Hint"
+                    defaultText={`내경 d₁은 교재 예제와 동일하게 t = d₂/10, 즉 d₁ = ${HOLLOW_K}·d₂ 로 가정합니다.`}
+                  />
+                } />
             </>
           ) : (
             <DualField label="직경 d" value={s.dims.d} min={1} max={200} step={0.5} onChange={setDim('d')}
@@ -76,9 +82,13 @@ export default function TorsionDesign() {
         ) : (
           <>
             {hollow && (
-              <div className="hint" style={{ marginBottom: 10 }}>
-                중공축: t = d₂/10 (d₁ = {HOLLOW_K}·d₂) 가정으로 필요 외경 d₂를 역산합니다.
-              </div>
+              <EditableText
+                as="div"
+                className="hint"
+                contentKey="torsionDesign.reqDiameterHollowHint"
+                defaultText={`중공축: t = d₂/10 (d₁ = ${HOLLOW_K}·d₂) 가정으로 필요 외경 d₂를 역산합니다.`}
+                style={{ marginBottom: 10 }}
+              />
             )}
             <DualField label="토크 T (주어진 값)" value={s.T} min={0} max={1000} step={1} onChange={setNum('T')}
               unitMap={TORQUE_UNITS} unit={s.TUnit} onUnitChange={(v) => set({ TUnit: v })} invalid={!(s.T >= 0)} />

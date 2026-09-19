@@ -46,7 +46,13 @@ export default function ThermalEffects() {
           value={s.alpha * 1e6}
           min={0} max={30} step={0.1}
           onChange={(v) => set({ alpha: parseFloat(v) * 1e-6 })}
-          hint="α 값은 사용자가 직접 입력합니다 (특정 재료의 실제 물성치를 임의로 단정하지 않습니다)."
+          hint={
+            <EditableText
+              as="span"
+              contentKey="thermalEffects.alphaHint"
+              defaultText="α 값은 사용자가 직접 입력합니다 (특정 재료의 실제 물성치를 임의로 단정하지 않습니다)."
+            />
+          }
         />
         <DualField label="온도변화 ΔT (°C, 냉각시 음수)" value={s.deltaT} min={-100} max={100} step={1} onChange={setNum('deltaT')} />
         <DualField label="부재 길이 L" value={s.L} min={0.01} max={10} step={0.01} onChange={setNum('L')}

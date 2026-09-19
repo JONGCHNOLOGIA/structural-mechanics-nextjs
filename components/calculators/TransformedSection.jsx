@@ -140,9 +140,12 @@ export default function TransformedSection() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         {blocks.length > 1 && (
-          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}>
-            ⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요. 상단폭=하단폭이면 그냥 사각형이 돼요.
-          </div>
+          <EditableText
+            as="div"
+            contentKey="transformedSection.dragHint"
+            defaultText="⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요. 상단폭=하단폭이면 그냥 사각형이 돼요."
+            style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}
+          />
         )}
 
         {blocks
@@ -264,9 +267,12 @@ export default function TransformedSection() {
                   <Tip title="블록 i의 환산 배율">nᵢ</Tip> ={' '}
                   <Frac num={<Tip title="이 블록의 탄성계수">Eᵢ</Tip>} den={<Tip title="기준 재료의 탄성계수">E_ref</Tip>} /> (폭에만 곱함, 높이는 그대로)
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
-                  기준 재료를 제외한 블록들의 폭(상단·하단 모두)에 n을 곱하면, 전체 단면이 기준 재료 하나로 이루어진 것처럼 취급할 수 있어요.
-                </div>
+                <EditableText
+                  as="div"
+                  contentKey="transformedSection.widthScaleHint"
+                  defaultText="기준 재료를 제외한 블록들의 폭(상단·하단 모두)에 n을 곱하면, 전체 단면이 기준 재료 하나로 이루어진 것처럼 취급할 수 있어요."
+                  style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}
+                />
                 {result.blocks.map((b, k) => {
                   const c = blockColor(b);
                   const n = b.E / refBlock.E;
@@ -280,7 +286,12 @@ export default function TransformedSection() {
                 })}
               </FormulaSection>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}>환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요.</p>
+            <EditableText
+              as="p"
+              contentKey="transformedSection.equivalenceNote"
+              defaultText="환산단면법으로 구해도, General Theory와 최종 응력값은 완전히 동일해요."
+              style={{ fontSize: 12, color: 'var(--gray-soft)', marginTop: 12 }}
+            />
 
             <EditableText as="div" className="ai-hint" contentKey="calc.TransformedSection.aiHint" defaultText="💬 왜 폭에만 n을 곱하고 높이는 그대로 두는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
           </>

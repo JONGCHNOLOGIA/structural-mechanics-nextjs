@@ -94,21 +94,27 @@ export default function MultiSegmentBar() {
 
             <h3 style={{ marginTop: 20 }}>자유물체도 — 구간별 절단 (Free Body Diagram)</h3>
             <CutSequenceSVG res={res} />
-            <div className="hint">
-              각 구간을 통째로 잘라낸 자유물체는 양쪽 절단면에 크기가 같은 내력 N이 나타나며(그 구간만 보면 ΣF=0), 인장이면 양쪽 다 바깥으로,
-              압축이면 양쪽 다 안쪽으로 향합니다. 구간 사이 틈의 빨간 화살표는 그 경계에 실제로 작용하는 외력이고, 이게 옆 구간과 N값을 연결해줍니다:
-              N_(다음 구간) = N_(이번 구간) + (경계의 외력).
-            </div>
+            <EditableText
+              as="div"
+              className="hint"
+              contentKey="multiSegmentBar.cutSequenceHint"
+              defaultText="각 구간을 통째로 잘라낸 자유물체는 양쪽 절단면에 크기가 같은 내력 N이 나타나며(그 구간만 보면 ΣF=0), 인장이면 양쪽 다 바깥으로, 압축이면 양쪽 다 안쪽으로 향합니다. 구간 사이 틈의 빨간 화살표는 그 경계에 실제로 작용하는 외력이고, 이게 옆 구간과 N값을 연결해줍니다: N_(다음 구간) = N_(이번 구간) + (경계의 외력)."
+            />
             <div className="hint" style={{ marginTop: 8 }}>
-              <b>검산 (ΣF=0):</b> 마지막 하중까지 다 지나면 자유단이므로 내력은 0이어야 합니다 → 계산값 = {checkKN} kN{' '}
+              <b>검산 (ΣF=0):</b>{' '}
+              <EditableText as="span" contentKey="multiSegmentBar.checkHint" defaultText="마지막 하중까지 다 지나면 자유단이므로 내력은 0이어야 합니다 → 계산값 =" />{' '}
+              {checkKN} kN{' '}
               {Math.abs(res.finalCheck_N) < 1 ? '✓' : '⚠'}
             </div>
 
             <h3 style={{ marginTop: 20 }}>축력도 N(x) — 구간별 계단식</h3>
             <StepDiagram segments={segments} valueUnit="kN" lengthUnit="m" quantitySymbol="N" />
-            <div className="hint">
-              비균일 부재는 구간마다 내력 N이 달라지므로, 축력도가 CH.1의 균일 부재처럼 일정하지 않고 구간별로 계단 형태로 변합니다.
-            </div>
+            <EditableText
+              as="div"
+              className="hint"
+              contentKey="multiSegmentBar.stepDiagramHint"
+              defaultText="비균일 부재는 구간마다 내력 N이 달라지므로, 축력도가 CH.1의 균일 부재처럼 일정하지 않고 구간별로 계단 형태로 변합니다."
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

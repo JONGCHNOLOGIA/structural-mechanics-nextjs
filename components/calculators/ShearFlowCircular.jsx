@@ -80,10 +80,12 @@ export default function ShearFlowCircular() {
                   <ResultCard label="단면적 A" value={`${fmt1(res.A * 1e6, 2)} mm²`} />
                   <ResultCard label="최대 전단응력 τ_max = 4V/(3A)" value={`${fmt1(MPa(res.tauMax), 3)} MPa`} tone="comp" full />
                 </ResultGrid>
-                <div className="hint">
-                  같은 단면적이라도 계수가 다릅니다 — 직사각형은 1.5V/A, 원형은 1.333V/A. 중립축 근처에 폭이 넓게 몰려 있는 원형이
-                  조금 더 유리합니다.
-                </div>
+                <EditableText
+                  as="div"
+                  className="hint"
+                  contentKey="shearFlowCircular.circularHint"
+                  defaultText="같은 단면적이라도 계수가 다릅니다 — 직사각형은 1.5V/A, 원형은 1.333V/A. 중립축 근처에 폭이 넓게 몰려 있는 원형이 조금 더 유리합니다."
+                />
               </>
             ) : (
               <>
@@ -92,9 +94,12 @@ export default function ShearFlowCircular() {
                   <ResultCard label="전단흐름 q = V·Q/I" value={`${fmt1(res.q, 2)} N/m`} />
                   <ResultCard label="필요 체결재 간격 s = F_allow/q" value={`${fmt1(mm(res.spacing), 2)} mm`} tone="tens" />
                 </ResultGrid>
-                <div className="hint">
-                  실제로는 이 간격보다 <b>좁게</b> 박아야 안전합니다. 간격이 넓어질수록 체결재 하나가 담당하는 길이가 길어져 하중이 커집니다.
-                </div>
+                <EditableText
+                  as="div"
+                  className="hint"
+                  contentKey="shearFlowCircular.spacingHint"
+                  defaultText="실제로는 이 간격보다 **좁게** 박아야 안전합니다. 간격이 넓어질수록 체결재 하나가 담당하는 길이가 길어져 하중이 커집니다."
+                />
               </>
             )}
             <EditableText as="div" className="ai-hint" contentKey={`calc.ShearFlowCircular.aiHint.${res.mode}`}

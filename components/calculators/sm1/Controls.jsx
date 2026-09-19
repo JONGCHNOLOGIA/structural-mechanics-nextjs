@@ -3,6 +3,7 @@
 import { fmt1 } from '@/lib/calc/units1';
 import { Tip } from '../FormulaSection';
 import { SYMBOL_TIPS } from './glossary';
+import EditableText from '@/components/EditableText';
 
 // 구조역학 1 계산기들이 공용으로 쓰는 입력/결과 UI 조각들.
 // 원본 프로토타입의 dualField()/unitSelect()/resultCard()/stepCard()/errorBox() 를 React로 옮긴 것 —
@@ -161,7 +162,11 @@ export function ErrorBox({ errors }) {
   if (!errors || errors.length === 0) return null;
   return (
     <div className="error-box">
-      <b>입력값을 확인해주세요:</b>
+      {/* 아래 에러 문장들(errors 배열) 자체는 lib/calc/*.js 안에서 상황마다 계산되는 값이라
+          이 문구처럼 통째로 고정 텍스트로 바꿔서 관리자가 고치게 할 수는 없다 — 이 제목줄만 고정 문구. */}
+      <b>
+        <EditableText as="span" contentKey="controls.errorBox.title" defaultText="입력값을 확인해주세요:" />
+      </b>
       {errors.map((e, i) => (
         <div key={i}>· {e}</div>
       ))}
@@ -173,11 +178,13 @@ export function InputNeededPlaceholder() {
   return (
     <div className="viz-placeholder" style={{ minHeight: 220 }}>
       <span className="badge">입력 필요</span>
-      <div>
-        왼쪽에서 유효한 값을 입력하면
-        <br />
-        계산 과정이 표시됩니다.
-      </div>
+      <EditableText
+        as="div"
+        contentKey="controls.inputNeededPlaceholder"
+        defaultText="왼쪽에서 유효한 값을 입력하면
+계산 과정이 표시됩니다."
+        style={{ whiteSpace: 'pre-line' }}
+      />
     </div>
   );
 }

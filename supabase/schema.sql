@@ -156,6 +156,14 @@ drop policy if exists "교수자는 전체 풀이기록 조회 가능" on proble
 create policy "교수자는 전체 풀이기록 조회 가능" on problem_attempts
   for select using (exists (select 1 from profiles where id = auth.uid() and role = 'instructor'));
 
+-- 통계 화면에서 방문 학생 수 막대에 마우스를 올리면 학번을 보여주기 위해, 교수자는
+-- 다른 학생들의 profiles 행(학번)도 조회할 수 있게 한다. 아래 서브쿼리는 "본인 프로필만
+-- 조회/수정" 정책과 같은 테이블(profiles)을 자기참조하지만, 그 서브쿼리 자체는 항상
+-- auth.uid()=id로 좁혀서 재귀적으로 막히지 않는다(다른 정책들과 동일한 패턴).
+drop policy if exists "교수자는 전체 프로필(학번) 조회 가능" on profiles;
+create policy "교수자는 전체 프로필(학번) 조회 가능" on profiles
+  for select using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'instructor'));
+
 -- site_content: 문구는 누구나 읽을 수 있지만, 수정은 정해진 학번(22011031, demo-admin)만 가능.
 -- role='instructor' 전체로 허용하면 관계없는 instructor 계정도 실제 문구를 고칠 수 있게 되므로
 -- role이 아니라 student_id 화이트리스트로 지정함. demo-admin은 로그인 화면의

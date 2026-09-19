@@ -222,9 +222,13 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                   <rect x="4" y="4" width="16" height="16" rx="2" />
                   <path d="M8 9h8M8 13h5" />
                 </svg>
-                왼쪽에서 챕터를 클릭하면
-                <br />
-                소주제를 고를 수 있습니다.
+                <EditableText
+                  as="span"
+                  contentKey="problemGenerator.pickChapterHint"
+                  defaultText="왼쪽에서 챕터를 클릭하면
+소주제를 고를 수 있습니다."
+                  style={{ whiteSpace: 'pre-line' }}
+                />
               </div>
             ) : (
               activeChapters.map((ch) => (
@@ -353,6 +357,8 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                           style={{ margin: 0, color: 'var(--teal)', borderColor: 'var(--teal)' }}
                           onClick={() => handleSelfGrade(i, p, true)}
                         >
+                          {/* EditableText 안의 수정(✎) 버튼이 <button>이라, 이 버튼 안에 넣으면
+                              button 안에 button이 중첩돼 HTML이 깨진다 — 버튼 라벨은 그대로 둔다. */}
                           맞았어요
                         </button>
                         <button
@@ -373,7 +379,15 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                           color: graded[i] === 'correct' ? 'var(--teal)' : 'var(--crimson)',
                         }}
                       >
-                        {graded[i] === 'correct' ? '✓ 정답으로 기록했어요.' : '✗ 오답으로 기록했어요 — 홈 화면에서 다시 확인할 수 있어요.'}
+                        {graded[i] === 'correct' ? (
+                          <EditableText as="span" contentKey="problemGenerator.gradedCorrect" defaultText="✓ 정답으로 기록했어요." />
+                        ) : (
+                          <EditableText
+                            as="span"
+                            contentKey="problemGenerator.gradedWrong"
+                            defaultText="✗ 오답으로 기록했어요 — 홈 화면에서 다시 확인할 수 있어요."
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -426,11 +440,13 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                           <circle cx="9" cy="11" r="2" />
                           <path d="M21 16l-5.5-5.5L3 20" />
                         </svg>
-                        <span style={{ fontSize: 12.5 }}>
-                          풀이를 촬영·캡처해서
-                          <br />
-                          올려주세요
-                        </span>
+                        <EditableText
+                          as="span"
+                          contentKey="problemGenerator.attachHint"
+                          defaultText="풀이를 촬영·캡처해서
+올려주세요"
+                          style={{ fontSize: 12.5, whiteSpace: 'pre-line' }}
+                        />
                         <input
                           type="file"
                           accept="image/*"

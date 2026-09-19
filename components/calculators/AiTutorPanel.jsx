@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { recordAiTutorMessage } from '@/lib/aiTutorLog';
+import EditableText from '@/components/EditableText';
 
 // 소주제 계산기 페이지 우측(또는 FloatingActions의 떠있는 패널)에 항상 붙는 AI 튜터 채팅창.
 // URL의 "/ch3/" 같은 조각에서 챕터 번호를 뽑아 그 챕터의 강의자료를 근거로 답하도록
@@ -66,9 +67,11 @@ export default function AiTutorPanel({ question }) {
             💡 예시 질문: {question}
           </div>
         )}
+        {/* 챕터 배지(위 h3)가 이미 어떤 챕터 기준인지 보여주므로, 안내 문구 자체는 챕터 유무와
+            상관없이 하나만 쓴다 — 관리자가 고칠 문구도 하나로 줄어든다. */}
         {messages.length === 0 && !question && (
           <div className="msg ai">
-            {chapterNum ? `${chapterNum} 내용에 대해 궁금한 점을 물어보세요.` : '구조역학에 대해 궁금한 점을 물어보세요.'}
+            <EditableText as="span" contentKey="aiTutor.emptyState" defaultText="구조역학에 대해 궁금한 점을 물어보세요." />
           </div>
         )}
         {messages.map((m, i) => (

@@ -42,7 +42,13 @@ export default function StressConcentration() {
           unitMap={LENGTH_UNITS} unit={s.dimUnit} onUnitChange={(v) => set({ dimUnit: v })} invalid={!(s.d > 0 && s.d < s.b)} />
         <DualField label="응력집중계수 K (교재 선도에서 읽은 값)" value={s.K} min={1} max={4} step={0.01} onChange={setNum('K')}
           invalid={!(s.K > 0)}
-          hint="K는 d/b 비율에 따른 응력집중계수 선도(교재 Fig. 2-63)에서 직접 읽어 입력합니다. 계산기가 K를 임의로 산출하지 않습니다." />
+          hint={
+            <EditableText
+              as="span"
+              contentKey="stressConcentration.kHint"
+              defaultText="K는 d/b 비율에 따른 응력집중계수 선도(교재 Fig. 2-63)에서 직접 읽어 입력합니다. 계산기가 K를 임의로 산출하지 않습니다."
+            />
+          } />
         <ResetButton onClick={() => setS(DEFAULTS)} />
       </div>
 

@@ -116,7 +116,7 @@ export default function AllowableDesign() {
                 unitMap={LENGTH_UNITS} unit={s.dimUnit} onUnitChange={(v) => set({ dimUnit: v })}
                 invalid={!(s.dims.d_inner > 0 && s.dims.d_inner < s.dims.d_outer)} />
             ) : (
-              <div className="hint" style={{ marginBottom: 10 }}>Mode C에서는 외경만 고정하고 내경을 역산합니다.</div>
+              <EditableText as="div" className="hint" style={{ marginBottom: 10 }} contentKey="allowableDesign.modeCOuterHint" defaultText="Mode C에서는 외경만 고정하고 내경을 역산합니다." />
             )}
           </>
         )}
@@ -129,7 +129,7 @@ export default function AllowableDesign() {
               <DualField label="높이 h" value={s.dims.h} min={1} max={200} step={0.5} onChange={setDim('h')}
                 unitMap={LENGTH_UNITS} unit={s.dimUnit} onUnitChange={(v) => set({ dimUnit: v })} invalid={!(s.dims.h > 0)} />
             ) : (
-              <div className="hint" style={{ marginBottom: 10 }}>Mode C에서는 폭(b)만 고정하고 높이(h)를 역산합니다.</div>
+              <EditableText as="div" className="hint" style={{ marginBottom: 10 }} contentKey="allowableDesign.modeCWidthHint" defaultText="Mode C에서는 폭(b)만 고정하고 높이(h)를 역산합니다." />
             )}
           </>
         )}

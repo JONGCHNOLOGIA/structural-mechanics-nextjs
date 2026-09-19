@@ -226,9 +226,12 @@ export default function CompositeBeams() {
       <div className="panel">
         <h3>SETTING MENU</h3>
         {blocks.length > 1 && (
-          <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}>
-            ⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요.
-          </div>
+          <EditableText
+            as="div"
+            contentKey="compositeBeams.dragHint"
+            defaultText="⠿ 아이콘을 끌어서 블록 순서(위/아래)를 바꿀 수 있어요."
+            style={{ fontSize: 11, color: 'var(--gray-soft)', marginBottom: 12 }}
+          />
         )}
 
         {blocks.map((_, vi) => {
@@ -333,7 +336,7 @@ export default function CompositeBeams() {
                               maxWidth: 180,
                             }}
                           >
-                            ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
+                            <EditableText as="span" contentKey="calcGate.staleWarning" defaultText="⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요." />
                           </div>
                         )}
                         <button className="add-block calc-trigger" onClick={() => calcSection(name)} style={{ margin: 0 }}>
@@ -662,10 +665,12 @@ function ApproxBody({ snapshot }) {
   const symmetric3 = result.blocks.length === 3 && isDoublySymmetric(result.blocks);
   if (!symmetric3) {
     return (
-      <div style={{ fontSize: 12.5, color: 'var(--gray-soft)', lineHeight: 1.6 }}>
-        현재 구조는 좌우상하 대칭 샌드위치(3블록, 위/아래 face가 같은 재료)가 아니라서 근사이론을 적용할 수 없어요. Setting Menu의 "Doubly
-        symmetric section" 버튼으로 샌드위치 구조를 먼저 만들어보세요.
-      </div>
+      <EditableText
+        as="div"
+        contentKey="compositeBeams.approxUnavailableHint"
+        defaultText='현재 구조는 좌우상하 대칭 샌드위치(3블록, 위/아래 face가 같은 재료)가 아니라서 근사이론을 적용할 수 없어요. Setting Menu의 "Doubly symmetric section" 버튼으로 샌드위치 구조를 먼저 만들어보세요.'
+        style={{ fontSize: 12.5, color: 'var(--gray-soft)', lineHeight: 1.6 }}
+      />
     );
   }
   const lenF = UNIT_OPTIONS.length[units.length];

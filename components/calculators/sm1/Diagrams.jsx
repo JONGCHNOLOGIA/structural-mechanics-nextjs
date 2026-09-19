@@ -1,6 +1,7 @@
 'use client';
 
 import { fmt1 } from '@/lib/calc/units1';
+import EditableText from '@/components/EditableText';
 
 // 구조역학 1에서 여러 소주제가 공용으로 쓰는 그림들.
 // 원본 프로토타입의 axisPlaneNoteSVG() / axialForceDiagramBlock() / axialFBDBlock() / stepDiagramSVG()를
@@ -26,9 +27,11 @@ export function AxisPlaneNote() {
         <text x="28" y="27" fontSize="9" fill={GRAY} fontWeight="800">z</text>
         <polygon points="10,12 26,20 26,40 10,42" fill={CRIMSON} opacity="0.14" stroke={CRIMSON} strokeWidth="1" />
       </svg>
-      <div>
-        지금 보고 있는 단면은 부재 길이방향(<b>x축</b>)에 <b>수직인 y-z 평면</b>입니다. 하중 P는 x축 방향으로 작용합니다.
-      </div>
+      <EditableText
+        as="div"
+        contentKey="diagrams.axisPlaneNote"
+        defaultText="지금 보고 있는 단면은 부재 길이방향(**x축**)에 **수직인 y-z 평면**입니다. 하중 P는 x축 방향으로 작용합니다."
+      />
     </div>
   );
 }
@@ -63,10 +66,12 @@ export function AxialForceDiagramBlock({ signedP, L, unitP, unitL }) {
     <>
       <h3 style={{ marginTop: 20 }}>축력도 N(x) — Axial Force Diagram</h3>
       <AxialForceDiagram signedP={signedP} L={L} unitP={unitP} unitL={unitL} />
-      <div className="hint">
-        축하중만 받는 부재이므로 부재 내부 어디를 잘라도 내력은 P로 동일합니다. (전단력/굽힘모멘트는 발생하지 않음 — SFD/BMD는 횡하중을 받는
-        보(beam)에서만 정의됩니다.)
-      </div>
+      <EditableText
+        as="div"
+        className="hint"
+        contentKey="diagrams.axialForceHint"
+        defaultText="축하중만 받는 부재이므로 부재 내부 어디를 잘라도 내력은 P로 동일합니다. (전단력/굽힘모멘트는 발생하지 않음 — SFD/BMD는 횡하중을 받는 보(beam)에서만 정의됩니다.)"
+      />
     </>
   );
 }
@@ -120,8 +125,12 @@ export function AxialFBDBlock({ P, unitP, sign, reactionLabel, appliedLabel }) {
       <h3 style={{ marginTop: 20 }}>자유물체도 (Free Body Diagram)</h3>
       <AxialFBD P={P} unitP={unitP} sign={sign} reactionLabel={reactionLabel} appliedLabel={appliedLabel} />
       <div className="hint">
-        {sign >= 0 ? '인장' : '압축'}: 지지부 반력과 하중이 서로 반대방향으로 작용해 평형(ΣF=0)을 이루고, 부재를 가상으로 자르면 어느 위치에서나
-        내부 축력 N이 동일하게 노출됩니다.
+        <b>{sign >= 0 ? '인장' : '압축'}:</b>{' '}
+        <EditableText
+          as="span"
+          contentKey="diagrams.axialFbdHint"
+          defaultText="지지부 반력과 하중이 서로 반대방향으로 작용해 평형(ΣF=0)을 이루고, 부재를 가상으로 자르면 어느 위치에서나 내부 축력 N이 동일하게 노출됩니다."
+        />
       </div>
     </>
   );

@@ -157,7 +157,12 @@ export default function HookesLaw() {
                 {r.deltaT !== null ? (
                   <div className="step-final">두께 변화 Δt = εz × t = {fmtSci(r.deltaT)} m</div>
                 ) : (
-                  <div style={{ fontSize: 11, color: 'var(--gray-soft)' }}>두께(t)를 입력하면 Δt(두께 변화)도 계산돼요.</div>
+                  <EditableText
+                    as="div"
+                    contentKey="hookesLaw.thicknessHint"
+                    defaultText="두께(t)를 입력하면 Δt(두께 변화)도 계산돼요."
+                    style={{ fontSize: 11, color: 'var(--gray-soft)' }}
+                  />
                 )}
               </FormulaSection>
             </div>

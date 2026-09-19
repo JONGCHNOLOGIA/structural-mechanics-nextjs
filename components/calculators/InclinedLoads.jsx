@@ -265,7 +265,7 @@ export default function InclinedLoads() {
                       <div style={{ flexShrink: 0, textAlign: 'right' }}>
                         {calcState[name] === 'stale' && (
                           <div style={{ fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)', borderRadius: 0, padding: '8px 12px', marginBottom: 8, maxWidth: 180 }}>
-                            ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
+                            <EditableText as="span" contentKey="calcGate.staleWarning" defaultText="⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요." />
                           </div>
                         )}
                         <button className="add-block calc-trigger" style={{ margin: 0 }} onClick={() => calcSection(name)}>

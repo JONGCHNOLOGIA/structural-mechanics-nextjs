@@ -43,14 +43,16 @@ export default function SiteHeader({ active = 'sm2' }) {
           <Link href="/problem-generator" className={'site-nav-item' + (isProblemGenerator ? ' active' : '')}>
             문제 제작
           </Link>
-          <span className="site-nav-item disabled" title="준비중">
-            커뮤니티
-          </span>
-          {/* role='instructor' 계정("관리자로 시연" 데모 포함)에게만 보이는 통계 메뉴. */}
-          {isAdmin && (
+          {/* 통계는 항상 노출되지만, role='instructor'("관리자로 시연" 데모 포함)가 아니면
+              회색으로 비활성 처리만 하고 링크는 걸지 않는다. */}
+          {isAdmin ? (
             <Link href="/admin/stats" className={'site-nav-item' + (active === 'admin-stats' ? ' active' : '')}>
               통계
             </Link>
+          ) : (
+            <span className="site-nav-item disabled" title="관리자 계정만 이용 가능">
+              통계
+            </span>
           )}
         </nav>
 

@@ -55,7 +55,13 @@ export default function BeamReactions() {
         <DualField label="분포하중 끝" value={s.qEnd} min={0} max={s.L} step={0.1} onChange={setNum('qEnd')} />
         <DualField label="집중모멘트 M₀ (CCW 양수, 선택)" value={s.M0} min={-200} max={200} step={1} onChange={setNum('M0')}
           unitMap={TORQUE_UNITS} unit={s.M0Unit} onUnitChange={(v) => set({ M0Unit: v })}
-          hint="M₀의 회전방향 부호는 교재마다 표기가 다를 수 있습니다 — 이 도구는 CCW(반시계)를 양수로 통일해서 계산합니다. 값을 0으로 두면 영향이 없습니다. 짝힘(couple)은 어디에 걸든 반력이 같으므로 그림에서는 보 가운데에 표시합니다." />
+          hint={
+            <EditableText
+              as="span"
+              contentKey="beamReactions.momentHint"
+              defaultText="M₀의 회전방향 부호는 교재마다 표기가 다를 수 있습니다 — 이 도구는 CCW(반시계)를 양수로 통일해서 계산합니다. 값을 0으로 두면 영향이 없습니다. 짝힘(couple)은 어디에 걸든 반력이 같으므로 그림에서는 보 가운데에 표시합니다."
+            />
+          } />
         <ResetButton onClick={() => setS(DEFAULTS)} />
       </div>
 

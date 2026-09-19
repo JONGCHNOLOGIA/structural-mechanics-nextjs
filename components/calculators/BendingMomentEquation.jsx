@@ -354,13 +354,20 @@ export default function BendingMomentEquation() {
 
         {determinacy === 'unstable' && (
           <div className="viz-placeholder" style={{ minHeight: 100 }}>
-            ⚠️ 지지단이 부족하거나 배치가 불안정해요 — 안정된 정정보/부정정보가 되도록 지지단을 조정해주세요.
+            <EditableText
+              as="span"
+              contentKey="bendingMomentEquation.unstableWarning"
+              defaultText="⚠️ 지지단이 부족하거나 배치가 불안정해요 — 안정된 정정보/부정정보가 되도록 지지단을 조정해주세요."
+            />
           </div>
         )}
         {determinacy === 'indeterminate' && (
           <div className="viz-placeholder" style={{ minHeight: 100 }}>
-            ⚠️ 이 보는 <b>부정정보(statically indeterminate)</b>예요 — 지지단 반력이 평형방정식(2개)보다 많아서, 이
-            굽힘모멘트식 적분만으로는 못 풀어요. (부정정보 풀이는 CH10 "Statically Indeterminate Beams"에서 다뤄요.)
+            <EditableText
+              as="span"
+              contentKey="bendingMomentEquation.indeterminateWarning"
+              defaultText='⚠️ 이 보는 **부정정보(statically indeterminate)**예요 — 지지단 반력이 평형방정식(2개)보다 많아서, 이 굽힘모멘트식 적분만으로는 못 풀어요. (부정정보 풀이는 CH10 "Statically Indeterminate Beams"에서 다뤄요.)'
+            />
           </div>
         )}
 
@@ -389,23 +396,40 @@ export default function BendingMomentEquation() {
 
             <div className="steps">
               <FormulaSection title="① 굽힘모멘트식을 적분 (Macaulay 방법)">
-                <div className="step-formula">EIv&#8221; = M(x) — 지지단 반력 + 모든 하중을 Macaulay 괄호로 한 식에 표현</div>
-                <div className="step-row">
-                  왼쪽부터 절단면 x까지의 모든 반력·하중을 더해서 M(x)를 구하고, 두 번 적분한 뒤 지지단 조건(각
-                  지지단에서 v=0, 고정단은 v'=0도 추가)으로 적분상수를 결정해요.
-                </div>
-                <div className="step-final">
-                  이 보는 미지수 2개(반력)와 경계조건 2개가 정확히 맞아떨어지는 정정보라서, 이 방법으로 유일하게 풀려요.
-                </div>
+                <EditableText
+                  as="div"
+                  className="step-formula"
+                  contentKey="bendingMomentEquation.method1Formula"
+                  defaultText="EIv” = M(x) — 지지단 반력 + 모든 하중을 Macaulay 괄호로 한 식에 표현"
+                />
+                <EditableText
+                  as="div"
+                  className="step-row"
+                  contentKey="bendingMomentEquation.method1Row"
+                  defaultText="왼쪽부터 절단면 x까지의 모든 반력·하중을 더해서 M(x)를 구하고, 두 번 적분한 뒤 지지단 조건(각 지지단에서 v=0, 고정단은 v'=0도 추가)으로 적분상수를 결정해요."
+                />
+                <EditableText
+                  as="div"
+                  className="step-final"
+                  contentKey="bendingMomentEquation.method1Final"
+                  defaultText="이 보는 미지수 2개(반력)와 경계조건 2개가 정확히 맞아떨어지는 정정보라서, 이 방법으로 유일하게 풀려요."
+                />
                 <CalcTrigger name="method1" calcState={calcState} onCalc={calcSection} />
                 {calcState.method1 !== 'idle' && <Method1Body snapshot={calcSnapshot.method1} />}
               </FormulaSection>
               <FormulaSection title="② 4차 미분방정식 (EIv⁗ = q(x))">
-                <div className="step-formula">EIv&#8221;&#8221; = q(x) — 하중강도를 직접 네 번 적분</div>
-                <div className="step-row">
-                  집중하중·모멘트는 q(x)의 특이함수(디랙 델타·모멘트항)로 표현돼요. 경계조건 4개(양 끝에서 v 또는 v',
-                  M 또는 V 중 아는 것)로 적분상수 4개를 구하면, ①과 <b>완전히 같은</b> v(x)가 나와요.
-                </div>
+                <EditableText
+                  as="div"
+                  className="step-formula"
+                  contentKey="bendingMomentEquation.method2Formula"
+                  defaultText="EIv”” = q(x) — 하중강도를 직접 네 번 적분"
+                />
+                <EditableText
+                  as="div"
+                  className="step-row"
+                  contentKey="bendingMomentEquation.method2Row"
+                  defaultText="집중하중·모멘트는 q(x)의 특이함수(디랙 델타·모멘트항)로 표현돼요. 경계조건 4개(양 끝에서 v 또는 v', M 또는 V 중 아는 것)로 적분상수 4개를 구하면, ①과 **완전히 같은** v(x)가 나와요."
+                />
                 <CalcTrigger name="method2" calcState={calcState} onCalc={calcSection} />
                 {calcState.method2 !== 'idle' && <Method2Body snapshot={calcSnapshot.method2} />}
               </FormulaSection>
@@ -574,7 +598,7 @@ function CalcTrigger({ name, calcState, onCalc }) {
             borderRadius: 0, padding: '7px 11px', marginBottom: 8, display: 'inline-block',
           }}
         >
-          ⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요.
+          <EditableText as="span" contentKey="calcGate.staleWarning" defaultText="⚠️ 입력값이 바뀌었어요 — 아래는 이전 값 기준 결과예요." />
         </div>
       )}
       <div>

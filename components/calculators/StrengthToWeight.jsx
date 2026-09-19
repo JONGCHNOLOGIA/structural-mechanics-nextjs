@@ -49,9 +49,12 @@ export default function StrengthToWeight() {
               <ResultCard label="무게 비 (중공/중실)" value={fmt1(res.weightRatio, 3)} />
               <ResultCard label="(T/W) 비 (동일 τ_allow, 중공/중실)" value={fmt1(res.TW_ratio, 3)} tone="tens" full />
             </ResultGrid>
-            <div className="hint">
-              (T/W)비가 1보다 크면, 무게 1kg당 버틸 수 있는 토크가 중실축보다 크다는 뜻입니다 — 같은 무게라면 중공축이 더 강합니다.
-            </div>
+            <EditableText
+              as="div"
+              className="hint"
+              contentKey="strengthToWeight.ratioHint"
+              defaultText="(T/W)비가 1보다 크면, 무게 1kg당 버틸 수 있는 토크가 중실축보다 크다는 뜻입니다 — 같은 무게라면 중공축이 더 강합니다."
+            />
             <EditableText as="div" className="ai-hint" contentKey="calc.StrengthToWeight.aiHint"
               defaultText="💬 (T/W)비가 1보다 크면 무슨 뜻인지, 오른쪽 AI 튜터에게 물어보세요." />
           </>

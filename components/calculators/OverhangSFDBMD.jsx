@@ -66,10 +66,12 @@ export default function OverhangSFDBMD() {
             <h3 style={{ marginTop: 20 }}>BMD — M(x)</h3>
             <CurveDiagram points={res.Mpts.map((p) => ({ x: m(p.x), y: kNm(p.y) }))} valueUnit="kN·m" lengthUnit="m" symbol="M" totalLen={m(res.L)} />
 
-            <div className="hint">
-              주경간(0~Lb)은 아래로 처져 sagging(+M), 돌출 구간(Lb~L)은 반대로 hogging(−M)이 되기 쉽습니다. 부호가 바뀌는 지점
-              (M=0인 위치)을 변곡점(inflection point)이라고 합니다.
-            </div>
+            <EditableText
+              as="div"
+              className="hint"
+              contentKey="overhangSFDBMD.inflectionHint"
+              defaultText="주경간(0~Lb)은 아래로 처져 sagging(+M), 돌출 구간(Lb~L)은 반대로 hogging(−M)이 되기 쉽습니다. 부호가 바뀌는 지점(M=0인 위치)을 변곡점(inflection point)이라고 합니다."
+            />
             <EditableText as="div" className="ai-hint" contentKey="calc.OverhangSFDBMD.aiHint"
               defaultText="💬 돌출보에서 M의 부호가 구간마다 왜 바뀌는지, 오른쪽 AI 튜터에게 물어보세요." />
           </>

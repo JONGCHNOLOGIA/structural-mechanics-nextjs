@@ -184,9 +184,12 @@ export default function SectionProperties() {
               <div className="step-formula">
                 ȳ = <Frac num="ΣAᵢyᵢ" den="ΣAᵢ" /> &nbsp; Ix = Σ(I₀ᵢ + Aᵢ(yᵢ−ȳ)²)
               </div>
-              <div className="step-row">
-                T형은 상하 대칭이 아니라서, 각 조각(플랜지·웨브)의 자체 도심을 먼저 구하고 평행축 정리로 전체 도심(ȳ)과 Ix를 합산해요.
-              </div>
+              <EditableText
+                as="div"
+                className="step-row"
+                contentKey="sectionProperties.tShapeHint"
+                defaultText="T형은 상하 대칭이 아니라서, 각 조각(플랜지·웨브)의 자체 도심을 먼저 구하고 평행축 정리로 전체 도심(ȳ)과 Ix를 합산해요."
+              />
             </FormulaSection>
           )}
         </div>
