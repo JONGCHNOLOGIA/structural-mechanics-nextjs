@@ -191,9 +191,14 @@ header{
   display:none; gap:12px; align-items:center; justify-content:center;
   margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
 }
+/* object-fit은 cover가 아니라 scale-down —
+   cover는 칸(약 900×300)을 꽉 채우려고 원본을 강제로 확대·크롭해서, 400×198짜리 GIF 같은
+   작은 원본이 2배 이상 늘어나 뭉개졌다. scale-down은 "칸보다 크면 줄이고, 작으면 원본 그대로"라
+   작은 이미지는 선명하게 나오고 큰 이미지는 칸에 맞게 줄어든다. 칸 높이(300px)는 그대로 둬서
+   목록의 줄 높이는 변하지 않는다. */
 .subtopic-preview-imgs img{
   flex:1 1 0; min-width:0; height:300px;
-  object-fit:cover; border:1px solid var(--line); background:var(--bg);
+  object-fit:scale-down; border:1px solid var(--line); background:var(--bg);
 }
 .subtopic:hover .subtopic-preview-imgs{ display:flex; }
 
