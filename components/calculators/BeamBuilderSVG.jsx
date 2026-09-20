@@ -23,10 +23,12 @@ export default function BeamBuilderSVG({
   loads,
   selectedId,
   onSelect,
-  maxAbsM,
-  momentPts,
+  pts,              // 풀린 결과 [{ x, M, V, v, slope }] — 처짐곡선·다이어그램 공용
   maxAbsV,
   showDeflection,
+  // 보 아래에 쌓아 그릴 다이어그램들. 하나당 한 칸씩 세로로 늘어난다.
+  // [{ key, label, axis, color, value:(p)=>number, unit }]
+  diagrams = [],
   labelFor, // (load) => string, 실제 값 라벨 (예: "q = 5.0 kN/m")
   getEditValue, // (item) => number|null, 인라인 편집칸에 보여줄 표시값(단위 환산됨) — null이면 편집 불가
   onEditValue, // (id, newDisplayValue) => void
@@ -63,11 +65,14 @@ export default function BeamBuilderSVG({
   const reactBase = beamY + 66;  // 화살표 꼬리
   const spanShift = hasReactions ? 62 : 0;
 
-  const hasDiagram = Array.isArray(momentPts) && momentPts.length > 1;
+  const hasPts = Array.isArray(pts) && pts.length > 1;
   const diagH = 80;
-  const diagTop = 260 + spanShift;
-  const mToPx = (m) => diagTop + diagH / 2 - (maxAbsM > 0 ? (m / maxAbsM) * (diagH / 2 - 6) : 0);
-  const h = hasDiagram ? diagTop + diagH + 30 : beamY + 110 + spanShift;
+  const diagGap = 34;
+  const diagTop0 = 260 + spanShift;
+  const bands = hasPts ? diagrams : [];
+  const h = bands.length
+    ? diagTop0 + bands.length * (diagH + diagGap) - diagGap + 30
+    : beamY + 110 + spanShift;
 
   const spanY = beamY + 60 + spanShift;
   const maxBendPx = 26;
@@ -220,9 +225,9 @@ export default function BeamBuilderSVG({
       })}
 
       {/* 예상 처짐곡선 (점선, 실제 위치에 겹쳐서) */}
-      {showDeflection && Array.isArray(momentPts) && momentPts.length > 1 && (
+      {showDeflection && hasPts && (
         <polyline
-          points={momentPts.map((p) => `${xToPx(p.x)},${beamY + p.v * bendScale}`).join(' ')}
+          points={pts.map((p) => `${xToPx(p.x)},${beamY + p.v * bendScale}`).join(' ')}
           fill="none"
           stroke={CRIMSON}
           strokeWidth="2"
@@ -480,35 +485,50 @@ export default function BeamBuilderSVG({
         return null;
       })}
 
-      {/* M(x) 다이어그램 — 가로축(x)과 세로축(M)을 화살표로 그려서 어느 쪽이 무엇인지 보이게 한다.
-          예전에는 0 기준선 한 줄뿐이라 "무엇에 대한 그래프인지"가 그림에 없었다. */}
-      {hasDiagram && (
-        <g>
-          {/* 세로축 M */}
-          <line x1={padL - 14} y1={diagTop + diagH + 4} x2={padL - 14} y2={diagTop - 6} stroke="#8A97A2" strokeWidth="1.1" />
-          <polygon points={`${padL - 14},${diagTop - 10} ${padL - 17.5},${diagTop - 3} ${padL - 10.5},${diagTop - 3}`} fill="#8A97A2" />
-          <text x={padL - 20} y={diagTop - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="800">M</text>
+      {/* 다이어그램 — 가로축(x)과 세로축을 화살표로 그려서 어느 쪽이 무엇인지 보이게 한다.
+          예전에는 0 기준선 한 줄뿐이라 "무엇에 대한 그래프인지"가 그림에 없었다.
+          V(x)와 M(x)처럼 여러 개를 요청하면 위에서 아래로 한 칸씩 쌓는다. */}
+      {bands.map((d, bi) => {
+        const top = diagTop0 + bi * (diagH + diagGap);
+        const vals = pts.map((p) => d.value(p));
+        const maxAbs = Math.max(1e-12, ...vals.map(Math.abs));
+        const toPx = (val) => top + diagH / 2 - (val / maxAbs) * (diagH / 2 - 6);
+        const color = d.color || CRIMSON;
+        return (
+          <g key={d.key || bi}>
+            {/* 세로축 */}
+            <line x1={padL - 14} y1={top + diagH + 4} x2={padL - 14} y2={top - 6} stroke="#8A97A2" strokeWidth="1.1" />
+            <polygon points={`${padL - 14},${top - 10} ${padL - 17.5},${top - 3} ${padL - 10.5},${top - 3}`} fill="#8A97A2" />
+            <text x={padL - 20} y={top - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="800">
+              {d.axis}
+            </text>
 
-          {/* 가로축 x (= 0 기준선) */}
-          <line x1={padL - 14} y1={diagTop + diagH / 2} x2={padL + drawW + 16} y2={diagTop + diagH / 2} stroke="#8A97A2" strokeWidth="1.1" />
-          <polygon
-            points={`${padL + drawW + 20},${diagTop + diagH / 2} ${padL + drawW + 13},${diagTop + diagH / 2 - 3.5} ${padL + drawW + 13},${diagTop + diagH / 2 + 3.5}`}
-            fill="#8A97A2"
-          />
-          <text x={padL + drawW + 24} y={diagTop + diagH / 2 + 4} fontSize="11" fill="#8A97A2" fontWeight="800">x</text>
-          <text x={padL - 20} y={diagTop + diagH / 2 + 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
+            {/* 가로축 x (= 0 기준선) */}
+            <line x1={padL - 14} y1={top + diagH / 2} x2={padL + drawW + 16} y2={top + diagH / 2} stroke="#8A97A2" strokeWidth="1.1" />
+            <polygon
+              points={`${padL + drawW + 20},${top + diagH / 2} ${padL + drawW + 13},${top + diagH / 2 - 3.5} ${padL + drawW + 13},${top + diagH / 2 + 3.5}`}
+              fill="#8A97A2"
+            />
+            <text x={padL + drawW + 24} y={top + diagH / 2 + 4} fontSize="11" fill="#8A97A2" fontWeight="800">x</text>
+            <text x={padL - 20} y={top + diagH / 2 + 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
 
-          <polyline
-            points={momentPts.map((p) => `${xToPx(p.x)},${mToPx(p.M)}`).join(' ')}
-            fill="none"
-            stroke={CRIMSON}
-            strokeWidth="1.8"
-          />
-          <text x={padL} y={diagTop - 8} fontSize="12.5" fill="#8A97A2" fontWeight="700">
-            M(x) 다이어그램
-          </text>
-        </g>
-      )}
+            <polyline
+              points={pts.map((p, i) => `${xToPx(p.x)},${toPx(vals[i])}`).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="1.8"
+            />
+            <text x={padL} y={top - 8} fontSize="12.5" fill="#8A97A2" fontWeight="700">
+              {d.label}
+            </text>
+            {d.maxLabel && (
+              <text x={padL + drawW} y={top - 8} fontSize="10.5" fill={color} textAnchor="end" fontWeight="700">
+                {d.maxLabel(maxAbs)}
+              </text>
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }
