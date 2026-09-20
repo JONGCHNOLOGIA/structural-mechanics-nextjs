@@ -38,7 +38,8 @@ export async function POST(req) {
     const answer = await callGemini(apiKey, {
       systemInstruction: { parts: { text: buildSystemPrompt(chapterNum) } },
       contents,
-      generationConfig: { maxOutputTokens: 800 },
+      // grade-solution에서 겪은 것과 같은 이유(생각 토큰이 maxOutputTokens를 같이 씀)로 여유를 둔다.
+      generationConfig: { maxOutputTokens: 2000 },
     });
     return Response.json({ answer });
   } catch (err) {

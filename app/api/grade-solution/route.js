@@ -50,7 +50,10 @@ export async function POST(req) {
           ],
         },
       ],
-      generationConfig: { maxOutputTokens: 700 },
+      // 이 모델(gemini-3.5-flash)은 "생각(thinking)" 토큰도 maxOutputTokens 예산 안에서 쓴다.
+      // 사진 채점처럼 비교·추론이 필요한 요청은 생각에만 1000~1400토큰을 쓰는 걸 실측했다
+      // (700으로는 답변이 26토큰에서 끊겼다) — 답변 분량(700토큰 지침)에 여유를 더해 넉넉히 잡는다.
+      generationConfig: { maxOutputTokens: 3000 },
     });
     return Response.json({ feedback });
   } catch (err) {
