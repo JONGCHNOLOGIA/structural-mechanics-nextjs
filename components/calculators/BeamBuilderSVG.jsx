@@ -35,6 +35,10 @@ export default function BeamBuilderSVG({
   onResizeLoad, // (id, edge:'start'|'end', newXInMeters) => void — 분포하중 양 끝 리사이즈
   onEditL, // (newDisplayValue) => void — 스팬 L 라벨 클릭 편집
   formatX, // (xInMeters) => string — 집중하중 위치 치수선 라벨 포맷터
+  // 계산이 끝났을 때 각 지점의 반력을 보 위에 직접 그려준다. 결과 표를 따로 읽지 않아도
+  // "어디서 얼마로 받치고 있는지"가 그림에서 보여야 한다는 요청 때문.
+  // [{ x, Fy, M, type, letter, fyLabel, mLabel }] — 라벨은 단위를 아는 부르는 쪽에서 만들어 넘긴다.
+  reactions = [],
 }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null); // { id, overTrash, px, py, ghostLabel }
@@ -52,13 +56,20 @@ export default function BeamBuilderSVG({
 
   const trashCx = w - 30, trashCy = beamY - 50, trashR = 18;
 
+  // 반력을 그리면 보 아래로 화살표 + 값이 한 줄 더 들어가므로, 스팬 치수선과 다이어그램을
+  // 그만큼 아래로 민다. 반력이 없으면 예전 간격 그대로다.
+  const hasReactions = reactions.length > 0;
+  const reactTop = beamY + 34;   // 화살촉이 닿는 높이
+  const reactBase = beamY + 66;  // 화살표 꼬리
+  const spanShift = hasReactions ? 62 : 0;
+
   const hasDiagram = Array.isArray(momentPts) && momentPts.length > 1;
   const diagH = 80;
-  const diagTop = 260;
+  const diagTop = 260 + spanShift;
   const mToPx = (m) => diagTop + diagH / 2 - (maxAbsM > 0 ? (m / maxAbsM) * (diagH / 2 - 6) : 0);
-  const h = hasDiagram ? diagTop + diagH + 30 : beamY + 110;
+  const h = hasDiagram ? diagTop + diagH + 30 : beamY + 110 + spanShift;
 
-  const spanY = beamY + 60;
+  const spanY = beamY + 60 + spanShift;
   const maxBendPx = 26;
   const bendScale = showDeflection && maxAbsV > 0 ? maxBendPx / maxAbsV : 0;
 
@@ -168,6 +179,45 @@ export default function BeamBuilderSVG({
         strokeWidth="1.4"
       />
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke="#B9C2C9" strokeWidth="1" strokeDasharray="5 4" />
+
+      {/* 반력 — 위로 받치면 화살표가 위를 향하고, 아래로 당기면(들림) 반대로 향한다.
+          고정단은 힘에 더해 모멘트도 받으므로 회전 화살표를 같이 그린다. */}
+      {reactions.map((rx, i) => {
+        const x = xToPx(rx.x);
+        const up = (rx.Fy || 0) >= 0;
+        const tail = up ? reactBase : reactTop;
+        const head = up ? reactTop : reactBase;
+        return (
+          <g key={`react-${i}`}>
+            <line x1={x} y1={tail} x2={x} y2={head} stroke={TEAL} strokeWidth="2.2" />
+            <polygon
+              points={
+                up
+                  ? `${x},${head - 2} ${x - 5},${head + 8} ${x + 5},${head + 8}`
+                  : `${x},${head + 2} ${x - 5},${head - 8} ${x + 5},${head - 8}`
+              }
+              fill={TEAL}
+            />
+            <text x={x} y={reactBase + 14} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
+              {rx.fyLabel}
+            </text>
+            {rx.type === 'fixed' && rx.mLabel && (
+              <>
+                <path
+                  d={`M ${x - 17} ${beamY + 2} A 17 17 0 1 ${(rx.M || 0) >= 0 ? 1 : 0} ${x + 17} ${beamY + 2}`}
+                  fill="none"
+                  stroke={TEAL}
+                  strokeWidth="1.8"
+                />
+                <polygon points={`${x + 17},${beamY + 2} ${x + 11},${beamY - 6} ${x + 23},${beamY - 4}`} fill={TEAL} />
+                <text x={x} y={reactBase + 27} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
+                  {rx.mLabel}
+                </text>
+              </>
+            )}
+          </g>
+        );
+      })}
 
       {/* 예상 처짐곡선 (점선, 실제 위치에 겹쳐서) */}
       {showDeflection && Array.isArray(momentPts) && momentPts.length > 1 && (
@@ -430,10 +480,24 @@ export default function BeamBuilderSVG({
         return null;
       })}
 
-      {/* M(x) 다이어그램 */}
+      {/* M(x) 다이어그램 — 가로축(x)과 세로축(M)을 화살표로 그려서 어느 쪽이 무엇인지 보이게 한다.
+          예전에는 0 기준선 한 줄뿐이라 "무엇에 대한 그래프인지"가 그림에 없었다. */}
       {hasDiagram && (
         <g>
-          <line x1={padL} y1={diagTop + diagH / 2} x2={padL + drawW} y2={diagTop + diagH / 2} stroke="#8A97A2" strokeWidth="1" />
+          {/* 세로축 M */}
+          <line x1={padL - 14} y1={diagTop + diagH + 4} x2={padL - 14} y2={diagTop - 6} stroke="#8A97A2" strokeWidth="1.1" />
+          <polygon points={`${padL - 14},${diagTop - 10} ${padL - 17.5},${diagTop - 3} ${padL - 10.5},${diagTop - 3}`} fill="#8A97A2" />
+          <text x={padL - 20} y={diagTop - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="800">M</text>
+
+          {/* 가로축 x (= 0 기준선) */}
+          <line x1={padL - 14} y1={diagTop + diagH / 2} x2={padL + drawW + 16} y2={diagTop + diagH / 2} stroke="#8A97A2" strokeWidth="1.1" />
+          <polygon
+            points={`${padL + drawW + 20},${diagTop + diagH / 2} ${padL + drawW + 13},${diagTop + diagH / 2 - 3.5} ${padL + drawW + 13},${diagTop + diagH / 2 + 3.5}`}
+            fill="#8A97A2"
+          />
+          <text x={padL + drawW + 24} y={diagTop + diagH / 2 + 4} fontSize="11" fill="#8A97A2" fontWeight="800">x</text>
+          <text x={padL - 20} y={diagTop + diagH / 2 + 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
+
           <polyline
             points={momentPts.map((p) => `${xToPx(p.x)},${mToPx(p.M)}`).join(' ')}
             fill="none"

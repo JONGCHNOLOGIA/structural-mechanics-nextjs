@@ -350,6 +350,22 @@ export default function BendingMomentEquation() {
           onResizeLoad={resizeLoad}
           onEditL={commitL}
           formatX={(xMeters) => `${fmt(disp(xMeters, lenF))} ${units.length}`}
+          reactions={
+            solved
+              ? solved.supports.map((sp, i) => ({
+                  x: sp.x,
+                  Fy: sp.reactionFy,
+                  M: sp.reactionM,
+                  type: sp.type,
+                  letter: String.fromCharCode(65 + i),
+                  fyLabel: `R${String.fromCharCode(65 + i)} = ${fmt(disp(Math.abs(sp.reactionFy), forceF))} ${units.force}`,
+                  mLabel:
+                    sp.type === 'fixed'
+                      ? `M${String.fromCharCode(65 + i)} = ${fmt(disp(Math.abs(sp.reactionM), momF))} ${units.moment}`
+                      : null,
+                }))
+              : []
+          }
         />
 
         {determinacy === 'unstable' && (
