@@ -1,182 +1,208 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmtSci } from '@/lib/calc/unitOptions';
-import { bendingStrainEnergy } from '@/lib/calc/strainEnergy';
+import { useMemo } from 'react';
+import { fmt, fmtSci } from '@/lib/calc/unitOptions';
+import { solveBeamFull } from '@/lib/calc/beamBuilder';
+import { bendingEnergy, externalWork } from '@/lib/calc/beamEnergy';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
-import FieldBlockCard from './FieldBlockCard';
-import { DimLineH } from './EditableDim';
+import BeamWorkbench, { sup, udl, pointLoad, momentLoad } from './BeamWorkbench';
 
-// 캔틸레버 자유단에 P, M0가 작용할 때 굽힘이 저장하는 변형에너지 U = ∫M²/2EI dx.
-// a) P만  b) M0만  c) P와 M0 동시 — 세 경우를 토글로 비교.
+// Strain Energy of Bending — 이 소분류는 "에너지가 무엇인가"만 다룬다.
+// 그 에너지로 처짐을 뽑아내는 방법(편미분·가상일)은 다음 소분류 Castigliano's Theorem이 맡는다.
+// 두 소분류가 같은 보를 다루면서 역할만 나뉘도록 짰다.
+//
+// 여기서 보여주는 것 세 가지:
+//   1) U = ∫ M²/2EI dx 가 M²/2EI 곡선 아래 넓이라는 것 (다이어그램으로 직접 보여준다)
+//   2) 하중이 한 일 W = ½ΣPδ + ½∫qv dx + ½ΣM₀θ 가 그 U와 같다는 것 (Clapeyron — 숫자로 확인)
+//   3) 처짐과 달리 **에너지는 중첩되지 않는다**는 것 (교차항) — 바로 앞 소분류와의 대비
 
 export default function StrainEnergyOfBending() {
-  const [caseType, setCaseType] = useState('both'); // 'point' | 'moment' | 'both'
-  const [units, setUnits] = useState({ length: 'm', force: 'kN', moment: 'kN·m', E: 'GPa', inertia: 'mm⁴' });
-  const [L, setL] = useState(4);
-  const [P, setP] = useState(20 * 1000);
-  const [M0, setM0] = useState(15 * 1000);
-  const [E, setE] = useState(200 * 1e9);
-  const [I, setI] = useState(60e6 * 1e-12);
-  const [activeField, setActiveField] = useState('L');
-
-  const lenF = UNIT_OPTIONS.length[units.length];
-  const forceF = UNIT_OPTIONS.force[units.force];
-  const momF = UNIT_OPTIONS.moment[units.moment];
-  const EF = UNIT_OPTIONS.E[units.E];
-  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
-  const disp = (b, f) => b / f;
-
-  const EI = E * I;
-  const PSI = caseType === 'moment' ? 0 : P;
-  const M0SI = caseType === 'point' ? 0 : M0;
-
-  const result = useMemo(() => {
-    const U = bendingStrainEnergy(L, PSI, M0SI, EI);
-    const Up = (PSI ** 2 * L ** 3) / (6 * EI); // P만 있을 때 기여분
-    const Um = (M0SI ** 2 * L) / (2 * EI); // M0만 있을 때 기여분
-    const Ucross = U - Up - Um; // 교차항 (P·M0)
-    return { U, Up, Um, Ucross };
-  }, [L, PSI, M0SI, EI]);
-
-  const N = 40;
-  const diagramPts = [];
-  for (let i = 0; i <= N; i++) {
-    const s = (L * i) / N;
-    diagramPts.push({ s, M: PSI * s + M0SI });
-  }
-  const maxAbsM = Math.max(1e-9, ...diagramPts.map((p) => Math.abs(p.M)));
-
   return (
     <>
-      {/* ---------------- Setting Menu ---------------- */}
-      <div className="panel">
-        <h3>SETTING MENU</h3>
-        <EditableText
-          contentKey="calc.StrainEnergyOfBending.intro"
-          defaultText="굽힘모멘트가 있으면 보 안에 **변형에너지** U = ∫ M²/2EI dx 가 저장돼요. 캔틸레버 자유단에 P, M0를 각각 또는 동시에 줘서 비교해보세요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
-        />
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-          <button className={'add-block' + (caseType === 'point' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('point')}>
-            P만
-          </button>
-          <button className={'add-block' + (caseType === 'moment' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('moment')}>
-            M0만
-          </button>
-          <button className={'add-block' + (caseType === 'both' ? ' active' : '')} style={{ margin: 0 }} onClick={() => setCaseType('both')}>
-            P + M0
-          </button>
-        </div>
-        <FieldBlockCard
-          title="보 조건 (L, P, M0, E, I)"
-          activeKey={activeField}
-          onActiveChange={setActiveField}
-          fields={[
-            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
-            ...(caseType !== 'moment' ? [{ key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force }] : []),
-            ...(caseType !== 'point' ? [{ key: 'M0', label: '모멘트 M0', value: disp(M0, momF), unitType: 'moment', unit: units.moment }] : []),
-            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
-            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
-          ]}
-          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
-          onFieldChange={(key, value) => {
-            const val = parseFloat(value);
-            if (isNaN(val)) return;
-            if (key === 'L') setL(val * lenF);
-            else if (key === 'P') setP(val * forceF);
-            else if (key === 'M0') setM0(val * momF);
-            else if (key === 'E') setE(val * EF);
-            else if (key === 'I') setI(val * inertiaF);
-          }}
-        />
-      </div>
-
-      {/* ---------------- Visualizer ---------------- */}
-      <div className="panel">
-        <h3>
-          VISUALIZER
-        </h3>
-        <MomentDiagramSVG
-          pts={diagramPts}
-          L={L}
-          maxAbsM={maxAbsM}
-          LDisp={disp(L, lenF)}
-          lengthUnit={units.length}
-          onEditL={(v) => setL(v * lenF)}
-        />
-        <div className="result-grid">
-          <div className="result-card">
-            <div className="l">총 변형에너지 U</div>
-            <div className="v">{fmtSci(result.U)} J</div>
-          </div>
-          <div className="result-card">
-            <div className="l">P 기여분 (P만 있었다면)</div>
-            <div className="v">{fmtSci(result.Up)} J</div>
-          </div>
-        </div>
-        <div className="steps">
-          <FormulaSection title="변형에너지 적분">
-            <div className="step-formula">
-              <Tip title="자유단 B로부터 잰 거리 s에서의 굽힘모멘트">M(s)</Tip> = P·s + M0
-            </div>
-            <div className="step-row">
-              U = ∫₀ᴸ <Frac num="M(s)²" den="2EI" /> ds = <Frac num="P²L³" den="6EI" /> + <Frac num="PM0L²" den="2EI" /> +{' '}
-              <Frac num="M0²L" den="2EI" />
-            </div>
-            {caseType === 'both' && (
-              <div className="step-row">
-                교차항(<Frac num="PM0L²" den="2EI" />) = {fmtSci(result.Ucross)} J — P와 M0가 같은 방향이면 에너지가 단순 합보다 커져요.
-              </div>
-            )}
-            <div className="step-final">U = {fmtSci(result.U)} J</div>
-          </FormulaSection>
-        </div>
-        <EditableText as="div" className="ai-hint" contentKey="calc.StrainEnergyOfBending.aiHint" defaultText="💬 U를 P로 편미분하면 왜 처짐 δ가 나오는지 궁금하다면, 다음 소주제(Castigliano's Theorem)에서 바로 이어집니다." />
-      </div>
+      <BeamWorkbench
+        contentPrefix="calc.StrainEnergyOfBending"
+        intro="보가 휘면 그만큼 **에너지가 보 안에 저장**돼요. 그게 변형에너지 U = ∫ M²/2EI dx 예요. 하중을 천천히 얹으면서 한 일이 고스란히 이 에너지가 되는데, 아래에서 두 값을 따로 구해 나란히 놓고 정말 같은지 확인해봐요."
+        initial={() => ({ L: 4, supports: [sup('fixed', 0)], loads: [pointLoad(4, 20 * 1000)] })}
+        presets={[
+          {
+            label: '캔틸레버 · 선단 P',
+            hint: 'U = P²L³/6EI',
+            build: () => ({ L: 4, supports: [sup('fixed', 0)], loads: [pointLoad(4, 20 * 1000)] }),
+          },
+          {
+            label: '캔틸레버 · 선단 M₀',
+            hint: 'U = M₀²L/2EI',
+            build: () => ({ L: 4, supports: [sup('fixed', 0)], loads: [momentLoad(4, 15 * 1000)] }),
+          },
+          {
+            label: '캔틸레버 · P + M₀',
+            hint: '교차항이 생겨서 단순 합보다 작거나 커져요',
+            build: () => ({ L: 4, supports: [sup('fixed', 0)], loads: [pointLoad(4, 20 * 1000), momentLoad(4, 15 * 1000)] }),
+          },
+          {
+            label: '단순보 · 등분포 q',
+            hint: 'U = q²L⁵/240EI',
+            build: () => ({ L: 4, supports: [sup('pin', 0), sup('roller', 4)], loads: [udl(0, 4, 10 * 1000)] }),
+          },
+        ]}
+        diagrams={(std) => [
+          std.M,
+          {
+            key: 'U',
+            axis: 'M²/2EI',
+            label: 'M²/2EI — 이 곡선 아래 넓이가 곧 U',
+            color: '#B0790A',
+            fill: '#FBF1DC',
+            value: (p) => (p.M * p.M) / (2 * p.EI),
+            maxLabel: (m) => `최대 ${fmtSci(m)} J/m`,
+          },
+        ]}
+      >
+        {(ctx) => <Energy ctx={ctx} />}
+      </BeamWorkbench>
 
       <AiTutorPanel />
     </>
   );
 }
 
-function MomentDiagramSVG({ pts, L, maxAbsM, LDisp, lengthUnit, onEditL }) {
-  // 아래에 스팬 치수선을 넣을 자리를 두려고 높이를 220에서 늘렸다.
-  const w = 620, h = 266;
-  const padL = 50, padR = 40, padTop = 30, padBottom = 86;
-  const drawW = w - padL - padR;
-  const drawH = h - padTop - padBottom;
-  const xToPx = (s) => padL + (s / L) * drawW;
-  const mToPx = (m) => padTop + drawH - (m / maxAbsM) * drawH;
+function Energy({ ctx }) {
+  const { solved, L, supports, loads, ei, units, forceF, distF, momF, lenF, disp } = ctx;
 
-  const areaPath =
-    `M ${xToPx(0)} ${padTop + drawH} ` +
-    pts.map((p) => `L ${xToPx(p.s).toFixed(2)} ${mToPx(p.M).toFixed(2)}`).join(' ') +
-    ` L ${xToPx(L)} ${padTop + drawH} Z`;
+  // 하중을 하나씩만 남겨서 따로 구한 에너지 — 합쳐도 전체 U가 되지 않는다는 걸 보여주려고.
+  const singles = useMemo(() => {
+    if (!solved || loads.length < 2) return [];
+    return loads.map((l) => {
+      const r = solveBeamFull(L, supports, [l], ei, 600);
+      return { load: l, U: bendingEnergy(r.pts, r.midPts) };
+    });
+  }, [solved, L, supports, loads, ei]);
+
+  if (!solved) return null;
+
+  const U = bendingEnergy(solved.pts, solved.midPts);
+  const W = externalWork(solved.pts, loads, L);
+  const gap = Math.abs(U - W);
+  const rel = U !== 0 ? gap / Math.abs(U) : gap;
+
+  const sumSingles = singles.reduce((a, s) => a + s.U, 0);
+  const cross = U - sumSingles;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
-      <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
-      <path d={areaPath} fill="#E7E9F7" stroke="#4A5FBF" strokeWidth="1.6" />
-      <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">B (자유단, s=0)</text>
-      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">A (고정단, s=L)</text>
-      {/* 스팬 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
-      <DimLineH
-        x1={padL}
-        x2={padL + drawW}
-        y={padTop + drawH + 44}
-        labelDy={15}
-        fontSize={12}
-        value={LDisp !== undefined ? LDisp : L}
-        unit={lengthUnit}
-        prefix="L = "
-        boxW={64}
-        onChange={onEditL}
+    <div className="steps">
+      <FormulaSection
+        title={<EditableText as="span" contentKey="strainEnergy.title" defaultText="① 저장된 에너지 U = ∫ M²/2EI dx" />}
+      >
+        <div className="step-formula">
+          U = ∫₀<sup>L</sup> <Frac num="M(x)²" den="2EI" /> dx = <b>{fmtSci(U)} J</b>
+        </div>
+        <EditableText
+          as="div"
+          className="step-row"
+          contentKey="strainEnergy.meaning"
+          defaultText="위 그림의 노란 칸이 M²/2EI 예요. 그 곡선 아래 넓이가 곧 U입니다. M이 큰 곳일수록 제곱으로 들어가서, 굽힘모멘트가 몰린 구간 하나가 전체 에너지를 거의 다 차지하기도 해요."
+        />
+        <div className="step-row">
+          가장 많이 저장된 지점: x = {fmt(disp(argmaxDensity(solved.pts).x, lenF))} {units.length} ·{' '}
+          {fmtSci(argmaxDensity(solved.pts).d)} J/m
+        </div>
+      </FormulaSection>
+
+      <FormulaSection
+        title={<EditableText as="span" contentKey="strainEnergy.workTitle" defaultText="② 하중이 한 일 = 저장된 에너지 (Clapeyron)" />}
+      >
+        <div className="step-formula">
+          W = ½ Σ P·δ &nbsp;+&nbsp; ½ ∫ q·v dx &nbsp;+&nbsp; ½ Σ M₀·θ
+        </div>
+        <EditableText
+          as="div"
+          className="step-row"
+          contentKey="strainEnergy.workWhy"
+          defaultText="하중을 0에서 천천히 키우면 처짐도 같이 커져요. 그래서 한 일이 P·δ가 아니라 **½P·δ**입니다 (힘-처짐 그래프 아래 삼각형 넓이). 재료가 탄성이면 이 일이 전부 보 안에 저장되고, 하중을 없애면 그대로 돌려받아요."
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="step-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>하중이 한 일 W</span>
+            <b>{fmtSci(W)} J</b>
+          </div>
+          <div className="step-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>보에 저장된 에너지 U</span>
+            <b>{fmtSci(U)} J</b>
+          </div>
+        </div>
+        <div className="step-final" style={{ color: rel < 1e-4 ? '#1E7F72' : 'var(--crimson)' }}>
+          {rel < 1e-4
+            ? `두 값의 차이 ${(rel * 100).toExponential(1)} % — 반올림 오차 수준이에요. W = U 가 그대로 확인됩니다.`
+            : `두 값이 ${(rel * 100).toFixed(2)} % 어긋나요.`}
+        </div>
+      </FormulaSection>
+
+      {singles.length >= 2 && (
+        <FormulaSection
+          title={<EditableText as="span" contentKey="strainEnergy.crossTitle" defaultText="③ 처짐은 더해지지만, 에너지는 더해지지 않아요" />}
+        >
+          <EditableText
+            as="div"
+            className="step-row"
+            contentKey="strainEnergy.crossWhy"
+            defaultText="바로 앞 소분류에서 처짐은 하중별로 구해 더하면 됐어요. 그런데 U는 M의 **제곱**이라 (M₁+M₂)² = M₁² + 2M₁M₂ + M₂² 처럼 교차항이 남아요. 그래서 에너지는 따로 구해 더할 수 없습니다."
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {singles.map((s, i) => (
+              <div key={s.load.id} className="step-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <span>{i === 0 ? '' : '+ '}{shortLabel(s.load, { units, forceF, distF, momF })} 혼자일 때</span>
+                <b>{fmtSci(s.U)} J</b>
+              </div>
+            ))}
+            <div className="step-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>따로 구해 더한 값</span>
+              <b>{fmtSci(sumSingles)} J</b>
+            </div>
+            <div className="step-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>함께 작용시켰을 때의 실제 U</span>
+              <b>{fmtSci(U)} J</b>
+            </div>
+            <div className="step-final" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>차이 = 교차항 2∫M₁M₂/2EI dx</span>
+              <b>{fmtSci(cross)} J</b>
+            </div>
+          </div>
+          <div className="step-row" style={{ color: 'var(--gray-soft)' }}>
+            {cross > 0
+              ? '교차항이 양수 — 두 하중이 같은 방향으로 휘게 해서, 따로 줄 때보다 에너지가 더 많이 쌓여요.'
+              : cross < 0
+              ? '교차항이 음수 — 두 하중이 서로 반대로 휘게 해서, 따로 줄 때의 합보다 에너지가 적어요.'
+              : '교차항이 0 — 두 하중의 M 분포가 서로 직교해요.'}
+          </div>
+        </FormulaSection>
+      )}
+
+      <EditableText
+        as="div"
+        className="ai-hint"
+        contentKey="calc.StrainEnergyOfBending.aiHint"
+        defaultText="💬 여기까지는 “에너지가 얼마나 쌓였나”예요. 이 에너지를 써서 처짐을 거꾸로 꺼내는 방법은 다음 소분류 Castigliano's Theorem에서 네 가지로 비교합니다."
       />
-      <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">굽힘모멘트 M(s) 다이어그램</text>
-    </svg>
+    </div>
   );
+}
+
+function argmaxDensity(pts) {
+  let best = { x: 0, d: -1 };
+  pts.forEach((p) => {
+    const d = (p.M * p.M) / (2 * p.EI);
+    if (d > best.d) best = { x: p.x, d };
+  });
+  return best;
+}
+
+function shortLabel(l, u) {
+  const { units, forceF, distF, momF } = u;
+  if (l.kind === 'point') return `P = ${fmt(l.P / forceF)} ${units.force}`;
+  if (l.kind === 'udl') return `q = ${fmt(l.q / distF)} ${units.distLoad}`;
+  if (l.kind === 'triangle') return `삼각분포 ${fmt(l.qStart / distF)}→${fmt(l.qEnd / distF)} ${units.distLoad}`;
+  return `M₀ = ${fmt(l.M0 / momF)} ${units.moment}`;
 }
