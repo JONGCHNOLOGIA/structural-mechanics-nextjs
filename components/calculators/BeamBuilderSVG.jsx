@@ -41,6 +41,9 @@ export default function BeamBuilderSVG({
   // "어디서 얼마로 받치고 있는지"가 그림에서 보여야 한다는 요청 때문.
   // [{ x, Fy, M, type, letter, fyLabel, mLabel }] — 라벨은 단위를 아는 부르는 쪽에서 만들어 넘긴다.
   reactions = [],
+  // 구간마다 단면이 다른 보(Nonprismatic)를 그릴 때, 구간별 두께 배율.
+  // [{ xStart, xEnd, scale }] — scale 1이 기본 두께다. 없으면 일정한 두께로 그린다.
+  profile = null,
 }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null); // { id, overTrash, px, py, ghostLabel }
@@ -67,7 +70,7 @@ export default function BeamBuilderSVG({
 
   const hasPts = Array.isArray(pts) && pts.length > 1;
   const diagH = 80;
-  const diagGap = 34;
+  const diagGap = 42;
   const diagTop0 = 260 + spanShift;
   const bands = hasPts ? diagrams : [];
   const h = bands.length
@@ -174,15 +177,35 @@ export default function BeamBuilderSVG({
       {/* 보 본체 */}
       {/* 보 본체 — 선 한 줄이 아니라 실제 보처럼 위아래로 두께를 준다.
           두꺼워야 "보"로 보이기도 하고, 하중을 끌어다 놓을 과녁도 그만큼 넓어진다. */}
-      <rect
-        x={padL}
-        y={beamY - BEAM_HALF}
-        width={drawW}
-        height={BEAM_HALF * 2}
-        fill="#E7E4DC"
-        stroke={GRAY}
-        strokeWidth="1.4"
-      />
+      {profile && profile.length ? (
+        // 구간마다 단면이 다르면 두께로 그 차이를 보여준다 — 계단처럼 꺾이는 자리가 곧 전환점이다.
+        profile.map((seg, i) => {
+          const half = Math.max(3, Math.min(22, BEAM_HALF * seg.scale));
+          const x0 = xToPx(seg.xStart), x1 = xToPx(seg.xEnd);
+          return (
+            <rect
+              key={`prof-${i}`}
+              x={x0}
+              y={beamY - half}
+              width={Math.max(0, x1 - x0)}
+              height={half * 2}
+              fill="#E7E4DC"
+              stroke={GRAY}
+              strokeWidth="1.4"
+            />
+          );
+        })
+      ) : (
+        <rect
+          x={padL}
+          y={beamY - BEAM_HALF}
+          width={drawW}
+          height={BEAM_HALF * 2}
+          fill="#E7E4DC"
+          stroke={GRAY}
+          strokeWidth="1.4"
+        />
+      )}
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke="#B9C2C9" strokeWidth="1" strokeDasharray="5 4" />
 
       {/* 반력 — 위로 받치면 화살표가 위를 향하고, 아래로 당기면(들림) 반대로 향한다.
@@ -512,12 +535,39 @@ export default function BeamBuilderSVG({
             <text x={padL + drawW + 24} y={top + diagH / 2 + 4} fontSize="11" fill="#8A97A2" fontWeight="800">x</text>
             <text x={padL - 20} y={top + diagH / 2 + 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
 
+            {/* 면적이 의미를 갖는 다이어그램(M/EI)은 0선까지 칠해서 "이 넓이가 곧 처짐각"이 보이게 한다 */}
+            {d.fill && (
+              <path
+                d={
+                  `M ${xToPx(pts[0].x)} ${toPx(0)} ` +
+                  pts.map((p, i) => `L ${xToPx(p.x).toFixed(2)} ${toPx(vals[i]).toFixed(2)}`).join(' ') +
+                  ` L ${xToPx(pts[pts.length - 1].x)} ${toPx(0)} Z`
+                }
+                fill={d.fill}
+                stroke="none"
+              />
+            )}
             <polyline
               points={pts.map((p, i) => `${xToPx(p.x)},${toPx(vals[i])}`).join(' ')}
               fill="none"
               stroke={color}
               strokeWidth="1.8"
             />
+            {/* 도심선처럼 "x 위치 하나"를 짚어야 하는 표시 — 보 그림과 같은 x 눈금 위에 찍힌다 */}
+            {(d.marks || []).map((mk, mi) => (
+              <g key={mi}>
+                <line
+                  x1={xToPx(mk.x)} y1={top} x2={xToPx(mk.x)} y2={top + diagH}
+                  stroke={mk.color || '#4A5FBF'} strokeWidth="1.4" strokeDasharray="5 4"
+                />
+                <text
+                  x={xToPx(mk.x)} y={top + diagH + 14} fontSize="10.5"
+                  fill={mk.color || '#4A5FBF'} textAnchor="middle" fontWeight="800"
+                >
+                  {mk.label}
+                </text>
+              </g>
+            ))}
             <text x={padL} y={top - 8} fontSize="12.5" fill="#8A97A2" fontWeight="700">
               {d.label}
             </text>

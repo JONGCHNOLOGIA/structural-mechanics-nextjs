@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
+import { UNIT_OPTIONS, fmt, fmtInput, fmtSci } from '@/lib/calc/unitOptions';
 import { determinacyInfo, solveBeamFull } from '@/lib/calc/beamBuilder';
 import BeamBuilderSVG from './BeamBuilderSVG';
 import BeamDeflect3D from './BeamDeflect3D';
@@ -45,7 +45,7 @@ export default function BeamWorkbench({
   intro,                      // 설정 패널 맨 위 설명 (기본 문구)
   initial,                    // () => ({ L, supports, loads }) — 처음 보여줄 보
   presets = [],               // [{ label, hint, build: () => ({ L, supports, loads }) }]
-  diagrams = ['M'],           // 'V' | 'M' 순서대로 보 아래에 쌓음
+  diagrams = ['M'],           // 'V' | 'M' | 'MoverEI', 직접 만든 정의, 또는 (std, ctx) => [...]
   show3D = true,
   solveIndeterminate = false, // CH.10: 부정정보도 끝까지 푼다. CH.9: 안내만 한다.
   extraFields = [],           // FieldBlockCard에 더 넣을 항목 [{ key,label,value,unitType,unit,set }]
@@ -53,6 +53,7 @@ export default function BeamWorkbench({
   beforeDiagrams,             // (ctx) => JSX — 그림 바로 아래
   children,                   // (ctx) => JSX — 결과/풀이 섹션
   eiSpec,                     // (ctx) => EI 숫자 또는 구간배열. 없으면 E·I
+  profile,                    // (ctx) => [{ xStart, xEnd, scale }] — 구간별 보 두께 배율
 }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const init = useMemo(() => (initial ? initial() : { L: 4, supports: [], loads: [] }), []);
@@ -80,14 +81,18 @@ export default function BeamWorkbench({
     supports, loads, setL, setE, setI, setSupports, setLoads,
   };
   const ei = eiSpec ? eiSpec(baseCtx) : EI;
+  // 구간별 EI는 렌더마다 새 배열로 만들어져서, 그대로 의존성에 넣으면 매번 다시 푼다.
+  // 내용이 같으면 같은 키가 나오도록 문자열로 접어서 쓴다.
+  const eiKey = typeof ei === 'number' ? String(ei) : JSON.stringify(ei);
 
   const info = useMemo(() => determinacyInfo(supports), [supports]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const solved = useMemo(() => {
     if (info.kind === 'unstable') return null;
     if (info.kind === 'indeterminate' && !solveIndeterminate) return null;
     const r = solveBeamFull(L, supports, loads, ei, 600);
     return r.determinacy === 'unstable' ? null : r;
-  }, [info.kind, L, supports, loads, ei, solveIndeterminate]);
+  }, [info.kind, L, supports, loads, eiKey, solveIndeterminate]);
 
   const maxAbsV = solved ? Math.max(1e-9, ...solved.pts.map((p) => Math.abs(p.v))) : 0;
 
@@ -224,7 +229,20 @@ export default function BeamWorkbench({
       key: 'M', axis: 'M', label: 'M(x) 굽힘모멘트도 (BMD)', color: '#C3002F', value: (p) => p.M,
       maxLabel: (m) => `|M|max = ${fmt(m / momF)} ${units.moment}`,
     },
+    // 모멘트-면적법에서는 이 칸의 "넓이"가 곧 처짐각이라 0선까지 칠한다.
+    MoverEI: {
+      key: 'MoverEI', axis: 'M/EI', label: 'M/EI 다이어그램 (넓이 = 처짐각)', color: '#C3002F',
+      value: (p) => p.M / p.EI, fill: '#F7E3E6',
+      maxLabel: (m) => `|M/EI|max = ${fmtSci(m)} /m`,
+    },
   };
+
+  // diagrams는 문자열 키, 직접 만든 정의, 또는 "표준 정의들을 받아서 목록을 만드는 함수" 모두 받는다.
+  // 소분류마다 필요한 칸이 달라서(모멘트-면적은 M/EI에 도심선까지) 바깥에서 손댈 수 있어야 한다.
+  function resolveDiagrams() {
+    const list = typeof diagrams === 'function' ? diagrams(DIAG_DEFS, { solved, units, lenF, forceF, momF }) : diagrams;
+    return (list || []).map((d) => (typeof d === 'string' ? DIAG_DEFS[d] : d)).filter(Boolean);
+  }
 
   const ctx = {
     ...baseCtx,
@@ -362,7 +380,7 @@ export default function BeamWorkbench({
           pts={solved ? solved.pts : null}
           maxAbsV={maxAbsV}
           showDeflection={showDeflection && !!solved}
-          diagrams={diagrams.map((d) => DIAG_DEFS[d]).filter(Boolean)}
+          diagrams={resolveDiagrams()}
           labelFor={labelForLoad}
           getEditValue={editValueForLoad}
           onEditValue={commitLoadEdit}
@@ -371,6 +389,7 @@ export default function BeamWorkbench({
           onResizeLoad={resizeLoad}
           onEditL={commitL}
           formatX={(xMeters) => `${fmt(disp(xMeters, lenF))} ${units.length}`}
+          profile={profile ? profile(baseCtx) : null}
           reactions={
             solved
               ? solved.supports.map((sp, i) => ({

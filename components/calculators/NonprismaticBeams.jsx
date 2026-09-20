@@ -1,202 +1,221 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
+import { fmt, fmtSci } from '@/lib/calc/unitOptions';
 import FormulaSection, { Tip } from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
-import FieldBlockCard from './FieldBlockCard';
-import { DimLineH } from './EditableDim';
+import BeamWorkbench, { NumField, sup, udl, pointLoad } from './BeamWorkbench';
 
-// 캔틸레버 보인데 단면(I)이 중간(x=c)에서 바뀜 — 자유단(x=L)에 집중하중 P.
-// EI가 구간마다 다르니 M/EI 다이어그램을 구간별로 나눠 적분(수치적분)해서
-// 모멘트-면적 2번째 정리로 처짐을 구함.
+// 단면(I)이 구간마다 달라지는 보. 예전에는 "캔틸레버 + 자유단 집중하중, 전환점 하나" 한 가지만
+// 다룰 수 있었는데, 지금은 다른 소분류와 같은 보 빌더 위에서 구간을 원하는 만큼 쌓는다.
+//
+// 구간마다 재료(E)와 단면(b × h)을 따로 정하면 EI(x)가 구간별로 바뀌고,
+// 그 EI를 그대로 풀이에 넘기기 때문에 M/EI 다이어그램이 전환점에서 꺾이는 게 바로 보인다.
+// 보 그림 자체도 구간별 높이 비율로 두껍게/얇게 그려서, 어디서 단면이 바뀌는지 눈에 띈다.
+
+let segId = 1;
+const newSeg = (fracEnd, b, h, E) => ({ id: `seg-${segId++}`, fracEnd, b, h, E });
 
 export default function NonprismaticBeams() {
-  const [units, setUnits] = useState({ length: 'm', force: 'kN', E: 'GPa', inertia: 'mm⁴' });
-  const [L, setL] = useState(4);
-  const [c, setC] = useState(2);
-  const [P, setP] = useState(20 * 1000);
-  const [E, setE] = useState(200 * 1e9);
-  const [I1, setI1] = useState(30e6 * 1e-12);
-  const [I2, setI2] = useState(90e6 * 1e-12);
-  const [activeField, setActiveField] = useState('L');
+  // 구간은 "보 길이에 대한 비율"로 끝 위치를 갖는다 — L을 바꿔도 구성이 그대로 따라온다.
+  const [segs, setSegs] = useState([
+    newSeg(0.5, 0.15, 0.2, 200e9),
+    newSeg(1, 0.15, 0.3, 200e9),
+  ]);
 
-  const lenF = UNIT_OPTIONS.length[units.length];
-  const forceF = UNIT_OPTIONS.force[units.force];
-  const EF = UNIT_OPTIONS.E[units.E];
-  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
-  const disp = (b, f) => b / f;
+  const segEI = (s) => s.E * ((s.b * Math.pow(s.h, 3)) / 12);
 
-  const cClamped = Math.min(Math.max(c, 0.001), L - 0.001);
-  const PSI = P;
-  const EPa = E;
-  const EI1 = EPa * I1;
-  const EI2 = EPa * I2;
-
-  const result = useMemo(() => {
-    const N = 400;
-    let theta = 0;
-    let delta = 0;
-    const pts = [];
-    for (let i = 0; i <= N; i++) {
-      const x = (L * i) / N;
-      const EIx = x < cClamped ? EI1 : EI2;
-      const m = (PSI * (L - x)) / EIx; // M/EI (절대값)
-      pts.push({ x, m });
-    }
-    for (let i = 0; i < N; i++) {
-      const dx = L / N;
-      const mAvg = (pts[i].m + pts[i + 1].m) / 2;
-      const xAvg = (pts[i].x + pts[i + 1].x) / 2;
-      theta += mAvg * dx;
-      delta += mAvg * (L - xAvg) * dx;
-    }
-    return { pts, theta, delta };
-  }, [L, cClamped, PSI, EI1, EI2]);
-
-  const maxM = Math.max(1e-12, ...result.pts.map((p) => p.m));
+  // 구간 끝 비율을 실제 좌표로 펴서, 겹치거나 순서가 뒤집히지 않게 정리한다.
+  const spans = (L) => {
+    let start = 0;
+    return segs.map((s, i) => {
+      const end = i === segs.length - 1 ? L : Math.min(L, Math.max(start + L * 0.02, s.fracEnd * L));
+      const out = { ...s, xStart: start, xEnd: end, EI: segEI(s), I: (s.b * Math.pow(s.h, 3)) / 12 };
+      start = end;
+      return out;
+    });
+  };
 
   return (
     <>
-      {/* ---------------- Setting Menu ---------------- */}
-      <div className="panel">
-        <h3>SETTING MENU</h3>
-        <EditableText
-          contentKey="calc.NonprismaticBeams.intro"
-          defaultText="단면 2차모멘트가 한 값이 아니라(**Nonprismatic**) x=c 지점에서 I₁ → I₂로 바뀌는 캔틸레버예요. M/EI 다이어그램이 **c에서 불연속으로 꺾이고**, 구간을 나눠 적분해야 해요."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
-        />
-        <FieldBlockCard
-          title="보 조건 (L, P, E, I₁, I₂)"
-          activeKey={activeField}
-          onActiveChange={setActiveField}
-          fields={[
-            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
-            { key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force },
-            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
-            { key: 'I1', label: 'I₁ [0,c]', value: disp(I1, inertiaF), unitType: 'inertia', unit: units.inertia },
-            { key: 'I2', label: 'I₂ [c,L]', value: disp(I2, inertiaF), unitType: 'inertia', unit: units.inertia },
-          ]}
-          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
-          onFieldChange={(key, value) => {
-            const val = parseFloat(value);
-            if (isNaN(val)) return;
-            if (key === 'L') setL(val * lenF);
-            else if (key === 'P') setP(val * forceF);
-            else if (key === 'E') setE(val * EF);
-            else if (key === 'I1') setI1(val * inertiaF);
-            else if (key === 'I2') setI2(val * inertiaF);
-          }}
-        />
-        <div className="field">
-          <label>단면 전환 위치 c (고정단으로부터) — {fmt(disp(cClamped, lenF))} {units.length}</label>
-          <input type="range" min="0.1" max={Math.max(0.2, L - 0.1)} step="0.05" value={cClamped} onChange={(e) => setC(parseFloat(e.target.value))} style={{ width: '100%' }} />
-        </div>
-      </div>
-
-      {/* ---------------- Visualizer ---------------- */}
-      <div className="panel">
-        <h3>
-          VISUALIZER
-        </h3>
-        <NonprismaticSVG
-          pts={result.pts}
-          L={L}
-          c={cClamped}
-          maxM={maxM}
-          LDisp={disp(L, lenF)}
-          cDisp={disp(cClamped, lenF)}
-          lengthUnit={units.length}
-          onEditL={(v) => setL(v * lenF)}
-          onEditC={(v) => setC(v * lenF)}
-        />
-        <div className="result-grid">
-          <div className="result-card">
-            <div className="l">θB (구간별 적분 합)</div>
-            <div className="v">{result.theta.toExponential(3)} rad</div>
-          </div>
-          <div className="result-card">
-            <div className="l">δB</div>
-            <div className="v">{fmt(result.delta * 1000)} mm</div>
-          </div>
-        </div>
-        <div className="steps">
-          <FormulaSection title="구간별로 나눠 적분">
-            <div className="step-formula">
-              <Tip title="자유단으로부터 잰 굽힘모멘트">M(x)</Tip> = −P(L−x) (전 구간 동일, EI만 구간마다 다름)
-            </div>
-            <div className="step-row">
-              θB = ∫₀ᶜ <Frac num="M" den="EI₁" /> dx + ∫ᶜᴸ <Frac num="M" den="EI₂" /> dx
-            </div>
-            <div className="step-row">
-              δB = ∫₀ᶜ (<Frac num="M" den="EI₁" />)(L−x) dx + ∫ᶜᴸ (<Frac num="M" den="EI₂" />)(L−x) dx
-            </div>
-            <div className="step-final">
-              <Frac num="I₂" den="I₁" /> = {fmt(I2 / I1)} → 단면이 클수록(I₂ 구간) <Frac num="M" den="EI" /> 다이어그램이 낮아지는 게 보이시나요?
-            </div>
-          </FormulaSection>
-        </div>
-        <EditableText as="div" className="ai-hint" contentKey="calc.NonprismaticBeams.aiHint" defaultText="💬 왜 단면이 큰 쪽에서 처짐 기여도가 작아지는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
-      </div>
+      <BeamWorkbench
+        contentPrefix="calc.NonprismaticBeams"
+        intro="단면이 한 값이 아니라(**Nonprismatic**) 구간마다 달라지는 보예요. 구간을 원하는 만큼 쌓고 각 구간의 재료(E)와 단면(b × h)을 정하면, M/EI 다이어그램이 전환점에서 **뚝 꺾이는** 걸 볼 수 있어요. 보 그림의 두께도 구간별 단면 높이를 따라갑니다."
+        initial={() => ({ L: 4, supports: [sup('fixed', 0)], loads: [pointLoad(4, 20 * 1000)] })}
+        presets={[
+          {
+            label: '캔틸레버 · 자유단 P',
+            hint: '고정단 쪽을 두껍게 하면 처짐이 얼마나 줄까요',
+            build: () => ({ L: 4, supports: [sup('fixed', 0)], loads: [pointLoad(4, 20 * 1000)] }),
+          },
+          {
+            label: '단순보 · 등분포 q',
+            hint: '중앙을 두껍게 한 보',
+            build: () => ({ L: 6, supports: [sup('pin', 0), sup('roller', 6)], loads: [udl(0, 6, 12 * 1000)] }),
+          },
+        ]}
+        diagrams={['MoverEI']}
+        eiSpec={({ L }) => spans(L).map((s) => ({ xStart: s.xStart, xEnd: s.xEnd, EI: s.EI }))}
+        profile={({ L }) => {
+          const list = spans(L);
+          const hMax = Math.max(...list.map((s) => s.h));
+          return list.map((s) => ({ xStart: s.xStart, xEnd: s.xEnd, scale: s.h / hMax }));
+        }}
+        extraSettings={(ctx) => (
+          <SegmentEditor segs={segs} setSegs={setSegs} spans={spans(ctx.L)} ctx={ctx} />
+        )}
+      >
+        {(ctx) => <Explain ctx={ctx} spans={spans(ctx.L)} />}
+      </BeamWorkbench>
 
       <AiTutorPanel />
     </>
   );
 }
 
-function NonprismaticSVG({ pts, L, c, maxM, LDisp, cDisp, lengthUnit, onEditL, onEditC }) {
-  // 아래에 스팬·전환점 치수선을 넣을 자리를 두려고 높이를 260에서 늘렸다.
-  const w = 620, h = 330;
-  const padL = 50, padR = 40, padTop = 30, padBottom = 110;
-  const drawW = w - padL - padR;
-  const drawH = h - padTop - padBottom;
+function SegmentEditor({ segs, setSegs, spans, ctx }) {
+  const { units, lenF, EF, inertiaF } = ctx;
+  const update = (id, patch) => setSegs((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
-  const xToPx = (x) => padL + (x / L) * drawW;
-  const mToPx = (m) => padTop + drawH - (m / maxM) * drawH;
-
-  const areaPath =
-    `M ${xToPx(0)} ${padTop + drawH} ` +
-    pts.map((p) => `L ${xToPx(p.x).toFixed(2)} ${mToPx(p.m).toFixed(2)}`).join(' ') +
-    ` L ${xToPx(L)} ${padTop + drawH} Z`;
+  function addSeg() {
+    // 마지막 구간을 반으로 잘라 새 구간을 끼워넣는다 — 항상 빈 자리가 생긴다.
+    setSegs((prev) => {
+      const last = prev[prev.length - 1];
+      const prevEnd = prev.length > 1 ? prev[prev.length - 2].fracEnd : 0;
+      const mid = (prevEnd + 1) / 2;
+      const head = prev.slice(0, -1);
+      return [...head, { ...last, fracEnd: mid }, newSeg(1, last.b, last.h * 1.2, last.E)];
+    });
+  }
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 660, margin: '0 auto', display: 'block', overflow: 'visible' }}>
-      <line x1={padL} y1={padTop + drawH} x2={padL + drawW} y2={padTop + drawH} stroke="#8A97A2" strokeWidth="1.2" />
-      <path d={areaPath} fill="#F7E3E6" stroke="#C3002F" strokeWidth="1.6" />
-      <line x1={xToPx(c)} y1={padTop} x2={xToPx(c)} y2={padTop + drawH} stroke="#1E7F72" strokeWidth="1.4" strokeDasharray="5 4" />
-      <text x={xToPx(c)} y={padTop - 8} fontSize="13" fill="#1E7F72" textAnchor="middle" fontWeight="800">c (단면 전환점)</text>
-      <text x={padL} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2">A (고정단)</text>
-      <text x={padL + drawW} y={padTop + drawH + 20} fontSize="13" fill="#8A97A2" textAnchor="end">B (자유단)</text>
-      {/* 치수 — 고정단에서 단면 전환점까지의 거리 c와 전체 스팬 L. 둘 다 클릭해서 고칠 수 있다. */}
-      <DimLineH
-        x1={padL}
-        x2={xToPx(c)}
-        y={padTop + drawH + 40}
-        labelDy={14}
-        fontSize={11.5}
-        color="#1E7F72"
-        value={cDisp}
-        unit={lengthUnit}
-        prefix="c = "
-        boxW={60}
-        onChange={onEditC}
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--gray-soft)' }}>단면 구간 (왼쪽부터)</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="add-block" style={{ margin: 0, padding: '3px 10px', fontSize: 12 }} onClick={addSeg}>
+            + 구간 쌓기
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {spans.map((s, i) => (
+          <div key={s.id} style={{ border: '1.4px solid var(--line)', padding: '8px 10px', position: 'relative' }}>
+            {segs.length > 1 && (
+              <div
+                onClick={() => setSegs((prev) => prev.filter((x) => x.id !== s.id))}
+                style={{ position: 'absolute', top: 6, right: 8, fontSize: 13, color: 'var(--gray-soft)', cursor: 'pointer', fontWeight: 800 }}
+                title="이 구간 지우기"
+              >
+                ×
+              </div>
+            )}
+            <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6 }}>
+              <span className="color-dot" style={{ background: '#1E7F72' }} />
+              구간 {i + 1} · x = {fmt(s.xStart / lenF)} ~ {fmt(s.xEnd / lenF)} {units.length}
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {i < spans.length - 1 && (
+                <NumField
+                  label={`끝 위치 (${units.length})`}
+                  value={s.xEnd / lenF}
+                  onCommit={(v) => update(s.id, { fracEnd: Math.min(1, Math.max(0.02, (v * lenF) / ctx.L)) })}
+                />
+              )}
+              <NumField label="b (m)" value={s.b} onCommit={(v) => update(s.id, { b: Math.max(0.001, v) })} />
+              <NumField label="h (m)" value={s.h} onCommit={(v) => update(s.id, { h: Math.max(0.001, v) })} />
+              <NumField label={`E (${units.E})`} value={s.E / EF} onCommit={(v) => update(s.id, { E: Math.max(1, v * EF) })} />
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginTop: 4 }}>
+              I = bh³/12 = {fmt(s.I / inertiaF)} {units.inertia} · EI = {fmtSci(s.EI)} N·m²
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginTop: 6, lineHeight: 1.6 }}>
+        ※ 위 &quot;보 조건&quot;의 E·I는 여기서 구간별로 준 값이 대신합니다.
+      </div>
+    </div>
+  );
+}
+
+function Explain({ ctx, spans }) {
+  const { solved, L, units, lenF } = ctx;
+
+  // 각 구간이 처짐에 얼마나 기여했는지 — ∫(M/EI)(L−x)dx를 구간별로 쪼개 본다.
+  const parts = useMemo(() => {
+    if (!solved) return [];
+    return spans.map((s) => {
+      // EI는 이 구간의 값을 쓴다. 전환점에 딱 걸린 절점은 어느 쪽 EI를 갖는지 애매해서,
+      // 그 절점의 EI를 그대로 쓰면 이웃 구간 몫까지 섞여 들어간다.
+      let theta = 0;
+      for (let i = 0; i < solved.pts.length - 1; i++) {
+        const p0 = solved.pts[i], p1 = solved.pts[i + 1];
+        const lo = Math.max(p0.x, s.xStart), hi = Math.min(p1.x, s.xEnd);
+        if (hi <= lo) continue;
+        const span = p1.x - p0.x || 1;
+        const mAt = (x) => p0.M + ((p1.M - p0.M) * (x - p0.x)) / span;
+        theta += ((mAt(lo) + mAt(hi)) / 2 / s.EI) * (hi - lo);
+      }
+      return { seg: s, theta };
+    });
+  }, [solved, spans]);
+
+  if (!solved) return null;
+
+  const totalTheta = parts.reduce((a, p) => a + p.theta, 0);
+
+  return (
+    <div className="steps">
+      <FormulaSection
+        title={<EditableText as="span" contentKey="nonprismatic.title" defaultText="구간별로 나눠서 적분하기" />}
+      >
+        <div className="step-formula">
+          <Tip title="굽힘모멘트는 단면과 상관없이 평형으로 정해진다">M(x)</Tip>는 단면과 무관하지만,{' '}
+          <Frac num="M" den="EI" />는 구간마다 EI가 달라서 <b>전환점에서 뚝 끊깁니다</b>
+        </div>
+        <EditableText
+          as="div"
+          className="step-row"
+          contentKey="nonprismatic.note"
+          defaultText="그래서 처짐각·처짐을 구할 때 한 번에 적분할 수 없고, 구간을 나눠 각각 적분한 뒤 더해야 해요. 굵은 구간은 EI가 커서 M/EI가 낮아지고, 그만큼 처짐에 덜 기여합니다."
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+          {parts.map((p, i) => (
+            <div key={p.seg.id} className="step-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+              <span>
+                구간 {i + 1} ({fmt(p.seg.xStart / lenF)}~{fmt(p.seg.xEnd / lenF)} {units.length}) · EI = {fmtSci(p.seg.EI)} N·m²
+              </span>
+              <b>
+                ∫M/EI dx = {fmtSci(p.theta)} rad
+                {Math.abs(totalTheta) > 1e-18 && ` (${((p.theta / totalTheta) * 100).toFixed(1)} %)`}
+              </b>
+            </div>
+          ))}
+          <div className="step-final" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+            <span>전체 합</span>
+            <b>{fmtSci(totalTheta)} rad</b>
+          </div>
+        </div>
+        <div className="step-row" style={{ marginTop: 6 }}>
+          최대 처짐 = {fmt(Math.max(...solved.pts.map((p) => Math.abs(p.v))) * 1000)} mm
+          {spans.length > 1 && (
+            <>
+              {' '}· 가장 굵은 구간과 가장 얇은 구간의 EI 비 ={' '}
+              <b>{fmt(Math.max(...spans.map((s) => s.EI)) / Math.min(...spans.map((s) => s.EI)))} 배</b>
+            </>
+          )}
+        </div>
+      </FormulaSection>
+
+      <EditableText
+        as="div"
+        className="ai-hint"
+        contentKey="calc.NonprismaticBeams.aiHint"
+        defaultText="💬 왜 단면이 큰 쪽에서 처짐 기여도가 작아지는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요."
       />
-      {/* 스팬 치수 — 숫자를 클릭하면 그 자리에서 고칠 수 있다(단위는 SETTING MENU 설정). */}
-      <DimLineH
-        x1={padL}
-        x2={padL + drawW}
-        y={padTop + drawH + 68}
-        labelDy={15}
-        fontSize={12}
-        value={LDisp !== undefined ? LDisp : L}
-        unit={lengthUnit}
-        prefix="L = "
-        boxW={64}
-        onChange={onEditL}
-      />
-      <text x={padL + drawW / 2} y={h - 6} fontSize="13" fill="#8A97A2" textAnchor="middle">M/EI 다이어그램 (c에서 꺾임)</text>
-    </svg>
+    </div>
   );
 }
