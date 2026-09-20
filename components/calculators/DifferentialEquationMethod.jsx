@@ -1,201 +1,278 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { UNIT_OPTIONS, fmt } from '@/lib/calc/unitOptions';
-import { proppedCantileverUDL, proppedCantileverUDLCurve, fixedFixedCenterLoad, fixedFixedCenterLoadCurve } from '@/lib/calc/indeterminateBeams';
-import FormulaSection, { Tip } from './FormulaSection';
-import DeflectionCurveSVG from './DeflectionCurveSVG';
+import { useEffect, useMemo, useState } from 'react';
+import { fmt } from '@/lib/calc/unitOptions';
+import { conditionsFor } from '@/lib/calc/beamBuilder';
+import { analyzeRedundant, redundantOptions } from '@/lib/calc/redundant';
+import { CH10_EXAMPLES, buildExample } from '@/lib/calc/ch10Examples';
+import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
-import Frac from '@/components/Frac';
-import FieldBlockCard from './FieldBlockCard';
+import BeamWorkbench, { CalcTrigger, sup, udl, pointLoad, momentLoad } from './BeamWorkbench';
+import ConditionList from './ConditionList';
+import ReleasedStructureSVG from './ReleasedStructureSVG';
+import RedundantResult from './RedundantResult';
 
-// Example 10-1(돌출 캔틸레버, UDL) / 10-2(양단고정, 중앙집중하중) —
-// 반력 중 하나를 "여분력(redundant)"으로 남겨두고 EIv''=M(x)를 적분,
-// 남는 경계조건(처짐/처짐각=0)으로 그 여분력을 거꾸로 구해냄.
+/*
+  CH.10 — 미분방정식법.
+
+  참고자료 mmch10.pdf Example 10-1의 9단계를 그대로 따라간다:
+    1 여분력 고르기 → 2 반력을 여분력으로 표현 → 3 M(x) 세우기 → 4 EIv"=M 적분
+    → 5 경계조건 적용 → 6 여분력 결정 → 7 반력 전부 → 8 SFD·BMD → 9 처짐곡선
+
+  예전 화면은 "돌출 캔틸레버 + UDL"과 "양단고정 + 중앙하중" 두 가지만 고정으로 보여줬다.
+  지금은 CH.9와 같은 보 빌더 위에서 아무 보나 만들 수 있고, 부정정보면 그대로 끝까지 푼다.
+  교재 예제들은 프리셋으로 그대로 불러올 수 있다.
+*/
 
 export default function DifferentialEquationMethod() {
-  const [beamType, setBeamType] = useState('propped'); // 'propped' | 'fixed-fixed'
-  const [units, setUnits] = useState({ length: 'm', force: 'kN', distLoad: 'kN/m', moment: 'kN·m', E: 'GPa', inertia: 'mm⁴' });
-  const [L, setL] = useState(4);
-  const [q, setQ] = useState(10 * 1000);
-  const [P, setP] = useState(20 * 1000);
-  const [E, setE] = useState(200 * 1e9);
-  const [I, setI] = useState(60e6 * 1e-12);
-  const [activeField, setActiveField] = useState('L');
-
-  const lenF = UNIT_OPTIONS.length[units.length];
-  const forceF = UNIT_OPTIONS.force[units.force];
-  const distF = UNIT_OPTIONS.distLoad[units.distLoad];
-  const momF = UNIT_OPTIONS.moment[units.moment];
-  const EF = UNIT_OPTIONS.E[units.E];
-  const inertiaF = UNIT_OPTIONS.inertia[units.inertia];
-  const disp = (b, f) => b / f;
-
-  const EI = E * I;
-  const qSI = q;
-  const PSI = P;
-  const isPropped = beamType === 'propped';
-
-  const result = useMemo(() => {
-    const N = 40;
-    const pts = [];
-    for (let i = 0; i <= N; i++) {
-      const x = (L * i) / N;
-      const v = isPropped ? proppedCantileverUDLCurve(x, L, qSI, EI) : fixedFixedCenterLoadCurve(x, L, PSI, EI);
-      pts.push({ x, v });
-    }
-    const reactions = isPropped ? proppedCantileverUDL(L, qSI, EI) : fixedFixedCenterLoad(L, PSI, EI);
-    return { pts, reactions };
-  }, [isPropped, L, qSI, PSI, EI]);
+  const [redundantKey, setRedundantKey] = useState(null);
 
   return (
     <>
-      {/* ---------------- Setting Menu ---------------- */}
-      <div className="panel">
-        <h3>SETTING MENU</h3>
-        <EditableText
-          contentKey="calc.DifferentialEquationMethod.intro"
-          defaultText="반력이 평형방정식 3개보다 많으면(**부정정**) 반력 하나를 **여분력**으로 남겨두고 EIv''=M(x)를 적분해요. 그러면 처짐·처짐각 조건이 하나 더 남는데, 그걸로 여분력을 거꾸로 구합니다."
-          style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6, marginBottom: 14, background: 'var(--bg)', borderRadius: 0, padding: '12px 14px' }}
-        />
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-          <button className={'add-block' + (isPropped ? ' active' : '')} style={{ margin: 0 }} onClick={() => setBeamType('propped')}>
-            돌출 캔틸레버 (UDL)
-          </button>
-          <button className={'add-block' + (!isPropped ? ' active' : '')} style={{ margin: 0 }} onClick={() => setBeamType('fixed-fixed')}>
-            양단고정 (중앙 집중하중)
-          </button>
-        </div>
-        <FieldBlockCard
-          title={isPropped ? '보 조건 (L, q, E, I)' : '보 조건 (L, P, E, I)'}
-          activeKey={activeField}
-          onActiveChange={setActiveField}
-          fields={[
-            { key: 'L', label: '스팬 L', value: disp(L, lenF), unitType: 'length', unit: units.length },
-            isPropped
-              ? { key: 'q', label: '등분포하중 q', value: disp(q, distF), unitType: 'distLoad', unit: units.distLoad }
-              : { key: 'P', label: '집중하중 P', value: disp(P, forceF), unitType: 'force', unit: units.force },
-            { key: 'E', label: '탄성계수 E', value: disp(E, EF), unitType: 'E', unit: units.E },
-            { key: 'I', label: '단면2차모멘트 I', value: disp(I, inertiaF), unitType: 'inertia', unit: units.inertia },
-          ]}
-          onUnitChange={(unitType, v) => setUnits((prev) => ({ ...prev, [unitType]: v }))}
-          onFieldChange={(key, value) => {
-            const val = parseFloat(value);
-            if (isNaN(val)) return;
-            if (key === 'L') setL(val * lenF);
-            else if (key === 'q') setQ(val * distF);
-            else if (key === 'P') setP(val * forceF);
-            else if (key === 'E') setE(val * EF);
-            else if (key === 'I') setI(val * inertiaF);
-          }}
-        />
-        <div className="field">
-          <label>반력모멘트 표시 단위</label>
-          <select className="unit-inline" style={{ width: '100%' }} value={units.moment} onChange={(e) => setUnits((p) => ({ ...p, moment: e.target.value }))}>
-            {Object.keys(UNIT_OPTIONS.moment).map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* ---------------- Visualizer ---------------- */}
-      <div className="panel">
-        <h3>
-          VISUALIZER
-        </h3>
-        <DeflectionCurveSVG
-          points={result.pts}
-          L={L}
-          support={isPropped ? 'propped' : 'fixed-fixed'}
-          pointLoadAt={isPropped ? undefined : L / 2}
-          LDisp={disp(L, lenF)}
-          lengthUnit={units.length}
-          onEditL={(v) => setL(v * lenF)}
-          loadValue={isPropped ? disp(q, distF) : disp(P, forceF)}
-          loadUnit={isPropped ? units.distLoad : units.force}
-          onEditLoad={(v) => (isPropped ? setQ(v * distF) : setP(v * forceF))}
-        />
-
-        {isPropped ? (
-          <div className="result-grid">
-            <div className="result-card">
-              <div className="l">RA</div>
-              <div className="v">{fmt(disp(result.reactions.RA, forceF))} {units.force}</div>
-            </div>
-            <div className="result-card">
-              <div className="l">RB (여분력)</div>
-              <div className="v">{fmt(disp(result.reactions.RB, forceF))} {units.force}</div>
-            </div>
-            <div className="result-card">
-              <div className="l">MA (고정단 모멘트)</div>
-              <div className="v">{fmt(disp(result.reactions.MA, momF))} {units.moment}</div>
-            </div>
-          </div>
-        ) : (
-          <div className="result-grid">
-            <div className="result-card">
-              <div className="l">MA = MB (고정단 모멘트)</div>
-              <div className="v">{fmt(disp(result.reactions.MA, momF))} {units.moment}</div>
-            </div>
-            <div className="result-card">
-              <div className="l">RA = RB</div>
-              <div className="v">{fmt(disp(result.reactions.RA, forceF))} {units.force}</div>
-            </div>
-          </div>
-        )}
-
-        <div className="steps">
-          {isPropped ? (
-            <FormulaSection title="RB를 여분력으로 두고 적분">
-              <div className="step-formula">
-                <Tip title="A로부터 잰 굽힘모멘트, RB는 아직 모르는 값">EIv&#8221;</Tip> = RA·x − MA − <Frac num="qx²" den="2" /> &nbsp; (단, RA, MA도 RB로 표현됨)
-              </div>
-              <EditableText
-                as="div"
-                className="step-row"
-                contentKey="calc.DifferentialEquationMethod.bc.propped1"
-                defaultText="경계조건: v(0)=0, v'(0)=0 (A는 고정단) → 적분상수 2개 결정"
-              />
-              <EditableText
-                as="div"
-                className="step-row"
-                contentKey="calc.DifferentialEquationMethod.bc.propped2"
-                defaultText="남은 조건: v(L)=0 (B는 롤러, 처짐이 0이어야 함) → 이 식 하나로 RB를 거꾸로 구함"
-              />
-              <div className="step-final">
-                RB = <Frac num="3qL" den="8" /> = {fmt(disp(result.reactions.RB, forceF))} {units.force}, MA = <Frac num="qL²" den="8" /> ={' '}
-                {fmt(disp(result.reactions.MA, momF))} {units.moment}
-              </div>
-            </FormulaSection>
-          ) : (
-            <FormulaSection title="대칭을 이용해 절반만 풀기">
-              <div className="step-formula">
-                <Tip title="중앙에서 대칭이라 절반(0~L/2)만 풀면 됨">EIv&#8221;</Tip> = <Frac num="P" den="2" />x − MA &nbsp; (0 ≤ x ≤ L/2)
-              </div>
-              <EditableText
-                as="div"
-                className="step-row"
-                contentKey="calc.DifferentialEquationMethod.bc.fixed1"
-                defaultText="경계조건: v(0)=0, v'(0)=0 (A는 고정단)"
-              />
-              <EditableText
-                as="div"
-                className="step-row"
-                contentKey="calc.DifferentialEquationMethod.bc.fixed2"
-                defaultText="남은 조건: v'(L/2)=0 (중앙은 대칭이라 처짐각이 0) → 이 식으로 MA를 거꾸로 구함"
-              />
-              <div className="step-final">
-                MA = <Frac num="PL" den="8" /> = {fmt(disp(result.reactions.MA, momF))} {units.moment} (양쪽 고정단 모두 동일)
-              </div>
-            </FormulaSection>
-          )}
-        </div>
-        <EditableText as="div" className="ai-hint" contentKey="calc.DifferentialEquationMethod.aiHint" defaultText="💬 왜 '남는 조건' 하나로 미지수를 구할 수 있는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요." />
-      </div>
+      <BeamWorkbench
+        contentPrefix="calc.DifferentialEquationMethod"
+        intro="반력이 평형방정식 2개보다 많으면 **부정정보**예요. 그중 하나를 **여분력(redundant)**으로 남겨두고 EIv” = M(x)를 적분하면, 다 쓰지 못한 조건이 하나 남습니다. 그 조건으로 여분력을 거꾸로 구하는 게 이 방법이에요."
+        initial={() => buildExample(CH10_EXAMPLES[0], { sup, pointLoad, udl, momentLoad })}
+        presets={CH10_EXAMPLES.map((ex) => ({
+          label: ex.label,
+          hint: ex.hint,
+          build: () => buildExample(ex, { sup, pointLoad, udl, momentLoad }),
+        }))}
+        diagrams={['V', 'M']}
+        solveIndeterminate
+      >
+        {(ctx) => <Steps ctx={ctx} redundantKey={redundantKey} setRedundantKey={setRedundantKey} />}
+      </BeamWorkbench>
 
       <AiTutorPanel />
     </>
   );
+}
+
+function Steps({ ctx, redundantKey, setRedundantKey }) {
+  const { solved, info, L, supports, loads, ei, units, lenF, forceF, momF, disp } = ctx;
+  const [state, setState] = useState('idle');
+  const [snap, setSnap] = useState(null);
+
+  useEffect(() => {
+    setState((s) => (s === 'done' ? 'stale' : s));
+  }, [solved, redundantKey]);
+
+  const options = useMemo(() => redundantOptions(supports), [supports]);
+  const chosen = options.find((o) => o.key === redundantKey) || options[0];
+  const analysis = useMemo(
+    () => (solved && chosen && info.kind === 'indeterminate' ? analyzeRedundant(L, supports, loads, ei, chosen, 600) : null),
+    [solved, chosen, info.kind, L, supports, loads, ei]
+  );
+
+  if (!solved) return null;
+
+  if (info.kind === 'determinate') {
+    return (
+      <div className="steps">
+        <FormulaSection title="이 보는 정정보예요">
+          <EditableText
+            as="div"
+            className="step-row"
+            contentKey="ch10.diffeq.determinateNote"
+            defaultText="반력 미지수가 평형방정식 2개와 딱 맞아떨어져서, 여분력을 따로 둘 필요가 없어요. 지지단을 하나 더 얹거나 힌지를 고정단으로 바꿔서 부정정보로 만들어보세요 — 위의 예제 버튼을 눌러도 됩니다."
+          />
+        </FormulaSection>
+      </div>
+    );
+  }
+
+  return (
+    <div className="steps">
+      <FormulaSection
+        title={<EditableText as="span" contentKey="ch10.diffeq.title" defaultText="여분력을 남겨두고 적분하기" />}
+      >
+        <div className="step-row" style={{ display: 'block' }}>
+          <div style={{ fontWeight: 800, marginBottom: 6 }}>
+            1단계 — 여분력(redundant)을 하나 고르세요
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {options.map((o) => (
+              <button
+                key={o.key}
+                className={'add-block' + (chosen && chosen.key === o.key ? ' active' : '')}
+                style={{ margin: 0 }}
+                title={o.releasedName}
+                onClick={() => setRedundantKey(o.key)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--gray-soft)', marginTop: 6, lineHeight: 1.6 }}>
+            {info.degree}차 부정정이라 여분력이 {info.degree}개 필요해요. 여기서는 하나씩 짚어가며 과정을 보여주고,
+            나머지는 풀이가 한꺼번에 처리합니다. <b>어느 것을 골라도 최종 답은 같아요.</b>
+          </div>
+        </div>
+
+        {analysis && analysis.ok && (
+          <>
+            <div className="step-row" style={{ display: 'block' }}>
+              <div style={{ fontWeight: 800, marginBottom: 6 }}>
+                2단계 — 그 구속을 풀어주면 정정보가 됩니다 ({chosen.releasedName})
+              </div>
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <ReleasedStructureSVG
+                  L={L}
+                  supports={analysis.relSupports}
+                  loads={loads}
+                  pts={analysis.released.pts}
+                  dofX={analysis.x0}
+                  dofKind={chosen.kind}
+                  dofLabel={chosen.kind === 'force' ? 'δ' : 'θ'}
+                  caption="실제 하중만 받는 released structure"
+                />
+                <ReleasedStructureSVG
+                  L={L}
+                  supports={analysis.relSupports}
+                  loads={analysis.unitCase ? [unitLoadShape(chosen, supports)] : []}
+                  pts={analysis.unitCase.pts}
+                  dofX={analysis.x0}
+                  dofKind={chosen.kind}
+                  dofLabel={chosen.kind === 'force' ? 'δ₁₁' : 'θ₁₁'}
+                  caption={`${chosen.symbol} 자리에 크기 1만 줬을 때`}
+                  unit
+                />
+              </div>
+            </div>
+
+            <EditableText
+              as="div"
+              className="step-formula"
+              contentKey="ch10.diffeq.moment"
+              defaultText="3단계 — M(x) = (하중이 만드는 M) + X · (여분력 1이 만드는 m) — 아직 X는 모르는 값으로 둡니다"
+            />
+            <EditableText
+              as="div"
+              className="step-row"
+              contentKey="ch10.diffeq.integrate"
+              defaultText="4단계 — EIv” = M(x)를 두 번 적분해요. X가 식 안에 그대로 남은 채로 v(x)가 나옵니다."
+            />
+
+            <div className="step-row" style={{ display: 'block' }}>
+              <div style={{ fontWeight: 800, marginBottom: 4 }}>5단계 — 조건을 적용합니다</div>
+              <ConditionList
+                conditions={conditionsFor(L, supports, loads, (x) => `${fmt(disp(x, lenF))} ${units.length}`)}
+                title=""
+              />
+              <div style={{ fontSize: 11, color: 'var(--gray-soft)', marginTop: 4, lineHeight: 1.6 }}>
+                적분상수 2개를 정하고 나면 조건이 {info.degree}개 <b>남아요</b>. 정정보였다면 딱 떨어졌을 텐데,
+                반력을 하나 더 모르는 채로 뒀으니 그만큼 조건이 남는 거예요. 그게 곧 여분력을 구하는 식이 됩니다.
+              </div>
+            </div>
+
+            <CalcTrigger state={state} onCalc={() => { setSnap(analysis); setState('done'); }} />
+            {state !== 'idle' && snap && snap.ok && (
+              <RedundantResult
+                analysis={snap}
+                chosen={chosen}
+                supports={supports}
+                units={units}
+                lenF={lenF}
+                forceF={forceF}
+                momF={momF}
+                startStep={6}
+              />
+            )}
+          </>
+        )}
+
+        {analysis && !analysis.ok && (
+          <div className="step-row" style={{ color: 'var(--crimson)' }}>
+            이 여분력을 풀어주면 남은 구조가 불안정해져요 — 다른 여분력을 골라보세요.
+          </div>
+        )}
+      </FormulaSection>
+
+      <TextbookAnswer ctx={ctx} />
+
+      <EditableText
+        as="div"
+        className="ai-hint"
+        contentKey="calc.DifferentialEquationMethod.aiHint"
+        defaultText="💬 왜 '남는 조건' 하나로 미지수를 구할 수 있는지 궁금하다면, 오른쪽 AI 튜터에게 물어보세요."
+      />
+    </div>
+  );
+}
+
+// 단위하중 그림에 쓸 모양 (값은 1이라 숫자를 안 적는다)
+function unitLoadShape(opt, supports) {
+  const s = supports[opt.supIdx];
+  return opt.kind === 'force'
+    ? { kind: 'point', x: s.x, P: -1 }
+    : { kind: 'moment', x: s.x, M0: -1 };
+}
+
+// 지금 만든 보가 교재 예제와 같은 구성이면, 교재의 닫힌 식과 화면 값을 나란히 놓는다.
+export function TextbookAnswer({ ctx }) {
+  const { solved, L, supports, loads, units, forceF, momF } = ctx;
+  if (!solved) return null;
+
+  const match = CH10_EXAMPLES.find((ex) => sameShape(ex, L, supports, loads));
+  if (!match) return null;
+
+  const params = { L, q: firstOf(loads, 'udl', 'q'), P: firstOf(loads, 'point', 'P'), M0: firstOf(loads, 'moment', 'M0') };
+  const rows = match.answer(params).filter((r) => r.value !== null);
+
+  const got = (r) => {
+    const letter = r.sym.replace(/[^A-Z]/g, '').slice(-1);
+    const idx = 'ABCDEFGH'.indexOf(letter);
+    const s = solved.supports[idx];
+    if (!s) return null;
+    return r.unitType === 'moment' ? Math.abs(s.reactionM) : s.reactionFy;
+  };
+
+  return (
+    <FormulaSection title={`교재 ${match.label}의 답과 맞춰보기`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {rows.map((r) => {
+          const mine = got(r);
+          const f = r.unitType === 'moment' ? momF : forceF;
+          const unit = r.unitType === 'moment' ? units.moment : units.force;
+          const near = mine !== null && Math.abs(Math.abs(mine) - Math.abs(r.value)) <= Math.abs(r.value) * 5e-3;
+          return (
+            <div key={r.sym} className="step-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+              <span>
+                {r.sym} = <b>{r.text}</b>
+              </span>
+              <span>
+                교재 {fmt(Math.abs(r.value) / f)} {unit}
+                {mine !== null && (
+                  <>
+                    {' · '}
+                    <b style={{ color: near ? '#1E7F72' : 'var(--crimson)' }}>
+                      화면 {fmt(Math.abs(mine) / f)} {unit}
+                    </b>
+                  </>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="step-row" style={{ fontSize: 10.5, color: 'var(--gray-soft)' }}>
+        ※ 부호는 이 사이트의 내부 규약(굽힘모멘트는 아래로 볼록할 때 +)으로 적혀요. 크기를 비교합니다.
+      </div>
+    </FormulaSection>
+  );
+}
+
+function firstOf(loads, kind, key) {
+  const l = loads.find((x) => x.kind === kind);
+  return l ? l[key] : 0;
+}
+
+function sameShape(ex, L, supports, loads) {
+  if (Math.abs(ex.L - L) > 1e-6) return false;
+  if (ex.supports.length !== supports.length || ex.loads.length !== loads.length) return false;
+  const supOk = ex.supports.every(([type, x], i) => supports[i] && supports[i].type === type && Math.abs(supports[i].x - x) < 1e-6);
+  const loadOk = ex.loads.every((l, i) => loads[i] && loads[i].kind === l[0]);
+  return supOk && loadOk;
 }

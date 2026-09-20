@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fmt, fmtSci } from '@/lib/calc/unitOptions';
 import { bendingEnergy, castiglianoDeflection, unitLoadCase, virtualWork } from '@/lib/calc/beamEnergy';
-import FormulaSection, { Tip } from './FormulaSection';
+import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { fmt, fmtSci } from '@/lib/calc/unitOptions';
 import { solveBeamFull } from '@/lib/calc/beamBuilder';
 import { bendingEnergy, externalWork } from '@/lib/calc/beamEnergy';
-import FormulaSection, { Tip } from './FormulaSection';
+import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
