@@ -131,12 +131,17 @@ export default function ReleasedStructureSVG({
         const i = Math.min(pts.length - 1, Math.max(0, Math.round((dofX / L) * (pts.length - 1))));
         const x = xToPx(dofX);
         const y = beamY + pts[i].v * bend;
+        // 여분력 자리가 보 오른쪽 끝이면(가장 흔한 경우다) 라벨을 오른쪽에 붙일 자리가 없다 —
+        // 그럴 땐 왼쪽으로 붙인다.
+        const right = x > w * 0.7;
+        const lx = right ? x - 6 : x + 6;
+        const lanchor = right ? 'end' : 'start';
         if (dofKind === 'moment') {
           return (
             <g>
               <path d={`M ${x + 6} ${y - 9} A 11 11 0 0 1 ${x + 6} ${y + 9}`} fill="none" stroke={BLUE} strokeWidth="1.4" />
               <polygon points={`${x + 6},${y + 9} ${x + 11},${y + 3} ${x + 1},${y + 4}`} fill={BLUE} />
-              <text x={x + 19} y={y + 4} fontSize="10.5" fill={BLUE} fontWeight="800">{dofLabel}</text>
+              <text x={right ? x - 8 : x + 19} y={y + 4} fontSize="10.5" fill={BLUE} fontWeight="800" textAnchor={lanchor}>{dofLabel}</text>
             </g>
           );
         }
@@ -147,7 +152,7 @@ export default function ReleasedStructureSVG({
               points={y > beamY ? `${x},${y} ${x - 3.5},${y - 7} ${x + 3.5},${y - 7}` : `${x},${y} ${x - 3.5},${y + 7} ${x + 3.5},${y + 7}`}
               fill={BLUE}
             />
-            <text x={x + 6} y={(beamY + y) / 2 + 4} fontSize="10.5" fill={BLUE} fontWeight="800">{dofLabel}</text>
+            <text x={lx} y={(beamY + y) / 2 + 4} fontSize="10.5" fill={BLUE} fontWeight="800" textAnchor={lanchor}>{dofLabel}</text>
           </g>
         );
       })()}

@@ -12,7 +12,7 @@ import FieldBlockCard from './FieldBlockCard';
 /*
   CH.9·CH.10에서 "보를 직접 만들어 푸는" 화면이 공통으로 쓰는 작업대.
 
-  예전에는 소분류마다 하중이 고정된 그림(DeflectionCurveSVG)을 따로 그렸다. 그래서 하중이
+  예전에는 소분류마다 하중이 고정된 그림을 따로 그렸다. 그래서 하중이
   그림 밖으로 잘리기도 했고, 무엇보다 Bending-Moment Equation에서만 하중을 끌어 옮길 수 있었다.
   이 부품은 그 편집 UI 하나를 모든 소분류가 같이 쓰게 만든 것이다:
 

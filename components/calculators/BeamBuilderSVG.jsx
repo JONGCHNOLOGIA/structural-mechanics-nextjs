@@ -155,6 +155,27 @@ export default function BeamBuilderSVG({
 
   const isDraggingId = (id) => !!(drag && drag.id === id);
 
+  // 값 라벨이 같은 자리에서 포개지는 걸 막는다. 자유단에 집중하중과 모멘트를 함께 얹는 것처럼
+  // 두 하중이 같은 x에 있으면 라벨 높이도 같아져서 글씨가 겹쳐 읽을 수 없게 된다.
+  // 앞서 자리잡은 라벨과 가까우면 한 줄씩 위로 올려 비켜준다. (렌더마다 새로 시작한다)
+  const takenLabels = [];
+  // 반력 라벨은 지지단 바로 아래 가운데 정렬로 놓는데, 지지단이 보 끝에 있으면
+  // ("MA = -13.333 kN·m"처럼 긴 값일 때) 글씨 절반이 그림 밖으로 나간다.
+  // 글자 수로 폭을 어림해서 그림 안쪽으로 밀어 넣는다.
+  const clampLabelX = (x, text) => {
+    const half = (String(text || '').length * 5.3) / 2;
+    return Math.min(w - 6 - half, Math.max(6 + half, x));
+  };
+  function labelSlot(x, y) {
+    let yy = y;
+    for (let guard = 0; guard < 8; guard++) {
+      if (!takenLabels.some((t) => Math.abs(t.x - x) < 76 && Math.abs(t.y - yy) < 15)) break;
+      yy -= 16;
+    }
+    takenLabels.push({ x, y: yy });
+    return yy;
+  }
+
   return (
     <svg
       ref={svgRef}
@@ -226,7 +247,7 @@ export default function BeamBuilderSVG({
               }
               fill={TEAL}
             />
-            <text x={x} y={reactBase + 14} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
+            <text x={clampLabelX(x, rx.fyLabel)} y={reactBase + 14} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
               {rx.fyLabel}
             </text>
             {rx.type === 'fixed' && rx.mLabel && (
@@ -238,7 +259,7 @@ export default function BeamBuilderSVG({
                   strokeWidth="1.8"
                 />
                 <polygon points={`${x + 17},${beamY + 2} ${x + 11},${beamY - 6} ${x + 23},${beamY - 4}`} fill={TEAL} />
-                <text x={x} y={reactBase + 27} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
+                <text x={clampLabelX(x, rx.mLabel)} y={reactBase + 27} fontSize="10.5" fill={TEAL} textAnchor="middle" fontWeight="800">
                   {rx.mLabel}
                 </text>
               </>
@@ -329,9 +350,16 @@ export default function BeamBuilderSVG({
         if (l.kind === 'point') {
           const x = xToPx(l.x);
           const down = l.P >= 0;
-          const y1 = down ? beamY - 40 : beamY + 40;
+          // 분포하중이 덮고 있는 자리에 집중하중이 겹치면, 두 값 라벨이 같은 높이에서 포개진다
+          // (등분포 + 중앙 집중하중은 가장 흔한 조합이라 바로 눈에 띈다).
+          // 그럴 때는 집중하중 화살표를 분포하중 라벨 위로 끌어올려 자리를 비켜준다.
+          const covered = loads.some(
+            (o) => (o.kind === 'udl' || o.kind === 'triangle') && l.x >= o.xStart - 1e-9 && l.x <= o.xEnd + 1e-9
+          );
+          const lift = down && covered ? 30 : 0;
+          const y1 = down ? beamY - 40 - lift : beamY + 40;
           const y2 = down ? beamY - 4 : beamY + 4;
-          const labelY = down ? y1 - 20 : y1 + 30;
+          const labelY = labelSlot(x, down ? y1 - 20 : y1 + 30);
           return (
             <g key={l.id} opacity={opacity}>
               <g onPointerDown={(e) => startDrag(e, l.id, l.x, 'P')} style={{ cursor: 'grab' }}>
@@ -430,7 +458,7 @@ export default function BeamBuilderSVG({
               )}
               <EditableLabel
                 x={(xS + xE) / 2}
-                y={beamY - 6 - 34 - 10}
+                y={labelSlot((xS + xE) / 2, beamY - 6 - 34 - 10)}
                 text={label}
                 color={stroke}
                 editValue={l.kind === 'udl' ? editVal : null}
@@ -496,7 +524,7 @@ export default function BeamBuilderSVG({
               </g>
               <EditableLabel
                 x={x}
-                y={cy - r - 10}
+                y={labelSlot(x, cy - r - 10)}
                 text={label}
                 color={stroke}
                 editValue={editVal}
@@ -522,7 +550,17 @@ export default function BeamBuilderSVG({
             {/* 세로축 */}
             <line x1={padL - 14} y1={top + diagH + 4} x2={padL - 14} y2={top - 6} stroke="#8A97A2" strokeWidth="1.1" />
             <polygon points={`${padL - 14},${top - 10} ${padL - 17.5},${top - 3} ${padL - 10.5},${top - 3}`} fill="#8A97A2" />
-            <text x={padL - 20} y={top - 6} fontSize="11" fill="#8A97A2" textAnchor="end" fontWeight="800">
+            {/* 축 이름은 축과 나란히 세워 쓴다. 가로로 눕히면 "M/EI"나 "M²/2EI" 같은 긴 이름이
+                그림 왼쪽 밖으로 삐져나간다 — 세워 쓰면 글자 높이만큼만 자리를 쓴다. */}
+            <text
+              x={padL - 24}
+              y={top + diagH / 2}
+              fontSize="11"
+              fill="#8A97A2"
+              textAnchor="middle"
+              fontWeight="800"
+              transform={`rotate(-90 ${padL - 24} ${top + diagH / 2})`}
+            >
               {d.axis}
             </text>
 
@@ -533,7 +571,7 @@ export default function BeamBuilderSVG({
               fill="#8A97A2"
             />
             <text x={padL + drawW + 24} y={top + diagH / 2 + 4} fontSize="11" fill="#8A97A2" fontWeight="800">x</text>
-            <text x={padL - 20} y={top + diagH / 2 + 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
+            <text x={padL - 4} y={top + diagH / 2 - 4} fontSize="10" fill="#8A97A2" textAnchor="end">0</text>
 
             {/* 면적이 의미를 갖는 다이어그램(M/EI)은 0선까지 칠해서 "이 넓이가 곧 처짐각"이 보이게 한다 */}
             {d.fill && (

@@ -221,12 +221,18 @@ export function TextbookAnswer({ ctx }) {
   const params = { L, q: firstOf(loads, 'udl', 'q'), P: firstOf(loads, 'point', 'P'), M0: firstOf(loads, 'moment', 'M0') };
   const rows = match.answer(params).filter((r) => r.value !== null);
 
+  // 교재가 적은 양을 화면 결과에서 같은 자리를 찾아 읽는다.
+  // at:'mid'는 지지단 반력이 아니라 보 중앙의 굽힘모멘트처럼 곡선에서 읽는 값이다.
   const got = (r) => {
+    if (r.at === 'mid') {
+      const mid = solved.pts[Math.round((solved.pts.length - 1) / 2)];
+      return mid ? mid.M : null;
+    }
     const letter = r.sym.replace(/[^A-Z]/g, '').slice(-1);
     const idx = 'ABCDEFGH'.indexOf(letter);
     const s = solved.supports[idx];
     if (!s) return null;
-    return r.unitType === 'moment' ? Math.abs(s.reactionM) : s.reactionFy;
+    return r.unitType === 'moment' ? s.reactionM : s.reactionFy;
   };
 
   return (
@@ -236,6 +242,9 @@ export function TextbookAnswer({ ctx }) {
           const mine = got(r);
           const f = r.unitType === 'moment' ? momF : forceF;
           const unit = r.unitType === 'moment' ? units.moment : units.force;
+          // |MA| 처럼 절댓값으로 적힌 줄은 크기만, 그 밖에는 부호까지 맞춰본다.
+          const asAbs = r.sym.trim().startsWith('|');
+          const show = (v) => fmt((asAbs ? Math.abs(v) : v) / f);
           const near = mine !== null && Math.abs(Math.abs(mine) - Math.abs(r.value)) <= Math.abs(r.value) * 5e-3;
           return (
             <div key={r.sym} className="step-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
@@ -243,12 +252,12 @@ export function TextbookAnswer({ ctx }) {
                 {r.sym} = <b>{r.text}</b>
               </span>
               <span>
-                교재 {fmt(Math.abs(r.value) / f)} {unit}
+                교재 {show(r.value)} {unit}
                 {mine !== null && (
                   <>
                     {' · '}
                     <b style={{ color: near ? '#1E7F72' : 'var(--crimson)' }}>
-                      화면 {fmt(Math.abs(mine) / f)} {unit}
+                      화면 {show(mine)} {unit}
                     </b>
                   </>
                 )}
@@ -258,7 +267,7 @@ export function TextbookAnswer({ ctx }) {
         })}
       </div>
       <div className="step-row" style={{ fontSize: 10.5, color: 'var(--gray-soft)' }}>
-        ※ 부호는 이 사이트의 내부 규약(굽힘모멘트는 아래로 볼록할 때 +)으로 적혀요. 크기를 비교합니다.
+        ※ 부호는 이 사이트의 내부 규약(굽힘모멘트는 아래로 볼록할 때 +)을 따라요. |…|로 적힌 줄은 크기만 견줍니다.
       </div>
     </FormulaSection>
   );

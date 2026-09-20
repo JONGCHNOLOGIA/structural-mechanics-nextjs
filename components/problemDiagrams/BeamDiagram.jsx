@@ -1,6 +1,6 @@
 // 문제 생성기 전용 하중도(beam loading diagram). 지점(단순/캔틸레버/돌출캔틸레버)과
 // 하중(등분포/집중하중/모멘트)을 표준 공학 도식 관례(핀-롤러 삼각형, 고정단 해칭,
-// 화살표)로 그린다. DeflectionCurveSVG의 지점 표기 스타일을 그대로 따름.
+// 화살표)로 그린다. 보 빌더(BeamBuilderSVG)의 지점 표기 스타일을 그대로 따름.
 export default function BeamDiagram({ support = 'simple', spanLabel, loads = [], stepAtFrac }) {
   const w = 420, h = 170;
   const padL = 50, padR = 50;
