@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { UNIT_OPTIONS, fmt, fmtInput } from '@/lib/calc/unitOptions';
 import { checkDeterminacy, solveBeam } from '@/lib/calc/beamBuilder';
+import BeamDeflect3D from './BeamDeflect3D';
+import { Collapsible } from './FormulaSection';
 import FormulaSection from './FormulaSection';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
@@ -358,15 +360,29 @@ export default function BendingMomentEquation() {
                   M: sp.reactionM,
                   type: sp.type,
                   letter: String.fromCharCode(65 + i),
-                  fyLabel: `R${String.fromCharCode(65 + i)} = ${fmt(disp(Math.abs(sp.reactionFy), forceF))} ${units.force}`,
+                  // 부호를 그대로 보여준다. abs로 크기만 적으면 아래 결과표(−10 kN처럼 부호가 있는 값)와
+                  // 어긋나서, 같은 반력이 두 군데에 서로 다르게 적히는 꼴이 된다.
+                  // 화살표 방향은 부호를 따라가므로 숫자와 그림이 같은 얘기를 한다.
+                  fyLabel: `R${String.fromCharCode(65 + i)} = ${fmt(disp(sp.reactionFy, forceF))} ${units.force}`,
                   mLabel:
                     sp.type === 'fixed'
-                      ? `M${String.fromCharCode(65 + i)} = ${fmt(disp(Math.abs(sp.reactionM), momF))} ${units.moment}`
+                      ? `M${String.fromCharCode(65 + i)} = ${fmt(disp(sp.reactionM, momF))} ${units.moment}`
                       : null,
                 }))
               : []
           }
         />
+
+        {/* 3D — 2D에서 만든 보를 그대로 받아 처짐과 굽힘응력을 입체로 보여준다.
+            편집은 위 2D에서 하고 여기는 보기 전용이다. 3D에서 하중을 끌게 만들면
+            지금도 쉽지 않은 조작이 더 어려워진다. */}
+        {solved && (
+          <div className="steps" style={{ marginTop: 14 }}>
+            <Collapsible title="3D로 보기 — 처짐과 굽힘응력" hint="Euler-Bernoulli">
+              <BeamDeflect3D pts={solved.pts} L={L} />
+            </Collapsible>
+          </div>
+        )}
 
         {determinacy === 'unstable' && (
           <div className="viz-placeholder" style={{ minHeight: 100 }}>
