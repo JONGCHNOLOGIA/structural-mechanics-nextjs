@@ -152,7 +152,7 @@ function Steps({ s, res }) {
       <StepCard
         key={`N${i}`}
         title={`Step ${i + 2}. 구간${i + 1} 절단 — 내력 N`}
-        formula="N = R + (지금까지 지나온 외력의 합)"
+        formula="N = −(R + 지금까지 지나온 외력의 합)"
         eqLines={[`N${i + 1} = ${fmt1(kN(p.N_N), 3)} kN`]}
         final={`N${i + 1} = ${fmt1(kN(p.N_N), 3)} kN`}
       />
@@ -230,9 +230,12 @@ function BarWithLoadsSVG({ res, segs = [], onEditSeg }) {
         return <line key={i} x1={x0} y1={yy} x2={x0 - 9} y2={yy + 8} stroke="#8A97A2" strokeWidth="1.1" />;
       })}
       <line x1={x0} y1={barY} x2={xEnd} y2={barY} stroke="var(--gray)" strokeWidth="5" />
-      <line x1={x0 - 6} y1={barY} x2={x0 - 6 - Rdir * 22} y2={barY} stroke="var(--teal)" strokeWidth="2.2" />
-      <polygon points={`${x0 - 6 - Rdir * 22},${barY} ${x0 - 6 - Rdir * 14},${barY - 5} ${x0 - 6 - Rdir * 14},${barY + 5}`} fill="var(--teal)" />
-      <text x={x0 - 6 - Rdir * 30} y={barY - 8} fontSize="10" fontWeight="800" fill="var(--teal)" textAnchor="middle">
+      {/* 아래쪽 하중 화살표(marks)는 tail + dir*length로 그려서 화살표가 dir 방향을 그대로
+          가리키는데, 반력 화살표만 tail - dir*length로 그려져 있어서 방향이 뒤집혀 나오고
+          있었다 — 부호는 맞는데 화살표만 반대쪽을 가리키는 버그. 같은 패턴(+Rdir)으로 맞춘다. */}
+      <line x1={x0 - 6} y1={barY} x2={x0 - 6 + Rdir * 22} y2={barY} stroke="var(--teal)" strokeWidth="2.2" />
+      <polygon points={`${x0 - 6 + Rdir * 22},${barY} ${x0 - 6 + Rdir * 14},${barY - 5} ${x0 - 6 + Rdir * 14},${barY + 5}`} fill="var(--teal)" />
+      <text x={x0 - 6 + Rdir * 30} y={barY - 8} fontSize="10" fontWeight="800" fill="var(--teal)" textAnchor="middle">
         R={fmt1(Math.abs(Rdisp), 1)}
       </text>
       {marks}

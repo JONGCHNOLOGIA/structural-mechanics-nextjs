@@ -305,13 +305,18 @@ function Steps({ s, res }) {
 // 고정단에 매달린 봉이 하중 방향으로 늘어나거나(인장) 줄어드는(압축) 모습 — δ는 보이도록 과장해서 그린다.
 function MemberSVG({ mode, res }) {
   const w = 460, h = 190, x1 = 70, x2 = 330, barY = 75, barH = 28;
-  const visualOffset = res.valid && res.sigma_Pa !== 0 ? res.sign * 38 : 0;
+  // 예전에는 응력이 0이 아니기만 하면 무조건 ±38px 고정폭으로 그려서, 하중을 10kN에서
+  // 200kN으로 올리거나 부재 길이를 바꿔도 그림이 똑같았다(응력 부호만 봤지 크기는 안 봄).
+  // 실제 변형량 δ(=εL, 하중과 길이가 둘 다 들어간 값)에 비례해서 그리되, tanh로 부드럽게
+  // 눌러서 δ가 아주 커져도 그림 밖으로 튀어나가지 않게 했다 — δ가 작으면 살짝만,
+  // δ=refMm 근처면 눈에 띄게, 그보다 훨씬 크면 maxOffset 가까이로 서서히 수렴한다.
+  const deltaMm = res.valid ? res.delta_m * 1000 : 0;
+  const maxOffset = 55, refMm = 4;
+  const visualOffset = res.valid ? maxOffset * Math.tanh(deltaMm / refMm) : 0;
   const color = mode === 'tension' ? 'var(--teal)' : 'var(--crimson)';
   const arrowDir = mode === 'tension' ? 1 : -1;
   const defX2 = x2 + visualOffset;
   const defW = Math.max(4, defX2 - x1);
-  const ax = defX2 + (arrowDir > 0 ? 8 : -8);
-  const ax2 = ax + arrowDir * 34;
   const arH = 7;
   const brY = barY + barH + 34;
   const deltaLabel = res.valid ? (res.sign > 0 ? '신장 (elongation)' : '수축 (shortening)') : '';
@@ -323,24 +328,42 @@ function MemberSVG({ mode, res }) {
         const yy = barY - 18 + i * 8;
         return <line key={i} x1={x1 - 8} y1={yy} x2={x1 - 16} y2={yy + 8} stroke="#8A97A2" strokeWidth="1.2" />;
       })}
+      {/* 하중 크기·부재 길이를 바꿀 때마다 늘어나고 줄어드는 모습이 눈에 보이도록, 값이
+          바뀌는 도형(채워진 막대·화살표·치수선)에 전부 transition을 걸어둔다. 슬라이더를
+          끄는 동안 range input이 값을 계속 쏴주니, 그 값들 사이를 브라우저가 부드럽게
+          이어 그려줘서 "점점 늘어나는" 움직임이 된다 — 상태나 애니메이션 루프를 따로 안
+          만들어도 된다. 화살표는 x1/x2가 아니라 <g transform="translate(...)">로 통째로
+          옮기는 방식을 썼다 — polygon의 points 속성은 CSS transition이 안 먹는다. */}
       <rect x={x1} y={barY} width={x2 - x1} height={barH} fill="none" stroke="#C3C3C3" strokeWidth="1.3" strokeDasharray="4 3" />
-      <rect x={x1} y={barY} width={defW} height={barH} fill={color} opacity="0.18" stroke={color} strokeWidth="1.8" />
-      <line x1={ax} y1={barY + barH / 2} x2={ax2} y2={barY + barH / 2} stroke={color} strokeWidth="2.4" />
-      <polygon
-        points={
-          arrowDir > 0
-            ? `${ax2},${barY + barH / 2} ${ax2 - 9},${barY + barH / 2 - arH} ${ax2 - 9},${barY + barH / 2 + arH}`
-            : `${ax2},${barY + barH / 2} ${ax2 + 9},${barY + barH / 2 - arH} ${ax2 + 9},${barY + barH / 2 + arH}`
-        }
+      <rect
+        x={x1}
+        y={barY}
+        width={defW}
+        height={barH}
         fill={color}
+        opacity="0.18"
+        stroke={color}
+        strokeWidth="1.8"
+        style={{ transition: 'width 0.35s ease-out, stroke 0.2s, fill 0.2s' }}
       />
-      <text x={(ax + ax2) / 2} y={barY + barH / 2 - 14} fontSize="12" fontWeight="800" fill={color} textAnchor="middle">
-        P
-      </text>
-      <line x1={x1} y1={brY} x2={defX2} y2={brY} stroke="#8A97A2" strokeWidth="1" />
+      <g transform={`translate(${defX2 - x2}, 0)`} style={{ transition: 'transform 0.35s ease-out' }}>
+        <line x1={x2 + (arrowDir > 0 ? 8 : -8)} y1={barY + barH / 2} x2={x2 + (arrowDir > 0 ? 8 : -8) + arrowDir * 34} y2={barY + barH / 2} stroke={color} strokeWidth="2.4" />
+        <polygon
+          points={
+            arrowDir > 0
+              ? `${x2 + 42},${barY + barH / 2} ${x2 + 33},${barY + barH / 2 - arH} ${x2 + 33},${barY + barH / 2 + arH}`
+              : `${x2 - 42},${barY + barH / 2} ${x2 - 33},${barY + barH / 2 - arH} ${x2 - 33},${barY + barH / 2 + arH}`
+          }
+          fill={color}
+        />
+        <text x={x2 + arrowDir * 25} y={barY + barH / 2 - 14} fontSize="12" fontWeight="800" fill={color} textAnchor="middle">
+          P
+        </text>
+      </g>
+      <line x1={x1} y1={brY} x2={defX2} y2={brY} stroke="#8A97A2" strokeWidth="1" style={{ transition: 'x2 0.35s ease-out' }} />
       <line x1={x1} y1={brY - 5} x2={x1} y2={brY + 5} stroke="#8A97A2" strokeWidth="1" />
-      <line x1={defX2} y1={brY - 5} x2={defX2} y2={brY + 5} stroke="#8A97A2" strokeWidth="1" />
-      <text x={(x1 + defX2) / 2} y={brY + 18} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700">
+      <line x1={defX2} y1={brY - 5} x2={defX2} y2={brY + 5} stroke="#8A97A2" strokeWidth="1" style={{ transition: 'x1 0.35s ease-out, x2 0.35s ease-out' }} />
+      <text x={(x1 + defX2) / 2} y={brY + 18} fontSize="10.5" fill="#8A97A2" textAnchor="middle" fontWeight="700" style={{ transition: 'x 0.35s ease-out' }}>
         {res.valid ? `${deltaLabel} — δ (그림은 확대 표현)` : ''}
       </text>
       <text x={x1 - 8} y={barY - 32} fontSize="10" fill="#8A97A2" textAnchor="middle">

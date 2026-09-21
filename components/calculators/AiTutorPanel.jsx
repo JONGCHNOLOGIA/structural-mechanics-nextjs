@@ -4,18 +4,26 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { recordAiTutorMessage } from '@/lib/aiTutorLog';
 import EditableText from '@/components/EditableText';
+import { useSiteContent } from '@/components/SiteContentProvider';
 
 // 소주제 계산기 페이지 우측(또는 FloatingActions의 떠있는 패널)에 항상 붙는 AI 튜터 채팅창.
 // URL의 "/ch3/" 같은 조각에서 챕터 번호를 뽑아 그 챕터의 강의자료를 근거로 답하도록
 // 서버(/api/ai-tutor)에 넘긴다 — 소주제 URL이 없는 곳(로비, 문제 제작 등)에서는
 // chapterNum이 없는 채로, 일반 범위 질문으로 동작한다.
 // question: 소주제마다 다른 "학생이 물어볼 법한 예시 질문" — 누르면 그 질문으로 바로 물어본다.
+// 계산기 파일 26개마다 박혀 있는 이 문구를 관리자가 코드 수정 없이 고칠 수 있도록,
+// EditableText와 같은 site_content 맵을 이 URL 경로를 키로 삼아 직접 읽는다 — 그래서
+// question prop은 그대로 "기본값"으로 남고, 호출부(각 계산기 파일)는 하나도 안 건드려도 된다.
 // 대화 기록은 이 페이지를 보는 동안만 브라우저 메모리에 남고 서버에는 저장되지 않는다
 // (페이지를 새로고침하면 사라짐 — 챕터별로 기록을 영구 저장하는 건 다음 단계로 미뤄둔 부분).
 export default function AiTutorPanel({ question }) {
   const pathname = usePathname();
   const chapterMatch = pathname ? pathname.match(/\/ch(\d+)\//) : null;
   const chapterNum = chapterMatch ? `CH.${chapterMatch[1]}` : null;
+
+  const { content } = useSiteContent();
+  const questionKey = question && pathname ? `aiTutor.question.${pathname.replace(/^\//, '').replace(/\//g, '.')}` : null;
+  const resolvedQuestion = questionKey ? content[questionKey] ?? question : question;
 
   const [messages, setMessages] = useState([]); // { role: 'user' | 'ai', text }
   const [input, setInput] = useState('');
@@ -63,8 +71,11 @@ export default function AiTutorPanel({ question }) {
       </h3>
       <div className="chat-log" ref={logRef}>
         {messages.length === 0 && question && (
-          <div className="msg ai" style={{ cursor: 'pointer' }} onClick={() => send(question)}>
-            💡 예시 질문: {question}
+          <div className="msg ai">
+            💡 예시 질문:{' '}
+            <span style={{ cursor: 'pointer' }} onClick={() => send(resolvedQuestion)}>
+              <EditableText as="span" contentKey={questionKey} defaultText={question} />
+            </span>
           </div>
         )}
         {/* 챕터 배지(위 h3)가 이미 어떤 챕터 기준인지 보여주므로, 안내 문구 자체는 챕터 유무와
