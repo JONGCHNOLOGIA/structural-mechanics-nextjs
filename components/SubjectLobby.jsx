@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useProgress } from '@/components/ProgressProvider';
 import EditableImages from '@/components/EditableImages';
 import ContinueLearning from '@/components/ContinueLearning';
-import LearningStatus from '@/components/LearningStatus';
 import FloatingActions from '@/components/FloatingActions';
 import SiteHeader from '@/components/SiteHeader';
 
@@ -22,22 +21,20 @@ export default function SubjectLobby({ subject, chapters, chapterIcons, problemG
   const activeCh = chapters[previewChapter];
   const router = useRouter();
 
-  // recentVisits/progressSummary는 app/layout.js에 있는 ProgressProvider가 한 번만 불러와 들고
-  // 있는 값을 그대로 읽는다 — 이 로비 컴포넌트 자체는 구조역학 1↔2를 오갈 때마다 통째로
-  // 새로 마운트되지만(라우트가 바뀌니까), 값을 들고 있는 쪽은 그 위에서 안 바뀌고 그대로 살아있어서
+  // recentVisits는 app/layout.js에 있는 ProgressProvider가 한 번만 불러와 들고 있는 값을 그대로
+  // 읽는다 — 이 로비 컴포넌트 자체는 구조역학 1↔2를 오갈 때마다 통째로 새로 마운트되지만
+  // (라우트가 바뀌니까), 값을 들고 있는 쪽은 그 위에서 안 바뀌고 그대로 살아있어서
   // "이어서 학습하기"가 [] → 데이터로 채워지는 깜박임 없이 처음부터 채워진 값으로 바로 그려진다.
-  const { recentVisits, progressSummary } = useProgress();
+  const { recentVisits } = useProgress();
 
   const chapterNums = new Set(chapters.map((c) => c.num));
   const myVisits = recentVisits.filter((v) => chapterNums.has(v.chapter_num));
-  const mySummary = progressSummary.filter((s) => chapterNums.has(s.chapterNum));
 
   return (
     <div style={{ background: 'var(--card)', minHeight: '100vh' }}>
       <SiteHeader active={subject} />
 
       <ContinueLearning visits={myVisits} chapters={chapters} />
-      <LearningStatus summary={mySummary} chapters={chapters} problemGeneratorHref={problemGeneratorHref} />
 
       <div className="board">
         <div>
