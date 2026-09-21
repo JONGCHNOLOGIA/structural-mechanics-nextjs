@@ -205,7 +205,6 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                       </span>
                     </span>
                     <div className="title">{ch.title}</div>
-                    <EditableText as="div" className="preview" contentKey={`chapter.${ch.num}.desc`} defaultText={ch.desc} />
                   </div>
                 </div>
               );
