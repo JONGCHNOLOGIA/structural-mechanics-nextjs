@@ -10,6 +10,7 @@ import EditableText from '@/components/EditableText';
 import { useProgress } from '@/components/ProgressProvider';
 import { recordAttempt } from '@/lib/progress';
 import { fileToResizedBase64 } from '@/lib/resizeImage';
+import { savePgSession, loadPgSession } from '@/lib/pgSession';
 
 // 챕터/소주제를 고르면 문제은행(lib/problemBank*.js)의 "문제 템플릿 + 랜덤 숫자"로 실제 문제를
 // 생성한다. 지문/숫자는 교재를 그대로 베끼지 않고 새로 작성한 템플릿이고, 정답은 각 계산기와 동일한
@@ -52,8 +53,24 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
   const [graded, setGraded] = useState({}); // { [problemIndex]: 'correct' | 'wrong' }
   const [aiReview, setAiReview] = useState({}); // { [problemIndex]: { loading, feedback, error } }
 
+  // 문제 제작 허브의 "이어서 풀기"에서 ?resume=1 로 들어오면, 정답 확인을 안 한 문제가 남아있던
+  // 마지막 생성 결과를 그대로 복원한다 — 고른 챕터/소주제부터 이미 채점한 것까지.
+  useEffect(() => {
+    if (searchParams.get('resume') !== '1') return;
+    const session = loadPgSession(subject);
+    if (!session || !Array.isArray(session.problems) || session.problems.length === 0) return;
+    setSelectedChapters(new Set(session.selectedChapters));
+    setSelectedSubtopics(new Set(session.selectedSubtopics));
+    setNumQuestions(session.numQuestions || 5);
+    setProblems(session.problems);
+    setRevealed(new Set(session.revealed));
+    setGraded(session.graded || {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 홈 화면 "최근 틀린 개념 → 다시 풀기"에서 ?ch=CH.6&slug=composite-beams 로 들어오면 자동 선택
   useEffect(() => {
+    if (searchParams.get('resume') === '1') return;
     const ch = searchParams.get('ch');
     const slug = searchParams.get('slug');
     if (!ch || !slug) return;
@@ -111,6 +128,9 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
       setRevealed(new Set());
       setGraded({});
       setGenerating(false);
+      // 새로 생성한 순간부터 "이어서 풀기" 대상이 된다 — 채점 전에 이 화면을 벗어나도
+      // 문제 제작 허브에서 다시 찾아올 수 있게, 생성 직후 바로 저장해둔다.
+      savePgSession(subject, { selectedChapters, selectedSubtopics, numQuestions, problems: list, revealed: [], graded: {} });
     }, 400);
   }
 
@@ -126,7 +146,12 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
   // AI 자동 채점은 아직 연결 전이라, 정답 확인 후 본인이 맞았는지/틀렸는지 스스로 표시하는 방식으로
   // 대신함. 이 기록이 홈 화면의 "문제 풀이 %"와 "오답 횟수", "최근 틀린 개념"의 근거가 됨.
   function handleSelfGrade(i, p, isCorrect) {
-    setGraded((prev) => ({ ...prev, [i]: isCorrect ? 'correct' : 'wrong' }));
+    setGraded((prev) => {
+      const next = { ...prev, [i]: isCorrect ? 'correct' : 'wrong' };
+      // "이어서 풀기"가 채점 진행 상황까지 기억하도록, 채점할 때마다 저장된 세션도 같이 갱신한다.
+      savePgSession(subject, { selectedChapters, selectedSubtopics, numQuestions, problems, revealed, graded: next });
+      return next;
+    });
     recordAttempt(p.ch.num, p.st.slug, isCorrect).then(refresh);
   }
 
@@ -335,7 +360,7 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                 <div className="step-body pg-step-body" style={{ display: 'grid', gap: 20 }}>
                   {/* 왼쪽: 문제 */}
                   <div>
-                    <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>
+                    <div className="problem-prompt-text" style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.75, marginBottom: 12, whiteSpace: 'pre-line' }}>
                       {p.prompt}
                     </div>
                     {p.diagram && (
