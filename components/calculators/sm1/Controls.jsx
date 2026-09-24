@@ -4,6 +4,7 @@ import { fmt1 } from '@/lib/calc/units1';
 import { Tip } from '../FormulaSection';
 import { SYMBOL_TIPS } from './glossary';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 
 // 구조역학 1 계산기들이 공용으로 쓰는 입력/결과 UI 조각들.
 // 원본 프로토타입의 dualField()/unitSelect()/resultCard()/stepCard()/errorBox() 를 React로 옮긴 것 —
@@ -128,17 +129,44 @@ const TIP_PATTERN = new RegExp(
   'g'
 );
 
-function withTips(text) {
+function withTips(input) {
+  const applyToString = (text, keyPrefix) =>
+    text.split(TIP_PATTERN).map((part, i) =>
+      SYMBOL_TIPS[part] ? (
+        <Tip key={`${keyPrefix}-${i}`} title={SYMBOL_TIPS[part]}>
+          {part}
+        </Tip>
+      ) : (
+        <span key={`${keyPrefix}-${i}`}>{part}</span>
+      )
+    );
+  if (typeof input === 'string') return applyToString(input, 't');
+  // withFractions가 배열(문자열 조각 + <Frac> 섞임)을 돌려준 경우, 문자열 조각에만 팁을 적용하고
+  // 이미 만들어진 <Frac> 엘리먼트는 그대로 둔다.
+  if (Array.isArray(input)) return input.flatMap((chunk, i) => (typeof chunk === 'string' ? applyToString(chunk, `t${i}`) : chunk));
+  return input;
+}
+
+// "(a/b)" 처럼 괄호로 정확히 감싸인 간단한 분수(안에 공백·다른 연산자 없이 토큰/토큰 하나뿐인
+// 경우)만 실제 분자/분모가 위아래로 쌓인 모양(Frac)으로 바꾼다. "(d₂² − 4·A_required/π)"처럼
+// 괄호 안에 분수 말고 다른 내용이 섞여 있으면 일부러 손대지 않고 그대로 둔다 — 어설프게 잘라서
+// 수식을 깨뜨리느니, 애매한 건 원래 텍스트 그대로 보여주는 쪽이 안전하다.
+const SIMPLE_FRACTION = /\(([^\s()/]+)\/([^\s()/]+)\)/g;
+
+function withFractions(text) {
   if (typeof text !== 'string') return text;
-  return text.split(TIP_PATTERN).map((part, i) =>
-    SYMBOL_TIPS[part] ? (
-      <Tip key={i} title={SYMBOL_TIPS[part]}>
-        {part}
-      </Tip>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  );
+  const parts = [];
+  let last = 0;
+  let match;
+  SIMPLE_FRACTION.lastIndex = 0;
+  while ((match = SIMPLE_FRACTION.exec(text))) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    parts.push(<Frac key={`f${parts.length}`} num={match[1]} den={match[2]} />);
+    last = match.index + match[0].length;
+  }
+  if (last === 0) return text; // 분수 패턴이 하나도 없었으면 원래 문자열 그대로
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
 }
 
 export function StepCard({ title, formula, eqLines = [], final }) {
@@ -146,13 +174,13 @@ export function StepCard({ title, formula, eqLines = [], final }) {
     <div className="step-card">
       <div className="step-header static">{title}</div>
       <div className="step-body">
-        {formula && <div className="step-formula">{withTips(formula)}</div>}
+        {formula && <div className="step-formula">{withTips(withFractions(formula))}</div>}
         {eqLines.map((line, i) => (
           <div className="step-eq" key={i}>
-            {line}
+            {withFractions(line)}
           </div>
         ))}
-        {final && <div className="step-final">{final}</div>}
+        {final && <div className="step-final">{withFractions(final)}</div>}
       </div>
     </div>
   );
