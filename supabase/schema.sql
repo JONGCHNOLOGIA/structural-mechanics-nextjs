@@ -101,6 +101,15 @@ create table if not exists problem_attempts (
   created_at timestamptz not null default now()
 );
 
+-- 문제 제작 허브 "문제 다시보기"에서 그때 그 문제/풀이사진/AI 튜터 설명까지 그대로 다시 볼 수
+-- 있도록, "정답 확인" 시점에 있던 문제 지문·정답·도형·AI 채점 결과까지 같이 저장한다.
+-- (기존 행들은 이 컬럼들이 전부 null — 이 기능 이전 기록이라 다시보기에서 "저장된 정보 없음"으로 처리)
+alter table problem_attempts add column if not exists prompt text;
+alter table problem_attempts add column if not exists answers jsonb;
+alter table problem_attempts add column if not exists diagram jsonb;
+alter table problem_attempts add column if not exists ai_feedback text;
+alter table problem_attempts add column if not exists solution_image_path text;
+
 -- RLS(Row Level Security): 각자 자기 데이터만 보게
 alter table profiles enable row level security;
 alter table user_progress enable row level security;
@@ -225,4 +234,25 @@ create policy "지정된 학번만 미리보기 이미지 삭제" on storage.obj
   for delete using (
     bucket_id = 'content-images'
     and exists (select 1 from profiles where id = auth.uid() and student_id in ('22011031', 'demo-admin'))
+  );
+
+-- "문제 다시보기"에서 같이 보여줄 학생 풀이 사진 저장용 버킷. content-images(누구나 조회 가능한
+-- 미리보기 이미지)와 달리 이건 개인 풀이 사진이라 비공개(public:false)로 만들고, 파일 경로를
+-- `${user_id}/파일명`으로 강제해서 본인 폴더에만 넣고 본인 폴더만 읽게 한다(교수자는 전체 조회).
+insert into storage.buckets (id, name, public)
+values ('solution-images', 'solution-images', false)
+on conflict (id) do nothing;
+
+drop policy if exists "본인 폴더에만 풀이 사진 업로드" on storage.objects;
+create policy "본인 폴더에만 풀이 사진 업로드" on storage.objects
+  for insert with check (
+    bucket_id = 'solution-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "본인 풀이 사진만 조회, 교수자는 전체 조회" on storage.objects;
+create policy "본인 풀이 사진만 조회, 교수자는 전체 조회" on storage.objects
+  for select using (
+    bucket_id = 'solution-images'
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_instructor())
   );

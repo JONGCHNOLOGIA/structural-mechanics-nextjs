@@ -8,7 +8,8 @@ import EditableText from '@/components/EditableText';
 import { chapters1 } from '@/lib/chapters1';
 import { chapters as chapters2 } from '@/lib/chapters';
 import { listUnfinishedPgSessions } from '@/lib/pgSession';
-import { fetchRecentAttempts } from '@/lib/progress';
+import { fetchRecentAttempts, getSolutionImageUrl } from '@/lib/progress';
+import ProblemDiagram from '@/components/problemDiagrams/ProblemDiagram';
 
 // "문제 제작 1" / "문제 제작 2"로 나뉘어 있던 메뉴를 하나("문제 제작")로 합치고, 그 안에서
 // 과목을 고르는 진입 화면. 건축공학과 홈페이지 하단 "일반공지 / 학사공지" 2단 게시판 레이아웃을
@@ -123,13 +124,26 @@ function ReviewPanel() {
     fetchRecentAttempts(20).then(setAttempts);
   }, []);
 
+  const [expandedId, setExpandedId] = useState(null);
+  const [imageUrls, setImageUrls] = useState({}); // { [attemptId]: signedUrl }
+
   const rows = (attempts || [])
     .map((a) => {
       const found = findSubtopicName(a.chapter_num, a.subtopic_slug);
       if (!found) return null;
-      return { ...found, isCorrect: a.is_correct, key: `${a.chapter_num}::${a.subtopic_slug}::${a.created_at}` };
+      return { ...found, ...a, isCorrect: a.is_correct };
     })
     .filter(Boolean);
+
+  function toggleExpand(r) {
+    const next = expandedId === r.id ? null : r.id;
+    setExpandedId(next);
+    if (next && r.solution_image_path && !imageUrls[r.id]) {
+      getSolutionImageUrl(r.solution_image_path).then((url) => {
+        if (url) setImageUrls((prev) => ({ ...prev, [r.id]: url }));
+      });
+    }
+  }
 
   return (
     <div style={{ flex: '1 1 380px', minWidth: 300 }}>
@@ -139,7 +153,7 @@ function ReviewPanel() {
       <EditableText
         as="div"
         contentKey="problemGeneratorHub.reviewIntro"
-        defaultText="정답 확인까지 마친 문제들을 최근 순서로 보여줘요. 맞은 문제는 O, 틀린 문제는 X예요."
+        defaultText="정답 확인까지 마친 문제들을 최근 순서로 보여줘요. 맞은 문제는 O, 틀린 문제는 X — 눌러보면 그때 문제·풀이 사진·AI 튜터 설명까지 다시 볼 수 있어요."
         style={{ fontSize: 12, color: 'var(--gray-soft)', marginBottom: 14 }}
       />
       {attempts === null ? null : rows.length === 0 ? (
@@ -147,24 +161,85 @@ function ReviewPanel() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {rows.map((r, i) => (
-            <div
-              key={r.key}
-              style={{
-                display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16,
-                padding: '11px 0', borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none',
-              }}
-            >
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
-                {r.subjectLabel} · {r.text}
-              </span>
-              <span
+            <div key={r.id} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none' }}>
+              <div
+                onClick={() => toggleExpand(r)}
                 style={{
-                  fontSize: 13, fontWeight: 800, flexShrink: 0,
-                  color: r.isCorrect ? 'var(--teal)' : 'var(--crimson)',
+                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16,
+                  padding: '11px 0', cursor: 'pointer',
                 }}
               >
-                {r.isCorrect ? 'O' : 'X'}
-              </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+                  {r.subjectLabel} · {r.text}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13, fontWeight: 800, flexShrink: 0,
+                    color: r.isCorrect ? 'var(--teal)' : 'var(--crimson)',
+                  }}
+                >
+                  {r.isCorrect ? 'O' : 'X'}
+                </span>
+              </div>
+              {expandedId === r.id && (
+                <div style={{ padding: '4px 0 16px' }}>
+                  {!r.prompt ? (
+                    <div style={{ fontSize: 12, color: 'var(--gray-soft)' }}>
+                      이 기록은 문제/풀이 정보를 같이 저장하기 전에 채점된 거라, 다시 볼 내용이 없어요.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="problem-prompt-text" style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, whiteSpace: 'pre-line', marginBottom: 10 }}>
+                        {r.prompt}
+                      </div>
+                      {r.diagram && (
+                        <div style={{ background: 'var(--bg)', padding: '14px 10px', marginBottom: 10 }}>
+                          <ProblemDiagram diagram={r.diagram} />
+                        </div>
+                      )}
+                      {Array.isArray(r.answers) && r.answers.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: 12.5, color: 'var(--teal)', background: 'var(--teal-soft)',
+                            padding: '10px 14px', lineHeight: 1.8, marginBottom: 10,
+                          }}
+                        >
+                          {r.answers.map((a, k) => (
+                            <div key={k}>{a}</div>
+                          ))}
+                        </div>
+                      )}
+                      {r.solution_image_path && (
+                        <div style={{ marginBottom: 10 }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--gray)', marginBottom: 6 }}>내 풀이</div>
+                          {imageUrls[r.id] ? (
+                            <img
+                              src={imageUrls[r.id]}
+                              alt="첨부한 풀이"
+                              style={{ width: '100%', maxHeight: 280, objectFit: 'contain', background: 'var(--bg)' }}
+                            />
+                          ) : (
+                            <div style={{ fontSize: 12, color: 'var(--gray-soft)' }}>사진 불러오는 중...</div>
+                          )}
+                        </div>
+                      )}
+                      {r.ai_feedback && (
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--gray)', marginBottom: 6 }}>AI 튜터 설명</div>
+                          <div
+                            style={{
+                              fontSize: 12.5, color: 'var(--ink)', background: 'var(--bg)', border: '1px solid var(--line)',
+                              padding: '10px 12px', lineHeight: 1.7, whiteSpace: 'pre-line',
+                            }}
+                          >
+                            {r.ai_feedback}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

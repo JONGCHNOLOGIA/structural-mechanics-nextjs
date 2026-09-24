@@ -152,7 +152,15 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
       savePgSession(subject, { selectedChapters, selectedSubtopics, numQuestions, problems, revealed, graded: next });
       return next;
     });
-    recordAttempt(p.ch.num, p.st.slug, isCorrect).then(refresh);
+    // "문제 다시보기"에서 이 문제·풀이 사진·AI 튜터 설명까지 같이 볼 수 있도록, 정답 확인
+    // 시점에 이미 있던 것들(사진/AI 검토는 안 했을 수도 있음 — 그럼 그냥 비워서 보낸다)을 같이 넘긴다.
+    recordAttempt(p.ch.num, p.st.slug, isCorrect, {
+      prompt: p.prompt,
+      answers: p.answers,
+      diagram: p.diagram || null,
+      aiFeedback: aiReview[i]?.feedback || null,
+      solutionFile: solutionFiles[i] || null,
+    }).then(refresh);
   }
 
   function handleUploadSolution(i, file) {
