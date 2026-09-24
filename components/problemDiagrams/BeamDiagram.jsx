@@ -63,7 +63,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
                   </g>
                 );
               })}
-              <text x={padL + drawW / 2} y={beamY - 27} fontSize="12" fontWeight="800" fill="#C3002F" textAnchor="middle">
+              <text x={padL + drawW / 2} y={beamY - 27} fontSize="15" fontWeight="800" fill="#C3002F" textAnchor="middle">
                 {ld.label || 'q'}
               </text>
             </g>
@@ -75,7 +75,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
             <g key={i}>
               <line x1={px} y1={beamY - 38} x2={px} y2={beamY - 3} stroke="#C3002F" strokeWidth="1.8" />
               <polygon points={`${px},${beamY} ${px - 5},${beamY - 9} ${px + 5},${beamY - 9}`} fill="#C3002F" />
-              <text x={px} y={beamY - 42} fontSize="12" fontWeight="800" fill="#C3002F" textAnchor="middle">
+              <text x={px} y={beamY - 42} fontSize="15" fontWeight="800" fill="#C3002F" textAnchor="middle">
                 {ld.label || 'P'}
               </text>
             </g>
@@ -99,7 +99,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
                 );
               })}
               <line x1={padL} y1={beamY - 9} x2={padL + drawW} y2={beamY - 33} stroke="#C3002F" strokeWidth="1" />
-              <text x={padL + drawW - 4} y={beamY - 38} fontSize="12" fontWeight="800" fill="#C3002F" textAnchor="end">
+              <text x={padL + drawW - 4} y={beamY - 38} fontSize="15" fontWeight="800" fill="#C3002F" textAnchor="end">
                 {ld.label || 'q₀'}
               </text>
             </g>
@@ -111,7 +111,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
             <g key={i}>
               <path d={`M ${px - 13} ${beamY - 12} A 14 14 0 1 1 ${px + 7} ${beamY - 24}`} fill="none" stroke="#4A5FBF" strokeWidth="1.8" />
               <polygon points={`${px + 7},${beamY - 24} ${px},${beamY - 28} ${px + 3},${beamY - 17}`} fill="#4A5FBF" />
-              <text x={px} y={beamY - 32} fontSize="12" fontWeight="800" fill="#4A5FBF" textAnchor="middle">
+              <text x={px} y={beamY - 32} fontSize="15" fontWeight="800" fill="#4A5FBF" textAnchor="middle">
                 {ld.label || 'M₀'}
               </text>
             </g>
@@ -124,7 +124,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
       <line x1={padL} y1={beamY + 34} x2={padL + drawW} y2={beamY + 34} stroke="#8A97A2" strokeWidth="1" />
       <line x1={padL} y1={beamY + 30} x2={padL} y2={beamY + 38} stroke="#8A97A2" strokeWidth="1" />
       <line x1={padL + drawW} y1={beamY + 30} x2={padL + drawW} y2={beamY + 38} stroke="#8A97A2" strokeWidth="1" />
-      <text x={padL + drawW / 2} y={beamY + 50} fontSize="11" fill="#51626F" textAnchor="middle" fontWeight="700">
+      <text x={padL + drawW / 2} y={beamY + 50} fontSize="13.5" fill="#51626F" textAnchor="middle" fontWeight="700">
         {spanLabel}
       </text>
     </svg>

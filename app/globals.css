@@ -1,5 +1,6 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
 
 /* 프로토타입(demo_vol.1.html)의 <style> 블록을 그대로 옮긴 것. 클래스명/값 1:1 동일. */
 /* 폰트는 세종대 e-Campus·건축공학과 홈페이지 레퍼런스와 맞춰 Pretendard로 통일 (Noto Sans KR → Pretendard).
@@ -359,6 +360,10 @@ input[type='range']::-moz-range-thumb{
    실제 사용자가 폰에서 "문제/풀이 첨부가 좌우로 꽉 낀다"고 지적해서 발견한 부분. */
 .pg-wrap{ padding:0 64px; }
 .pg-step-body{ grid-template-columns:1fr 1fr; }
+/* 문제 지문만 명조 계열 세리프로 — 실제 교재(영문 공학서는 Times/Computer Modern, 국문 문제집은
+   명조·바탕)가 본문에 세리프를 쓰는 관행을 따라 "문제집" 느낌을 낸다. 나머지 UI(버튼, 라벨 등)는
+   그대로 Pretendard를 쓴다 — 세리프를 전체에 쓰면 오히려 화면(UI)답지 않게 무거워진다. */
+.problem-prompt-text{ font-family:'Noto Serif KR', Georgia, 'Times New Roman', serif; }
 
 .steps{ margin-top:4px; }
 .step-card{ border:1px solid var(--line); border-radius:0; margin-bottom:10px; }

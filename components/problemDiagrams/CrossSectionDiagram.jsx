@@ -20,16 +20,16 @@ export default function CrossSectionDiagram({ blocks, angleDeg = 0, widthLabel }
         {rects.map((r, i) => (
           <g key={i}>
             <rect x={r.x} y={r.y} width={r.w} height={r.heightPx} fill={r.fill} stroke={r.stroke} strokeWidth="1.6" />
-            <text x={cx + maxW / 2 + 10} y={r.y + r.heightPx / 2 + 4} fontSize="10.5" fontWeight="800" fill={r.stroke}>
+            <text x={cx + maxW / 2 + 10} y={r.y + r.heightPx / 2 + 4} fontSize="13" fontWeight="800" fill={r.stroke}>
               {r.label}
             </text>
-            <text x={cx - maxW / 2 - 10} y={r.y + r.heightPx / 2 + 4} fontSize="10" fill={r.stroke} textAnchor="end">
+            <text x={cx - maxW / 2 - 10} y={r.y + r.heightPx / 2 + 4} fontSize="12.5" fill={r.stroke} textAnchor="end">
               {r.heightLabel}
             </text>
           </g>
         ))}
         {widthLabel && (
-          <text x={cx} y={cy + totalH / 2 + 20} fontSize="10" fill="#51626F" textAnchor="middle" fontWeight="700">
+          <text x={cx} y={cy + totalH / 2 + 20} fontSize="12.5" fill="#51626F" textAnchor="middle" fontWeight="700">
             {widthLabel}
           </text>
         )}
@@ -39,10 +39,10 @@ export default function CrossSectionDiagram({ blocks, angleDeg = 0, widthLabel }
       {angleDeg !== 0 && (
         <g>
           <line x1={cx} y1={cy + 4} x2={cx} y2={cy - totalH / 2 - 30} stroke="#8A97A2" strokeWidth="1.2" strokeDasharray="3 3" />
-          <text x={cx + 5} y={cy - totalH / 2 - 32} fontSize="10" fill="#8A97A2" fontWeight="800">y</text>
+          <text x={cx + 5} y={cy - totalH / 2 - 32} fontSize="12.5" fill="#8A97A2" fontWeight="800">y</text>
           <line x1={cx - maxW / 2 - 34} y1={cy} x2={cx + maxW / 2 + 34} y2={cy} stroke="#8A97A2" strokeWidth="1.2" strokeDasharray="3 3" />
-          <text x={cx + maxW / 2 + 38} y={cy + 4} fontSize="10" fill="#8A97A2" fontWeight="800">z</text>
-          <text x={cx + 14} y={cy - 14} fontSize="10" fill="var(--gray-soft)">α</text>
+          <text x={cx + maxW / 2 + 38} y={cy + 4} fontSize="12.5" fill="#8A97A2" fontWeight="800">z</text>
+          <text x={cx + 14} y={cy - 14} fontSize="12.5" fill="var(--gray-soft)">α</text>
         </g>
       )}
     </svg>

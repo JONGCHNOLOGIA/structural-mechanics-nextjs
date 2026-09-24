@@ -20,7 +20,7 @@ export default function ShaftDiagram({ dLabel, PLabel, MLabel, TLabel, show = { 
           <polygon points={`${x1 - 10},${cy} ${x1 - 18},${cy - 4} ${x1 - 18},${cy + 4}`} fill="#C3002F" />
           {/* 라벨을 화살표 왼쪽 끝 바깥에 오른쪽정렬로 붙이면(원래 방식) 뷰박스(0~340) 왼쪽으로
               잘려나가는 걸 실측으로 확인했다 — 화살표 중앙 위에 가운데정렬로 옮긴다. */}
-          <text x={(x1 - 40 + x1 - 10) / 2} y={cy - 10} fontSize="11" fontWeight="800" fill="#C3002F" textAnchor="middle">{PLabel}</text>
+          <text x={(x1 - 40 + x1 - 10) / 2} y={cy - 10} fontSize="13.5" fontWeight="800" fill="#C3002F" textAnchor="middle">{PLabel}</text>
         </>
       )}
 
@@ -29,7 +29,7 @@ export default function ShaftDiagram({ dLabel, PLabel, MLabel, TLabel, show = { 
         <>
           <path d={`M ${x2 + 14} ${cy - ry} A 20 20 0 1 1 ${x2 + 14} ${cy + ry}`} fill="none" stroke="#4A5FBF" strokeWidth="1.8" />
           <polygon points={`${x2 + 14},${cy + ry} ${x2 + 7},${cy + ry - 9} ${x2 + 21},${cy + ry - 9}`} fill="#4A5FBF" />
-          <text x={x2 + 48} y={cy - 2} fontSize="11" fontWeight="800" fill="#4A5FBF" textAnchor="middle">{MLabel}</text>
+          <text x={x2 + 48} y={cy - 2} fontSize="13.5" fontWeight="800" fill="#4A5FBF" textAnchor="middle">{MLabel}</text>
         </>
       )}
 
@@ -38,11 +38,11 @@ export default function ShaftDiagram({ dLabel, PLabel, MLabel, TLabel, show = { 
         <>
           <path d={`M ${(x1 + x2) / 2 - 16} ${cy - ry - 6} A 16 7 0 1 1 ${(x1 + x2) / 2 + 16} ${cy - ry - 6}`} fill="none" stroke="#1E7F72" strokeWidth="1.8" />
           <polygon points={`${(x1 + x2) / 2 + 16},${cy - ry - 6} ${(x1 + x2) / 2 + 9},${cy - ry - 11} ${(x1 + x2) / 2 + 9},${cy - ry - 1}`} fill="#1E7F72" />
-          <text x={(x1 + x2) / 2} y={cy - ry - 14} fontSize="11" fontWeight="800" fill="#1E7F72" textAnchor="middle">{TLabel}</text>
+          <text x={(x1 + x2) / 2} y={cy - ry - 14} fontSize="13.5" fontWeight="800" fill="#1E7F72" textAnchor="middle">{TLabel}</text>
         </>
       )}
 
-      <text x={(x1 + x2) / 2} y={h - 8} fontSize="10.5" fill="#51626F" textAnchor="middle" fontWeight="700">{dLabel}</text>
+      <text x={(x1 + x2) / 2} y={h - 8} fontSize="13" fill="#51626F" textAnchor="middle" fontWeight="700">{dLabel}</text>
     </svg>
   );
 }

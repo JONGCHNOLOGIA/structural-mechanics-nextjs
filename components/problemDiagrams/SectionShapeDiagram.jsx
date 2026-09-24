@@ -14,9 +14,9 @@ export default function SectionShapeDiagram({ shape = 'rectangular', b, h, d, to
       <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block' }}>
         <circle cx={cx} cy={cy} r={r} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="1.8" />
         <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="#8A97A2" strokeWidth="1" strokeDasharray="3 3" />
-        <text x={cx} y={cy + r + 22} fontSize="11" fill="#51626F" textAnchor="middle" fontWeight="700">{`d = ${d} mm`}</text>
+        <text x={cx} y={cy + r + 22} fontSize="13.5" fill="#51626F" textAnchor="middle" fontWeight="700">{`d = ${d} mm`}</text>
         {topLabel && (
-          <text x={cx} y={cy - r - 14} fontSize="11.5" fontWeight="800" fill="#C3002F" textAnchor="middle">
+          <text x={cx} y={cy - r - 14} fontSize="14.5" fontWeight="800" fill="#C3002F" textAnchor="middle">
             {topLabel}
           </text>
         )}
@@ -30,12 +30,12 @@ export default function SectionShapeDiagram({ shape = 'rectangular', b, h, d, to
   return (
     <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block' }}>
       <rect x={x} y={y} width={rw} height={rh} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="1.8" strokeDasharray={h == null ? '4 3' : undefined} />
-      <text x={cx} y={y + rh + 18} fontSize="11" fill="#51626F" textAnchor="middle" fontWeight="700">{`b = ${b} mm`}</text>
-      <text x={x - 10} y={cy + 4} fontSize="11" fill="#51626F" textAnchor="end" fontWeight="700">
+      <text x={cx} y={y + rh + 18} fontSize="13.5" fill="#51626F" textAnchor="middle" fontWeight="700">{`b = ${b} mm`}</text>
+      <text x={x - 10} y={cy + 4} fontSize="13.5" fill="#51626F" textAnchor="end" fontWeight="700">
         {h != null ? `h = ${h} mm` : 'h = ?'}
       </text>
       {topLabel && (
-        <text x={cx} y={y - 14} fontSize="11.5" fontWeight="800" fill="#C3002F" textAnchor="middle">
+        <text x={cx} y={y - 14} fontSize="14.5" fontWeight="800" fill="#C3002F" textAnchor="middle">
           {topLabel}
         </text>
       )}

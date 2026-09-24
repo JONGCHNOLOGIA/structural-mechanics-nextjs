@@ -56,7 +56,7 @@ export default function AxialBarDiagram({ leftSupport = 'free', rightSupport = '
           <g key={i}>
             <line x1={px} y1={barY} x2={x2 - dir * 8} y2={barY} stroke="#C3002F" strokeWidth="1.8" />
             <polygon points={`${x2},${barY} ${x2 - dir * 8},${barY - 4} ${x2 - dir * 8},${barY + 4}`} fill="#C3002F" />
-            <text x={midX} y={barY - 10} fontSize="11" fontWeight="800" fill="#C3002F" textAnchor="middle">
+            <text x={midX} y={barY - 10} fontSize="13.5" fontWeight="800" fill="#C3002F" textAnchor="middle">
               {ld.label}
             </text>
           </g>
@@ -69,7 +69,7 @@ export default function AxialBarDiagram({ leftSupport = 'free', rightSupport = '
         <line key={i} x1={xAt(f)} y1={barY + barH / 2 + 20} x2={xAt(f)} y2={barY + barH / 2 + 28} stroke="#8A97A2" strokeWidth="1" />
       ))}
       {segments.map((s, i) => (
-        <text key={i} x={xAt((boundaries[i] + boundaries[i + 1]) / 2)} y={barY + barH / 2 + 40} fontSize="10.5" fill="#51626F" textAnchor="middle" fontWeight="700">
+        <text key={i} x={xAt((boundaries[i] + boundaries[i + 1]) / 2)} y={barY + barH / 2 + 40} fontSize="13" fill="#51626F" textAnchor="middle" fontWeight="700">
           {s.label}
         </text>
       ))}

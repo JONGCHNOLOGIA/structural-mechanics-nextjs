@@ -33,12 +33,12 @@ export default function VesselDiagram({ kind, rLabel, tLabel, pLabel }) {
           <path d="M0,0 L6,3 L0,6 Z" fill="#C3002F" />
         </marker>
       </defs>
-      <text x={cx} y={cy - R - 14} fontSize="11" fontWeight="800" fill="#C3002F" textAnchor="middle">{pLabel}</text>
+      <text x={cx} y={cy - R - 14} fontSize="13.5" fontWeight="800" fill="#C3002F" textAnchor="middle">{pLabel}</text>
 
       {/* r, t 치수 표시 */}
       <line x1={cx} y1={cy} x2={cx + R * (kind === 'sphere' ? Math.SQRT1_2 : 1)} y2={cy - (kind === 'sphere' ? R * Math.SQRT1_2 : 0)} stroke="#51626F" strokeWidth="1" strokeDasharray="2 2" />
-      <text x={cx + 20} y={cy - 8} fontSize="10" fill="#51626F">{rLabel}</text>
-      <text x={cx} y={h - 12} fontSize="10" fill="#51626F" textAnchor="middle">{tLabel}</text>
+      <text x={cx + 20} y={cy - 8} fontSize="12.5" fill="#51626F">{rLabel}</text>
+      <text x={cx} y={h - 12} fontSize="12.5" fill="#51626F" textAnchor="middle">{tLabel}</text>
     </svg>
   );
 }

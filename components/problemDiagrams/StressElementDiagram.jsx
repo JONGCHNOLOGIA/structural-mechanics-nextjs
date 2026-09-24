@@ -35,7 +35,7 @@ export default function StressElementDiagram({ sigmaX, sigmaY, tauXY, sigmaXLabe
             }
             fill="#C3002F"
           />
-          <text x={x1 + 30} y={cy - 6} fontSize="11" fontWeight="800" fill="#C3002F">{sigmaXLabel || 'σx'}</text>
+          <text x={x1 + 30} y={cy - 6} fontSize="13.5" fontWeight="800" fill="#C3002F">{sigmaXLabel || 'σx'}</text>
         </>
       )}
 
@@ -60,7 +60,7 @@ export default function StressElementDiagram({ sigmaX, sigmaY, tauXY, sigmaXLabe
             }
             fill="#1E7F72"
           />
-          <text x={cx + 8} y={y1 + 40} fontSize="11" fontWeight="800" fill="#1E7F72">{sigmaYLabel || 'σy'}</text>
+          <text x={cx + 8} y={y1 + 40} fontSize="13.5" fontWeight="800" fill="#1E7F72">{sigmaYLabel || 'σy'}</text>
         </>
       )}
 
@@ -75,7 +75,7 @@ export default function StressElementDiagram({ sigmaX, sigmaY, tauXY, sigmaXLabe
           <polygon points={`${x1},${y0 + 44} ${x1 - 4},${y0 + 36} ${x1 + 4},${y0 + 36}`} fill="#B0790A" />
           <line x1={x0} y1={y1} x2={x0} y2={y1 - 44} stroke="#B0790A" strokeWidth="1.8" />
           <polygon points={`${x0},${y1 - 44} ${x0 - 4},${y1 - 36} ${x0 + 4},${y1 - 36}`} fill="#B0790A" />
-          <text x={x0 - 4} y={y0 - 8} fontSize="11" fontWeight="800" fill="#B0790A" textAnchor="end">{tauLabel || 'τxy'}</text>
+          <text x={x0 - 4} y={y0 - 8} fontSize="13.5" fontWeight="800" fill="#B0790A" textAnchor="end">{tauLabel || 'τxy'}</text>
         </>
       )}
     </svg>
