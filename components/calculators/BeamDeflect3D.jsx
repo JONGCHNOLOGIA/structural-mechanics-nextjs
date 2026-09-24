@@ -185,7 +185,14 @@ export default function BeamDeflect3D({ pts, L, height = 0.5, width = 0.3, exagg
     function resize() {
       const w = mount.clientWidth || 460;
       const h = Math.round(w * 0.46);
+      // setSize(..., false)는 드로잉 버퍼(실제 픽셀, devicePixelRatio 배율 적용)만 바꾸고
+      // 캔버스의 CSS 크기는 그대로 둔다 — 그걸 직접 안 정해주면 브라우저가 캔버스의 width/height
+      // "속성"(= 드로잉 버퍼 크기, 예: devicePixelRatio 2배면 실제보다 2배 큰 값)을 그대로 CSS
+      // 크기로 써버려서, 폰처럼 devicePixelRatio>1인 화면에서 캔버스가 부모 폭의 2배로 튀어나가며
+      // 가로 스크롤이 생긴다 — 모바일 실기기 폭에서 실측으로 발견한 버그. CSS 크기는 직접 맞춘다.
       renderer.setSize(w, h, false);
+      renderer.domElement.style.width = w + 'px';
+      renderer.domElement.style.height = h + 'px';
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }

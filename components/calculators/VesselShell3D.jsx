@@ -217,7 +217,12 @@ export default function VesselShell3D({ shape = 'sphere', hoopRatio = 1, axialRa
     function resize() {
       const w = mount.clientWidth || 380;
       const h = Math.round(w * 0.72);
+      // setSize(..., false)는 CSS 크기를 안 건드려서, devicePixelRatio>1인 화면(대부분의 폰)에서
+      // 캔버스가 드로잉 버퍼 크기(= CSS 크기 × pixelRatio, 여기선 최대 2배)로 렌더링되며 부모
+      // 폭을 넘어 가로 스크롤을 만든다 — 모바일 폭에서 실측으로 발견한 버그. CSS 크기를 직접 맞춘다.
       renderer.setSize(w, h, false);
+      renderer.domElement.style.width = w + 'px';
+      renderer.domElement.style.height = h + 'px';
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
