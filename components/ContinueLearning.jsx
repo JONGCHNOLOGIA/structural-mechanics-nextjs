@@ -113,9 +113,9 @@ export default function ContinueLearning({ visits, chapters = sm2Chapters }) {
   }
 
   return (
-    <div style={{ maxWidth: 1600, margin: '48px auto 0', padding: '0 64px' }}>
+    <div className="continue-learning" style={{ maxWidth: 1600, margin: '48px auto 0' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 56, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+        <div className="continue-learning-title" style={{ color: 'var(--navy)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           이어서 학습하기
         </div>
       </div>

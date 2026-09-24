@@ -45,6 +45,7 @@ export default function SubjectLobby({ subject, chapters, chapterIcons, problemG
                 key={ch.num}
                 className={'chapter' + (ch.ready ? '' : ' disabled') + (previewChapter === idx ? ' active' : '')}
                 onMouseEnter={() => ch.ready && setPreviewChapter(idx)}
+                onClick={() => ch.ready && setPreviewChapter(idx)}
               >
                 <div className="icon" dangerouslySetInnerHTML={{ __html: chapterIcons[ch.num] || '' }} />
                 <div className="body">

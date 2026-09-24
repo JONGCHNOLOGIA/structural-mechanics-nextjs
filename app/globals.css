@@ -132,6 +132,9 @@ header{
 .hide-scrollbar{ scrollbar-width:none; -ms-overflow-style:none; }
 .hide-scrollbar::-webkit-scrollbar{ display:none; }
 
+.continue-learning{ padding:0 64px; }
+.continue-learning-title{ font-size:56px; font-weight:600; }
+
 .chapter-list{ display:flex; flex-direction:column; gap:12px; }
 .chapter{
   position:relative;
@@ -167,7 +170,9 @@ header{
   display:none; font-size:12.5px; color:var(--gray); line-height:1.55;
   margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);
 }
-.chapter:hover .preview{ display:block; }
+/* 터치 기기는 :hover가 없어서(SubjectLobby.jsx의 onClick 대체 핸들러로 챕터는 고를 수 있게
+   했지만) hover에만 걸려 있던 미리보기 설명은 탭으로 고른 챕터(.active)에서도 보이게 한다. */
+.chapter:hover .preview, .chapter.active .preview{ display:block; }
 
 .subtopics{
   background:var(--card); border:1px solid #D8E0E8; border-radius:0;
@@ -609,3 +614,59 @@ input[type='range']::-moz-range-thumb{
   transition:border-color 0.15s ease, color 0.15s ease;
 }
 .login-demo-btn:hover{ border-color:var(--crimson); color:var(--crimson); }
+
+/* ---------- 모바일·태블릿 ----------
+   지금까지 media query가 하나도 없던 순수 데스크톱 전용 CSS라, 아이패드 세로(768px)·폰(360~430px)
+   폭에서는 .panels(계산기 75개 전부가 공용으로 쓰는 360px+1fr+340px 3단 그리드)와
+   .board(300px+1fr, 로비)의 고정폭 열이 좌우 64px 여백과 합쳐 화면 폭을 그냥 넘겨버린다.
+   레이아웃이 이 파일의 공용 클래스에 몰려 있어서, 여기 breakpoint만 잡으면 75개 페이지 전부에
+   한 번에 적용된다. 1024px(아이패드 세로 포함)부터 3단/2단 그리드를 세로로 쌓고, 640px(폰)에서는
+   좌우 여백도 더 줄인다. */
+@media (max-width: 1024px) {
+  .home-header-inner{ padding:18px 24px; }
+  .site-logo-img{ height:36px; }
+  .site-nav{ gap:4px; }
+  .site-nav-item{ font-size:14px; padding:10px 10px; }
+  .btn-outline, .btn-solid{ font-size:13px; padding:8px 14px; }
+
+  .hero{ flex-direction:column; align-items:flex-start; padding:0 24px; gap:20px; }
+  .hero-art{ align-self:center; }
+
+  .board{ grid-template-columns:1fr; padding:0 24px; margin:32px auto; gap:24px; }
+  .continue-learning{ padding:0 24px; }
+
+  .page-subheader{ padding:0 24px; }
+  .tabs{ padding:0 24px; }
+  .panels{ grid-template-columns:1fr; padding:0 24px; }
+  .panel{ min-height:0; }
+  /* 3단일 때만 의미 있던 "스크롤해도 AI 튜터 패널은 그 자리에 붙어있기"(sticky)를 세로로 쌓인
+     상태에서 그대로 두면 다른 두 패널 위로 계속 떠서 내용을 가린다 — 일반 흐름으로 풀어준다. */
+  .panel-ai{ position:static; max-height:none; }
+
+  .footer-top-inner{ flex-direction:column; padding:0 24px; }
+  .footer-quicklink:first-child{ padding-right:0; padding-bottom:16px; }
+  .footer-quicklink:last-child{ padding-left:0; padding-top:16px; }
+  .footer-quicklink + .footer-quicklink{ border-left:none; border-top:1px solid rgba(255,255,255,0.14); }
+  .footer-bottom-inner{ padding:32px 24px 24px; }
+}
+
+@media (max-width: 640px) {
+  .home-header-inner{ padding:14px 16px; }
+  /* 로고 한 줄 + 로그인/바로가기 버튼 한 줄에는 4개 네비 항목까지 다 들어갈 공간이 없어서,
+     home-header-inner의 flex-wrap을 이용해 네비만 다음 줄로 통째로 내려 가운데 정렬한다. */
+  .site-nav{ order:3; width:100%; justify-content:center; }
+
+  .hero{ padding:0 16px; }
+  .hero-text h1{ font-size:20px; }
+  .board{ padding:0 16px; }
+  .continue-learning{ padding:0 16px; }
+  .continue-learning-title{ font-size:28px; }
+
+  .page-subheader{ padding:0 16px; }
+  .tabs{ padding:0 16px; }
+  .panels{ padding:0 16px; gap:16px; }
+  .panel{ padding:18px; }
+
+  .footer-top-inner{ padding:0 16px; }
+  .footer-bottom-inner{ padding:28px 16px 20px; }
+}
