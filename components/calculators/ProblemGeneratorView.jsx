@@ -141,6 +141,14 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
     const file = solutionFiles[i];
     if (!file) return;
     setAiReview((prev) => ({ ...prev, [i]: { loading: true } }));
+    // 서버가 응답도 에러도 없이 그냥 끊기는 경우(예: 서버리스 함수 시간제한)에 대비해서,
+    // 일정 시간 넘게 아무 응답이 없으면 클라이언트 쪽에서 직접 포기하고 에러로 처리한다 —
+    // 이게 없으면 "검토 중..."이 영원히 떠 있게 된다.
+    // 서버 라우트의 maxDuration(60초)과 똑같이 맞췄다가, 서버가 정확히 60.0초 걸려 응답에
+    // 성공했는데 클라이언트가 몇 ms 먼저 포기해버려 멀쩡한 답을 에러로 날려버리는 경쟁 상태를
+    // 직접 재현했다(AiTutorPanel.jsx와 동일한 원인) — 서버 쪽 한도보다 15초 여유를 더 준다.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 75000);
     try {
       const { data, mediaType } = await fileToResizedBase64(file);
       const res = await fetch('/api/grade-solution', {
@@ -152,12 +160,19 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
           prompt: p.prompt,
           answers: p.answers,
         }),
+        signal: controller.signal,
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || '요청에 실패했어요.');
       setAiReview((prev) => ({ ...prev, [i]: { feedback: result.feedback } }));
     } catch (err) {
-      setAiReview((prev) => ({ ...prev, [i]: { error: err.message || '검토 요청에 실패했어요. 잠시 후 다시 시도해주세요.' } }));
+      const message =
+        err.name === 'AbortError'
+          ? '응답이 너무 오래 걸려서 중단했어요. 다시 시도해주세요.'
+          : err.message || '검토 요청에 실패했어요. 잠시 후 다시 시도해주세요.';
+      setAiReview((prev) => ({ ...prev, [i]: { error: message } }));
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

@@ -3,6 +3,12 @@
 import { buildSystemPrompt } from '@/lib/aiTutorPrompt';
 import { callGemini } from '@/lib/geminiFetch';
 
+// Vercel 서버리스 함수는 별다른 설정이 없으면 기본 10초에서 끊는다(요금제에 따라 다름).
+// maxOutputTokens를 올린 뒤로 "생각(thinking)" 토큰까지 써서 답이 3~8초, 길면 그 이상 걸릴 수
+// 있는데, 그 시점에 함수가 그냥 죽어버리면 브라우저는 응답도 에러도 못 받고 "생각 중..."에
+// 멈춘 것처럼 보인다 — 이 라우트가 최대 60초까지는 버티도록 명시한다.
+export const maxDuration = 60;
+
 export async function POST(req) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

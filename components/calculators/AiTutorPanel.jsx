@@ -41,11 +41,20 @@ export default function AiTutorPanel({ question }) {
     setMessages((prev) => [...prev, { role: 'user', text: q }]);
     setInput('');
     setLoading(true);
+    // 서버가 응답도 에러도 없이 그냥 끊기는 경우(예: 서버리스 함수 시간제한)에 대비해서,
+    // 일정 시간 넘게 아무 응답이 없으면 클라이언트 쪽에서 직접 포기하고 에러로 처리한다 —
+    // 이게 없으면 "생각 중..."이 영원히 떠 있게 된다.
+    // 서버 라우트의 maxDuration(60초)과 똑같이 60초로 맞췄다가, 실제로 서버가 정확히 60.0초
+    // 걸려 응답에 성공했는데 클라이언트가 몇 ms 먼저 포기해버려 멀쩡한 답을 에러로 날려버리는
+    // 경쟁 상태를 직접 재현했다 — 서버 쪽 한도보다 15초 여유(네트워크 왕복 포함)를 더 준다.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 75000);
     try {
       const res = await fetch('/api/ai-tutor', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chapterNum, question: q, history }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || '답변을 받아오지 못했어요.');
@@ -53,8 +62,10 @@ export default function AiTutorPanel({ question }) {
       // 교수자 통계용 기록 — 실패해도 채팅 자체는 이미 끝났으니 조용히 무시한다.
       recordAiTutorMessage(chapterNum, q, data.answer).catch(() => {});
     } catch (err) {
-      setMessages((prev) => [...prev, { role: 'ai', text: `⚠ ${err.message}` }]);
+      const message = err.name === 'AbortError' ? '응답이 너무 오래 걸려서 중단했어요. 다시 시도해주세요.' : err.message;
+      setMessages((prev) => [...prev, { role: 'ai', text: `⚠ ${message}` }]);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   }
