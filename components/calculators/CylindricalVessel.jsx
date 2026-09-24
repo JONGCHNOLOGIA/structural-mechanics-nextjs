@@ -158,8 +158,14 @@ function StressElement({ cx, cy, size, sx, sy, txy, rotateDeg, color, label }) {
 }
 
 function CylindricalVesselSVG({ r, theta, radius, thickness, lengthUnit, onEditRadius, onEditThickness }) {
+  // 원통 도형은 y=80~170을 차지하는데, 아래 두 StressElement(정사각형, size=80)는 cy=200이라
+  // 윗변이 y=160 — 원통 아랫변(170)보다 위에 있어서 실제로 겹쳐 그려지고 있었다(실측으로 확인한
+  // 버그). 라벨까지 포함하면 cy+size/2+40=280으로 원래 viewBox 높이(260)도 넘어서길래
+  // overflow:visible로 가려왔는데, 그러면 이 SVG 바로 다음에 오는 다른 엘리먼트 위로 라벨이
+  // 넘쳐 보일 수 있다 — 정사각형을 원통 아래로 충분히 내리고(cy 200→230) viewBox 자체도
+  // 실제 내용 높이만큼 늘려서, overflow에 기대지 않고 제대로 담기게 한다.
   return (
-    <svg viewBox="0 0 620 260" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block', overflow: 'visible' }}>
+    <svg viewBox="0 0 620 330" style={{ width: '100%', maxWidth: 640, margin: '0 auto', display: 'block' }}>
       <rect x="40" y="80" width="180" height="90" rx="45" fill="#F7E3E6" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       <text x="130" y="65" fontSize="13" fill="#8A97A2" textAnchor="middle">원통 (길이방향 = x)</text>
 
@@ -167,8 +173,8 @@ function CylindricalVesselSVG({ r, theta, radius, thickness, lengthUnit, onEditR
           그림은 비율대로 그리지 않지만(모양만 보여주는 그림) 숫자는 실제 입력값이고, 클릭해서 고칠 수 있다. */}
       <DimLineV x={232} y1={80} y2={125} side="right" value={radius} unit={lengthUnit} prefix="r = " fontSize={11.5} boxW={58} onChange={onEditRadius} />
       <Dim x={130} y={178} value={thickness} unit={lengthUnit} prefix="t = " fontSize={11.5} boxW={58} onChange={onEditThickness} />
-      <StressElement cx={150} cy={200} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />
-      <StressElement cx={460} cy={200} size={80} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ=${theta.toFixed(0)}° (용접선 방향)`} />
+      <StressElement cx={150} cy={230} size={80} sx={r.sigma2} sy={r.sigma1} txy={0} rotateDeg={0} color="#51626F" label="θ=0° (원래 상태)" />
+      <StressElement cx={460} cy={230} size={80} sx={r.sx1} sy={r.sy1} txy={r.tx1y1} rotateDeg={theta} color="#C3002F" label={`θ=${theta.toFixed(0)}° (용접선 방향)`} />
     </svg>
   );
 }
