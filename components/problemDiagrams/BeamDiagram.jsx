@@ -81,6 +81,30 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
             </g>
           );
         }
+        if (ld.kind === 'triangular') {
+          // 구조역학 1의 삼각형 분포하중(A에서 0, B에서 최대) — 화살표 길이를 왼쪽→오른쪽으로
+          // 선형 증가시키고, 화살표 꼭대기를 잇는 사선으로 "삼각형" 모양임을 보여준다.
+          const n = 8;
+          return (
+            <g key={i}>
+              {Array.from({ length: n + 1 }).map((_, k) => {
+                const frac = k / n;
+                const px = padL + frac * drawW;
+                const ah = 6 + frac * 24;
+                return (
+                  <g key={k}>
+                    <line x1={px} y1={beamY - ah - 3} x2={px} y2={beamY - 3} stroke="#C3002F" strokeWidth="1.2" />
+                    <polygon points={`${px},${beamY} ${px - 3},${beamY - 7} ${px + 3},${beamY - 7}`} fill="#C3002F" />
+                  </g>
+                );
+              })}
+              <line x1={padL} y1={beamY - 9} x2={padL + drawW} y2={beamY - 33} stroke="#C3002F" strokeWidth="1" />
+              <text x={padL + drawW - 4} y={beamY - 38} fontSize="12" fontWeight="800" fill="#C3002F" textAnchor="end">
+                {ld.label || 'q₀'}
+              </text>
+            </g>
+          );
+        }
         if (ld.kind === 'moment') {
           const px = xAt(ld.posFrac ?? 1);
           return (

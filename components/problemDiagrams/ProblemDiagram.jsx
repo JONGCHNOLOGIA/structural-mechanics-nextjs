@@ -6,6 +6,8 @@ import StressElementDiagram from './StressElementDiagram';
 import VesselDiagram from './VesselDiagram';
 import ShaftDiagram from './ShaftDiagram';
 import MaxStressPointDiagram from './MaxStressPointDiagram';
+import AxialBarDiagram from './AxialBarDiagram';
+import SectionShapeDiagram from './SectionShapeDiagram';
 
 // 문제 생성기가 만든 diagram 설명(type + params)을 실제 SVG 컴포넌트로 렌더링하는 디스패처.
 export default function ProblemDiagram({ diagram }) {
@@ -23,6 +25,10 @@ export default function ProblemDiagram({ diagram }) {
       return <ShaftDiagram {...diagram.props} />;
     case 'maxStressPoint':
       return <MaxStressPointDiagram {...diagram.props} />;
+    case 'axialBar':
+      return <AxialBarDiagram {...diagram.props} />;
+    case 'sectionShape':
+      return <SectionShapeDiagram {...diagram.props} />;
     case 'beamAndCrossSection':
       return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
