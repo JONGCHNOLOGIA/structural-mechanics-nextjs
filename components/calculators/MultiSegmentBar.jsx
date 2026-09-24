@@ -5,6 +5,7 @@ import { computeMultiSegment } from '@/lib/calc/multiSegmentBar';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
@@ -173,8 +174,16 @@ function Steps({ s, res }) {
       <StepCard
         key={`d${i}`}
         title={`Step. 구간${i + 1} 변위`}
-        formula="δᵢ = Nᵢ Lᵢ / (Eᵢ Aᵢ)"
-        eqLines={[`δ = ${fmt1(kN(p.N_N), 2)} kN × ${seg.L} ${seg.LUnit} / (${seg.E} ${seg.EUnit} × ${seg.A} ${seg.AUnit})`]}
+        formula={
+          <>
+            δᵢ = <Frac num="Nᵢ Lᵢ" den="Eᵢ Aᵢ" />
+          </>
+        }
+        eqLines={[
+          <>
+            δ = <Frac num={`${fmt1(kN(p.N_N), 2)} kN × ${seg.L} ${seg.LUnit}`} den={`${seg.E} ${seg.EUnit} × ${seg.A} ${seg.AUnit}`} />
+          </>,
+        ]}
         final={`δ${i + 1} = ${fmt1(fromBase(p.delta_m, 'mm', LENGTH_UNITS), 4)} mm`}
       />
     );

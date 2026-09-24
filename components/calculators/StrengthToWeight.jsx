@@ -5,6 +5,7 @@ import { computeStrengthToWeight } from '@/lib/calc/torsion';
 import { LENGTH_UNITS, toBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH } from './EditableDim';
@@ -83,22 +84,42 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 극관성모멘트"
-        formula="Ip_solid = πD⁴/32,  Ip_hollow = π(D⁴−(kD)⁴)/32"
+        formula={
+          <>
+            Ip_solid = <Frac num="πD⁴" den="32" />, Ip_hollow = <Frac num="π(D⁴−(kD)⁴)" den="32" />
+          </>
+        }
         eqLines={[
           `Ip_solid = ${fmt1(res.IpSol * 1e12, 1)} mm⁴`,
           `Ip_hollow = ${fmt1(res.IpHol * 1e12, 1)} mm⁴`,
         ]}
-        final={`Ip_hollow / Ip_solid = 1 − k⁴ = ${fmt1(res.IpHol / res.IpSol, 4)}`}
+        final={
+          <>
+            <Frac num="Ip_hollow" den="Ip_solid" /> = 1 − k⁴ = {fmt1(res.IpHol / res.IpSol, 4)}
+          </>
+        }
       />
       <StepCard
         title="Step 2. 같은 토크일 때 응력비"
-        formula="τ_hollow / τ_solid = Ip_solid / Ip_hollow"
-        eqLines={['τ = T·r/Ip 에서 r(=D/2)이 같으므로 Ip만 남는다']}
+        formula={
+          <>
+            <Frac num="τ_hollow" den="τ_solid" /> = <Frac num="Ip_solid" den="Ip_hollow" />
+          </>
+        }
+        eqLines={[
+          <>
+            τ = <Frac num="T·r" den="Ip" /> 에서 r(=D/2)이 같으므로 Ip만 남는다
+          </>,
+        ]}
         final={`τ 비 = ${fmt1(res.tauRatio, 3)}`}
       />
       <StepCard
         title="Step 3. 무게비"
-        formula="W_hollow / W_solid = A_hollow / A_solid = 1 − k²"
+        formula={
+          <>
+            <Frac num="W_hollow" den="W_solid" /> = <Frac num="A_hollow" den="A_solid" /> = 1 − k²
+          </>
+        }
         eqLines={[
           `A_solid = ${fmt1(res.Asol * 1e6, 1)} mm²,  A_hollow = ${fmt1(res.Ahol * 1e6, 1)} mm²`,
         ]}
@@ -106,8 +127,16 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 4. 강도/무게비"
-        formula="(T/W)비 = (Ip_hollow/Ip_solid) / (무게비) = (1−k⁴)/(1−k²)"
-        eqLines={[`= ${fmt1(res.T_ratio, 4)} / ${fmt1(res.weightRatio, 4)}`]}
+        formula={
+          <>
+            (T/W)비 = (<Frac num="Ip_hollow" den="Ip_solid" />) / (무게비) = <Frac num="1−k⁴" den="1−k²" />
+          </>
+        }
+        eqLines={[
+          <>
+            = <Frac num={`${fmt1(res.T_ratio, 4)}`} den={`${fmt1(res.weightRatio, 4)}`} />
+          </>,
+        ]}
         final={`(T/W)비 = ${fmt1(res.TW_ratio, 3)} ${res.TW_ratio > 1 ? '→ 중공축이 무게 대비 더 효율적' : '→ 중실축이 더 유리'}`}
       />
     </>

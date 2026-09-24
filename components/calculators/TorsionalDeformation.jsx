@@ -5,6 +5,7 @@ import { computeTorsionalDeformation } from '@/lib/calc/torsion';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ToggleRow, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -119,23 +120,47 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 극관성모멘트"
-        formula={s.sectionType === 'solid_circular' ? 'Ip = πd⁴/32' : 'Ip = π(d₂⁴−d₁⁴)/32'}
+        formula={
+          s.sectionType === 'solid_circular' ? (
+            <>
+              Ip = <Frac num="πd⁴" den="32" />
+            </>
+          ) : (
+            <>
+              Ip = <Frac num="π(d₂⁴−d₁⁴)" den="32" />
+            </>
+          )
+        }
         eqLines={[`d = ${fmt1(rMM * 2, 2)} mm`, `Ip = ${fmt1(IpMM4, 2)} mm⁴`]}
         final={`Ip = ${fmt1(IpMM4, 2)} mm⁴`}
       />
       <StepCard
         title="Step 2. 비틀림각"
-        formula="φ = T·L / (G·Ip)"
+        formula={
+          <>
+            φ = <Frac num="T·L" den="G·Ip" />
+          </>
+        }
         eqLines={[
           `T = ${fmt1(T_Nmm, 1)} N·mm,  L = ${fmt1(L_mm, 1)} mm,  G = ${fmt1(G_MPa, 1)} MPa`,
-          `φ = (${fmt1(T_Nmm, 1)} × ${fmt1(L_mm, 1)}) / (${fmt1(G_MPa, 1)} × ${fmt1(IpMM4, 2)})`,
+          <>
+            φ = <Frac num={`${fmt1(T_Nmm, 1)} × ${fmt1(L_mm, 1)}`} den={`${fmt1(G_MPa, 1)} × ${fmt1(IpMM4, 2)}`} />
+          </>,
         ]}
         final={`φ = ${fmt1(res.phi_rad, 5)} rad = ${fmt1((res.phi_rad * 180) / Math.PI, 3)}°`}
       />
       <StepCard
         title="Step 3. 단위길이당 비틀림률"
-        formula="θ = φ / L"
-        eqLines={[`θ = ${fmt1(res.phi_rad, 5)} rad / ${fmt1(L_m, 4)} m`]}
+        formula={
+          <>
+            θ = <Frac num="φ" den="L" />
+          </>
+        }
+        eqLines={[
+          <>
+            θ = <Frac num={`${fmt1(res.phi_rad, 5)} rad`} den={`${fmt1(L_m, 4)} m`} />
+          </>,
+        ]}
         final={`θ = ${fmt1(res.theta, 6)} rad/m = ${fmt1((res.theta * 180) / Math.PI, 4)}°/m`}
       />
       <StepCard

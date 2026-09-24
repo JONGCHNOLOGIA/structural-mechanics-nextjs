@@ -5,6 +5,7 @@ import { computeCombined } from '@/lib/calc/beamStresses';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -124,15 +125,37 @@ function Steps({ s, res }) {
     );
   }
   cards.push(
-    <StepCard key="n" title="Step 1. 축응력 성분" formula="σ_N = N / A"
-      eqLines={[`σ_N = ${fmt1(res.N_N, 1)} N / ${fmt1(res.A * 1e6, 2)} mm²`]}
-      final={`σ_N = ${fmt1(MPa(res.sigmaAxial), 3)} MPa`} />,
-    <StepCard key="m" title="Step 2. 굽힘응력 성분" formula="σ_M = M·c / I"
+    <StepCard
+      key="n"
+      title="Step 1. 축응력 성분"
+      formula={
+        <>
+          σ_N = <Frac num="N" den="A" />
+        </>
+      }
+      eqLines={[
+        <>
+          σ_N = <Frac num={`${fmt1(res.N_N, 1)} N`} den={`${fmt1(res.A * 1e6, 2)} mm²`} />
+        </>,
+      ]}
+      final={`σ_N = ${fmt1(MPa(res.sigmaAxial), 3)} MPa`}
+    />,
+    <StepCard
+      key="m"
+      title="Step 2. 굽힘응력 성분"
+      formula={
+        <>
+          σ_M = <Frac num="M·c" den="I" />
+        </>
+      }
       eqLines={[
         `I = ${fmt1(res.I * 1e12, 2)} mm⁴,  c = ${fmt1(res.c * 1000, 2)} mm`,
-        `σ_M = ${fmt1(res.M_Nm * 1000, 1)} N·mm × ${fmt1(res.c * 1000, 2)} mm / ${fmt1(res.I * 1e12, 2)} mm⁴`,
+        <>
+          σ_M = <Frac num={`${fmt1(res.M_Nm * 1000, 1)} N·mm × ${fmt1(res.c * 1000, 2)} mm`} den={`${fmt1(res.I * 1e12, 2)} mm⁴`} />
+        </>,
       ]}
-      final={`σ_M = ${fmt1(MPa(res.sigmaBend), 3)} MPa`} />,
+      final={`σ_M = ${fmt1(MPa(res.sigmaBend), 3)} MPa`}
+    />,
     <StepCard key="sum" title="Step 3. 중첩 (Superposition)"
       formula={isEcc ? 'σ = σ_N ± σ_M (편심측이 보강)' : 'σ = σ_N ± σ_M (sagging 기준)'}
       eqLines={

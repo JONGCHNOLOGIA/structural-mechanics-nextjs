@@ -5,6 +5,7 @@ import { computeOverhangSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { BeamSchematic, CurveDiagram } from './sm1/BeamDiagrams';
@@ -108,7 +109,11 @@ function Steps({ s, res }) {
       <StepCard
         title="Step 1. ΣM_A = 0 으로 R_B"
         formula="R_B · Lb = P · a"
-        eqLines={[`R_B = ${s.P} × ${s.a} / ${s.Lb}`]}
+        eqLines={[
+          <>
+            R_B = <Frac num={`${s.P} × ${s.a}`} den={`${s.Lb}`} />
+          </>,
+        ]}
         final={`R_B = ${fmt1(kN(res.RB), 3)} kN`}
       />
       <StepCard

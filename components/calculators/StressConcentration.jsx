@@ -5,6 +5,7 @@ import { computeStressConcentration } from '@/lib/calc/stressConcentration';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder, DiagramSkipNote } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { Dim, DimLineH, DimLineV } from './EditableDim';
@@ -97,9 +98,20 @@ function Steps({ s, res }) {
               <StepCard title="Step 1. 순단면적" formula="A_net = (b − d) × t"
                 eqLines={[`A_net = (${s.b} − ${s.d}) × ${s.t} ${s.dimUnit}² = ${fmt1(res.Anet / areaScale, 2)} ${s.dimUnit}²`]}
                 final={`A_net = ${fmt1(res.Anet / areaScale, 2)} ${s.dimUnit}²`} />
-              <StepCard title="Step 2. 공칭응력" formula="σ_nom = P / A_net"
-                eqLines={[`σ_nom = ${s.P} ${s.PUnit} / ${fmt1(res.Anet / areaScale, 2)} ${s.dimUnit}²`]}
-                final={`σ_nom = ${fmt1(fromBase(res.sigmaNom, 'MPa', STRESS_UNITS), 2)} MPa`} />
+              <StepCard
+                title="Step 2. 공칭응력"
+                formula={
+                  <>
+                    σ_nom = <Frac num="P" den="A_net" />
+                  </>
+                }
+                eqLines={[
+                  <>
+                    σ_nom = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(res.Anet / areaScale, 2)} ${s.dimUnit}²`} />
+                  </>,
+                ]}
+                final={`σ_nom = ${fmt1(fromBase(res.sigmaNom, 'MPa', STRESS_UNITS), 2)} MPa`}
+              />
               <StepCard title="Step 3. 최대응력" formula="σ_max = K × σ_nom"
                 eqLines={[`σ_max = ${s.K} × ${fmt1(fromBase(res.sigmaNom, 'MPa', STRESS_UNITS), 2)} MPa`]}
                 final={`σ_max = ${fmt1(fromBase(res.sigmaMax, 'MPa', STRESS_UNITS), 2)} MPa`} />

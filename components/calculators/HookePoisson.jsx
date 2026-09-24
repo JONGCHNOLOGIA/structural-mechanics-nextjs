@@ -5,6 +5,7 @@ import { computeHookePoisson } from '@/lib/calc/hookePoisson';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, toBase, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import {
   DualField,
   ToggleRow,
@@ -164,12 +165,26 @@ export default function HookePoisson() {
 function Steps({ s, res }) {
   const tone = res.sign > 0 ? 'tens' : 'comp';
   const sigmaStep =
-    s.mode === 'load' ? [`σ = P/A = ${s.P} ${s.PUnit} / ${s.A} ${s.AUnit}`] : [`σ = ${s.sigma} ${s.sigmaUnit} (직접 입력)`];
+    s.mode === 'load'
+      ? [
+          <>
+            σ = P/A = <Frac num={`${s.P} ${s.PUnit}`} den={`${s.A} ${s.AUnit}`} />
+          </>,
+        ]
+      : [`σ = ${s.sigma} ${s.sigmaUnit} (직접 입력)`];
   return (
     <>
       <StepCard
         title="Step 1. Normal Stress"
-        formula={s.mode === 'load' ? 'σ = P / A' : 'σ (직접 입력)'}
+        formula={
+          s.mode === 'load' ? (
+            <>
+              σ = <Frac num="P" den="A" />
+            </>
+          ) : (
+            'σ (직접 입력)'
+          )
+        }
         eqLines={sigmaStep}
         final={
           <>
@@ -179,8 +194,16 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 2. Longitudinal Strain"
-        formula="ε_long = σ / E"
-        eqLines={[`ε_long = ${fmt1(res.sigma_Pa, 0)} Pa / ${fmt1(toBase(s.E, s.EUnit, STRESS_UNITS), 0)} Pa`]}
+        formula={
+          <>
+            ε_long = <Frac num="σ" den="E" />
+          </>
+        }
+        eqLines={[
+          <>
+            ε_long = <Frac num={`${fmt1(res.sigma_Pa, 0)} Pa`} den={`${fmt1(toBase(s.E, s.EUnit, STRESS_UNITS), 0)} Pa`} />
+          </>,
+        ]}
         final={`ε_long = ${fmt1(res.epsLong * 1e6, 1)} × 10⁻⁶`}
       />
       <StepCard

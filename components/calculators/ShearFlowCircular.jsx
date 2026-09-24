@@ -5,6 +5,7 @@ import { computeShearCircularOrFlow } from '@/lib/calc/beamStresses';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, VOLUME3_UNITS, IN4_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { Dim, DimLineH } from './EditableDim';
@@ -136,14 +137,26 @@ function Steps({ s, res }) {
       <>
         <StepCard
           title="Step 1. 단면2차모멘트와 단면적"
-          formula="I = πd⁴/64,  A = πd²/4"
+          formula={
+            <>
+              I = <Frac num="πd⁴" den="64" />, A = <Frac num="πd²" den="4" />
+            </>
+          }
           eqLines={[`d = ${s.d} ${s.dimUnit}`]}
           final={`I = ${fmt1(res.I * 1e12, 2)} mm⁴,  A = ${fmt1(res.A * 1e6, 2)} mm²`}
         />
         <StepCard
           title="Step 2. 최대 전단응력 (원형 특수해)"
-          formula="τ_max = 4V / (3A)"
-          eqLines={[`τ_max = 4 × ${s.V} ${s.VUnit} / (3 × ${fmt1(res.A * 1e6, 2)} mm²)`]}
+          formula={
+            <>
+              τ_max = <Frac num="4V" den="3A" />
+            </>
+          }
+          eqLines={[
+            <>
+              τ_max = <Frac num={`4 × ${s.V} ${s.VUnit}`} den={`3 × ${fmt1(res.A * 1e6, 2)} mm²`} />
+            </>,
+          ]}
           final={`τ_max = ${fmt1(MPa(res.tauMax), 3)} MPa`}
         />
       </>
@@ -153,14 +166,30 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 전단흐름"
-        formula="q = V·Q / I"
-        eqLines={[`q = ${s.V} ${s.VUnit} × ${s.Q} ${s.QUnit} / ${s.I} ${s.IUnit}`]}
+        formula={
+          <>
+            q = <Frac num="V·Q" den="I" />
+          </>
+        }
+        eqLines={[
+          <>
+            q = <Frac num={`${s.V} ${s.VUnit} × ${s.Q} ${s.QUnit}`} den={`${s.I} ${s.IUnit}`} />
+          </>,
+        ]}
         final={`q = ${fmt1(res.q, 2)} N/m (= 길이 1m마다 붙잡아야 할 힘)`}
       />
       <StepCard
         title="Step 2. 체결재 간격"
-        formula="s = F_allow / q"
-        eqLines={[`s = ${s.Fallow} ${s.FallowUnit} / ${fmt1(res.q, 2)} N/m`]}
+        formula={
+          <>
+            s = <Frac num="F_allow" den="q" />
+          </>
+        }
+        eqLines={[
+          <>
+            s = <Frac num={`${s.Fallow} ${s.FallowUnit}`} den={`${fmt1(res.q, 2)} N/m`} />
+          </>,
+        ]}
         final={`s = ${fmt1(mm(res.spacing), 2)} mm 이하로 배치`}
       />
     </>

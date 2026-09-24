@@ -5,6 +5,7 @@ import { computeTriangularLoad } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { BeamSchematic, CurveDiagram } from './sm1/BeamDiagrams';
@@ -144,7 +145,11 @@ function Steps({ s, res }) {
     <StepCard
       key="W"
       title="Step 1. 전체하중 (하중 삼각형의 넓이)"
-      formula="W = (1/2) · q₀ · L"
+      formula={
+        <>
+          W = (<Frac num="1" den="2" />) · q₀ · L
+        </>
+      }
       eqLines={[`W = 0.5 × ${s.q0} ${s.qUnit} × ${s.L} ${s.LUnit}`]}
       final={`W = ${fmt1(kN(res.totalLoad), 3)} kN (도심은 B쪽에서 L/3 지점)`}
     />,
@@ -154,16 +159,47 @@ function Steps({ s, res }) {
     cards.push(
       <StepCard key="R" title="Step 2. 고정단 반력" formula="R_B = W (전체하중을 고정단이 다 받는다)"
         eqLines={[]} final={`R_B = ${fmt1(kN(res.RA), 3)} kN`} />,
-      <StepCard key="M" title="Step 3. 고정단 모멘트" formula="M_B = −W · (L/3)"
-        eqLines={[`삼각형 도심이 B로부터 L/3 = ${fmt1(s.L / 3, 3)} ${s.LUnit} 떨어져 있다`]}
-        final={`M_B = ${fmt1(kNm(res.M0), 3)} kN·m`} />
+      <StepCard
+        key="M"
+        title="Step 3. 고정단 모멘트"
+        formula={
+          <>
+            M_B = −W · (<Frac num="L" den="3" />)
+          </>
+        }
+        eqLines={[
+          <>
+            삼각형 도심이 B로부터 <Frac num="L" den="3" /> = {fmt1(s.L / 3, 3)} {s.LUnit} 떨어져 있다
+          </>,
+        ]}
+        final={`M_B = ${fmt1(kNm(res.M0), 3)} kN·m`}
+      />
     );
   } else if (s.mode === 'simple') {
     cards.push(
-      <StepCard key="R" title="Step 2. 반력 (ΣM_A=0, 도심은 A로부터 2L/3)" formula="R_B = W × (2/3),  R_A = W × (1/3)"
-        eqLines={[`R_B = ${fmt1(kN(res.totalLoad), 3)} × 2/3`]}
-        final={`R_A = ${fmt1(kN(res.RA), 3)} kN,  R_B = ${fmt1(kN(res.RB), 3)} kN`} />,
-      <StepCard key="M" title="Step 3. 최대모멘트 위치" formula="V(x) = 0 이 되는 지점: x = L/√3"
+      <StepCard
+        key="R"
+        title="Step 2. 반력 (ΣM_A=0, 도심은 A로부터 2L/3)"
+        formula={
+          <>
+            R_B = W × (<Frac num="2" den="3" />), R_A = W × (<Frac num="1" den="3" />)
+          </>
+        }
+        eqLines={[
+          <>
+            R_B = {fmt1(kN(res.totalLoad), 3)} × <Frac num="2" den="3" />
+          </>,
+        ]}
+        final={`R_A = ${fmt1(kN(res.RA), 3)} kN,  R_B = ${fmt1(kN(res.RB), 3)} kN`}
+      />,
+      <StepCard
+        key="M"
+        title="Step 3. 최대모멘트 위치"
+        formula={
+          <>
+            V(x) = 0 이 되는 지점: x = <Frac num="L" den="√3" />
+          </>
+        }
         eqLines={[`x = ${fmt1(s.L / Math.sqrt(3), 3)} ${s.LUnit}`]}
         final={`M_max = ${fmt1(kNm(res.Mmax), 3)} kN·m`} />
     );
@@ -174,12 +210,23 @@ function Steps({ s, res }) {
         final={`R_A = ${fmt1(kN(res.RA), 3)} kN`} />,
       // 하중 합력의 도심은 A에서 2L/3, 즉 B에서는 L/3 떨어져 있다. B를 기준으로 모멘트를 잡으므로
       // 팔 길이는 L/3이다 (원본 프로토타입은 여기에 2L/3을 적어 두어 수식과 결과가 어긋나 있었다).
-      <StepCard key="M" title="Step 3. 슬라이딩단 반력모멘트" formula="M_B = R_A · L − W · (L/3)"
+      <StepCard
+        key="M"
+        title="Step 3. 슬라이딩단 반력모멘트"
+        formula={
+          <>
+            M_B = R_A · L − W · (<Frac num="L" den="3" />)
+          </>
+        }
         eqLines={[
-          `하중 합력의 도심은 A에서 2L/3 = ${fmt1((2 * s.L) / 3, 3)} ${s.LUnit}, 즉 B에서 L/3 = ${fmt1(s.L / 3, 3)} ${s.LUnit}`,
+          <>
+            하중 합력의 도심은 A에서 <Frac num="2L" den="3" /> = {fmt1((2 * s.L) / 3, 3)} {s.LUnit}, 즉 B에서 <Frac num="L" den="3" /> ={' '}
+            {fmt1(s.L / 3, 3)} {s.LUnit}
+          </>,
           `M_B = ${fmt1(kN(res.RA), 3)} × ${s.L} − ${fmt1(kN(res.totalLoad), 3)} × ${fmt1(s.L / 3, 3)}`,
         ]}
-        final={`M_B = ${fmt1(kNm(res.MB), 3)} kN·m`} />
+        final={`M_B = ${fmt1(kNm(res.MB), 3)} kN·m`}
+      />
     );
   }
   return <>{cards}</>;

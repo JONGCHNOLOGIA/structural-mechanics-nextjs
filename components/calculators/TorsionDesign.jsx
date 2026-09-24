@@ -5,6 +5,7 @@ import { computeTorsionDesign, HOLLOW_K } from '@/lib/calc/torsion';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, UnitSelect, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -298,7 +299,11 @@ function Steps({ s, res }) {
       <>
         <StepCard
           title="Step 1. 응력 조건에서 허용토크"
-          formula="T_stress = τ_allow · Ip / r"
+          formula={
+            <>
+              T_stress = <Frac num="τ_allow · Ip" den="r" />
+            </>
+          }
           eqLines={[
             `Ip = ${fmt1(IpMM4, 2)} mm⁴,  r = ${fmt1((res.D / 2) * 1000, 2)} mm`,
             `τ_allow = ${s.tauAllow} ${s.tauAllowUnit}`,
@@ -307,7 +312,15 @@ function Steps({ s, res }) {
         />
         <StepCard
           title="Step 2. 비틀림 조건에서 허용토크"
-          formula={s.twistMode === 'total' ? 'T_twist = G·Ip·φ_allow / L' : 'T_twist = G·Ip·θ_allow'}
+          formula={
+            s.twistMode === 'total' ? (
+              <>
+                T_twist = <Frac num="G·Ip·φ_allow" den="L" />
+              </>
+            ) : (
+              'T_twist = G·Ip·θ_allow'
+            )
+          }
           eqLines={[
             s.twistMode === 'total'
               ? `φ_allow = ${s.phiAllowDeg}° 를 rad으로 바꾼 뒤 L = ${s.L} ${s.LUnit} 로 나눈다`
@@ -329,7 +342,17 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 응력 조건에서 필요지름"
-        formula={s.sectionType === 'solid_circular' ? 'τ_allow = 16T/(πd³)  →  d = ∛(16T/(πτ_allow))' : 'd³ = 16T/(πτ_allow(1−k⁴))'}
+        formula={
+          s.sectionType === 'solid_circular' ? (
+            <>
+              τ_allow = <Frac num="16T" den="πd³" /> → d = ∛(<Frac num="16T" den="πτ_allow" />)
+            </>
+          ) : (
+            <>
+              d³ = <Frac num="16T" den="πτ_allow(1−k⁴)" />
+            </>
+          )
+        }
         eqLines={[`T = ${s.T} ${s.TUnit},  τ_allow = ${s.tauAllow} ${s.tauAllowUnit}`]}
         final={`d_stress = ${fmt1(d.a, 3)} ${d.unit}`}
       />
@@ -337,7 +360,15 @@ function Steps({ s, res }) {
         title="Step 2. 비틀림 조건에서 필요지름"
         formula="필요 Ip를 먼저 구하고 d로 역산"
         eqLines={[
-          s.twistMode === 'total' ? 'Ip_req = T·L / (G·φ_allow)' : 'Ip_req = T / (G·θ_allow)',
+          s.twistMode === 'total' ? (
+            <>
+              Ip_req = <Frac num="T·L" den="G·φ_allow" />
+            </>
+          ) : (
+            <>
+              Ip_req = <Frac num="T" den="G·θ_allow" />
+            </>
+          ),
           `Ip_req = ${fmt1(res.reqIp * 1e12, 2)} mm⁴`,
         ]}
         final={`d_twist = ${fmt1(d.b, 3)} ${d.unit}`}

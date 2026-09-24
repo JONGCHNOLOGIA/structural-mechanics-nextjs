@@ -10,6 +10,7 @@ import {
 import { fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { ToggleRow, ResetButton, ResultGrid, ResultCard, StepCard } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 
@@ -122,7 +123,11 @@ function Steps({ s, res }) {
           />
           <StepCard
             title="Step 3. 선형보간으로 응력 계산"
-            formula="t = (ε−εₐ)/(ε_b−εₐ),  σ = σₐ + t·(σ_b−σₐ)"
+            formula={
+              <>
+                t = <Frac num="ε−εₐ" den="ε_b−εₐ" />, σ = σₐ + t·(σ_b−σₐ)
+              </>
+            }
             eqLines={[
               `t = ${fmt1(res.seg.t * 100, 1)}%`,
               `σ = ${fmt1(res.seg.a.y, 3)} + ${fmt1(res.seg.t, 3)} × (${fmt1(res.seg.b.y, 3)} − ${fmt1(res.seg.a.y, 3)})`,

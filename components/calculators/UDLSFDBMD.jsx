@@ -5,6 +5,7 @@ import { computeUDLSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { BeamSchematic, CurveDiagram } from './sm1/BeamDiagrams';
@@ -105,7 +106,15 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 2. 반력"
-        formula={isFullSpan ? 'R_A = R_B = q·L/2 (전체 경간 대칭)' : 'ΣM_A = 0,  ΣFy = 0 (부분 구간)'}
+        formula={
+          isFullSpan ? (
+            <>
+              R_A = R_B = <Frac num="q·L" den="2" /> (전체 경간 대칭)
+            </>
+          ) : (
+            'ΣM_A = 0,  ΣFy = 0 (부분 구간)'
+          )
+        }
         eqLines={[`R_A = ${fmt1(kN(res.RA), 3)} kN,  R_B = ${fmt1(kN(res.RB), 3)} kN`]}
         final="반력 확정"
       />

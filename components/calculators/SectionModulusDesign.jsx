@@ -5,6 +5,7 @@ import { computeSectionModulus } from '@/lib/calc/beamStresses';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -110,22 +111,46 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 필요 단면계수"
-        formula="σ_allow = M / S  →  S_required = M / σ_allow"
-        eqLines={[`S_required = ${s.M} ${s.MUnit} / ${s.sigmaAllow} ${s.sigmaAllowUnit}`]}
+        formula={
+          <>
+            σ_allow = <Frac num="M" den="S" /> → S_required = <Frac num="M" den="σ_allow" />
+          </>
+        }
+        eqLines={[
+          <>
+            S_required = <Frac num={`${s.M} ${s.MUnit}`} den={`${s.sigmaAllow} ${s.sigmaAllowUnit}`} />
+          </>,
+        ]}
         final={`S_required = ${fmt1(SMM3, 2)} mm³`}
       />
       {isRect ? (
         <StepCard
           title="Step 2. 필요 높이 (b 고정)"
-          formula="S = b·h²/6  →  h = √(6S/b)"
-          eqLines={[`h = √(6 × ${fmt1(SMM3, 2)} mm³ / ${s.bFixed} ${s.dimUnit})`]}
+          formula={
+            <>
+              S = <Frac num="b·h²" den="6" /> → h = √(<Frac num="6S" den="b" />)
+            </>
+          }
+          eqLines={[
+            <>
+              h = √(<Frac num={`6 × ${fmt1(SMM3, 2)} mm³`} den={`${s.bFixed} ${s.dimUnit}`} />)
+            </>,
+          ]}
           final={`h_required = ${fmt1(dimOut, 2)} ${s.dimUnit}`}
         />
       ) : (
         <StepCard
           title="Step 2. 필요 직경"
-          formula="S = πd³/32  →  d = (32S/π)^(1/3)"
-          eqLines={[`d = (32 × ${fmt1(SMM3, 2)} mm³ / π)^(1/3)`]}
+          formula={
+            <>
+              S = <Frac num="πd³" den="32" /> → d = (<Frac num="32S" den="π" />)^(1/3)
+            </>
+          }
+          eqLines={[
+            <>
+              d = (<Frac num={`32 × ${fmt1(SMM3, 2)} mm³`} den="π" />)^(1/3)
+            </>,
+          ]}
           final={`d_required = ${fmt1(dimOut, 2)} ${s.dimUnit}`}
         />
       )}

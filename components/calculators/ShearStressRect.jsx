@@ -5,6 +5,7 @@ import { computeShearRect } from '@/lib/calc/beamStresses';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -82,22 +83,36 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 단면2차모멘트와 단면적"
-        formula="I = b·h³/12,  A = b·h"
+        formula={
+          <>
+            I = <Frac num="b·h³" den="12" />, A = b·h
+          </>
+        }
         eqLines={[`b = ${s.b} ${s.dimUnit}, h = ${s.h} ${s.dimUnit}`]}
         final={`I = ${fmt1(res.I * 1e12, 2)} mm⁴,  A = ${fmt1(res.A * 1e6, 2)} mm²`}
       />
       <StepCard
         title="Step 2. 중립축의 단면1차모멘트"
-        formula="Q = (중립축 위쪽 면적) × (그 도심까지 거리) = b·(h/2)·(h/4)"
+        formula={
+          <>
+            Q = (중립축 위쪽 면적) × (그 도심까지 거리) = b·(<Frac num="h" den="2" />)·(<Frac num="h" den="4" />)
+          </>
+        }
         eqLines={[`Q = ${s.b} × ${fmt1(s.h / 2, 2)} × ${fmt1(s.h / 4, 2)} ${s.dimUnit}³`]}
         final={`Q = ${fmt1(res.Q_na * 1e9, 2)} mm³`}
       />
       <StepCard
         title="Step 3. 최대 전단응력"
-        formula="τ_max = V·Q / (I·b) = 1.5 V / A  (직사각형 특수해)"
+        formula={
+          <>
+            τ_max = <Frac num="V·Q" den="I·b" /> = <Frac num="1.5 V" den="A" /> (직사각형 특수해)
+          </>
+        }
         eqLines={[
           `일반식: τ = ${fmt1(MPa(res.tauMaxCheck), 3)} MPa`,
-          `특수해: τ = 1.5 × ${s.V} ${s.VUnit} / ${fmt1(res.A * 1e6, 2)} mm² = ${fmt1(MPa(res.tauMax), 3)} MPa`,
+          <>
+            특수해: τ = 1.5 × <Frac num={`${s.V} ${s.VUnit}`} den={`${fmt1(res.A * 1e6, 2)} mm²`} /> = {fmt1(MPa(res.tauMax), 3)} MPa
+          </>,
         ]}
         final={`τ_max = ${fmt1(MPa(res.tauMax), 3)} MPa (두 식이 같은 값 ✓)`}
       />

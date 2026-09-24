@@ -5,6 +5,7 @@ import { computeNormalStress } from '@/lib/calc/normalStress';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import {
   DualField,
   ToggleRow,
@@ -252,11 +253,27 @@ function Steps({ s, res }) {
   const deltaMm = fromBase(res.delta_m, 'mm', LENGTH_UNITS);
   let areaFormula, areaEq;
   if (s.sectionType === 'solid_circular') {
-    areaFormula = 'A = (π/4)·d²';
-    areaEq = `A = (π/4) × (${fmt1(s.dims.d, 2)} ${s.dimUnit})² = ${fmt1(A_disp, 2)} ${s.dimUnit}²`;
+    areaFormula = (
+      <>
+        A = <Frac num="π" den="4" />·d²
+      </>
+    );
+    areaEq = (
+      <>
+        A = <Frac num="π" den="4" /> × ({fmt1(s.dims.d, 2)} {s.dimUnit})² = {fmt1(A_disp, 2)} {s.dimUnit}²
+      </>
+    );
   } else if (s.sectionType === 'hollow_circular') {
-    areaFormula = 'A = (π/4)·(d₂² − d₁²)';
-    areaEq = `A = (π/4) × [(${fmt1(s.dims.d_outer, 2)})² − (${fmt1(s.dims.d_inner, 2)})²] ${s.dimUnit}² = ${fmt1(A_disp, 2)} ${s.dimUnit}²`;
+    areaFormula = (
+      <>
+        A = <Frac num="π" den="4" />·(d₂² − d₁²)
+      </>
+    );
+    areaEq = (
+      <>
+        A = <Frac num="π" den="4" /> × [({fmt1(s.dims.d_outer, 2)})² − ({fmt1(s.dims.d_inner, 2)})²] {s.dimUnit}² = {fmt1(A_disp, 2)} {s.dimUnit}²
+      </>
+    );
   } else {
     areaFormula = 'A = b × h';
     areaEq = `A = ${fmt1(s.dims.b, 2)} × ${fmt1(s.dims.h, 2)} ${s.dimUnit}² = ${fmt1(A_disp, 2)} ${s.dimUnit}²`;
@@ -267,9 +284,15 @@ function Steps({ s, res }) {
       <StepCard title="Step 1. Cross-sectional Area" formula={areaFormula} eqLines={[areaEq]} final={`A = ${fmt1(A_disp, 2)} ${s.dimUnit}²`} />
       <StepCard
         title="Step 2. Normal Stress"
-        formula="σ = P / A"
+        formula={
+          <>
+            σ = <Frac num="P" den="A" />
+          </>
+        }
         eqLines={[
-          `σ = ${s.P} ${s.PUnit} (${s.mode === 'tension' ? '인장 +' : '압축 −'}) / ${fmt1(A_disp, 2)} ${s.dimUnit}²`,
+          <>
+            σ = <Frac num={`${s.P} ${s.PUnit} (${s.mode === 'tension' ? '인장 +' : '압축 −'})`} den={`${fmt1(A_disp, 2)} ${s.dimUnit}²`} />
+          </>,
           `σ = ${fmt1(res.sigma_Pa, 0)} Pa`,
         ]}
         final={
@@ -280,8 +303,16 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 3. Normal Strain (Hooke's law, 보조계산)"
-        formula="ε = σ / E"
-        eqLines={[`ε = ${fmt1(res.sigma_Pa, 0)} Pa / ${fmt1(res.E_Pa, 0)} Pa`]}
+        formula={
+          <>
+            ε = <Frac num="σ" den="E" />
+          </>
+        }
+        eqLines={[
+          <>
+            ε = <Frac num={`${fmt1(res.sigma_Pa, 0)} Pa`} den={`${fmt1(res.E_Pa, 0)} Pa`} />
+          </>,
+        ]}
         final={
           <>
             ε = <span className={tone}>{fmt1(res.epsilon * 1e6, 1)} × 10⁻⁶</span> (무차원)

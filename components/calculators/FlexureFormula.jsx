@@ -5,6 +5,7 @@ import { computeFlexure } from '@/lib/calc/beamStresses';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { DimLineH, DimLineV } from './EditableDim';
@@ -101,7 +102,17 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 단면2차모멘트"
-        formula={s.sectionType === 'rectangular' ? 'I = b·h³/12' : 'I = πd⁴/64'}
+        formula={
+          s.sectionType === 'rectangular' ? (
+            <>
+              I = <Frac num="b·h³" den="12" />
+            </>
+          ) : (
+            <>
+              I = <Frac num="πd⁴" den="64" />
+            </>
+          )
+        }
         eqLines={[
           s.sectionType === 'rectangular'
             ? `b = ${s.dims.b} ${s.dimUnit}, h = ${s.dims.h} ${s.dimUnit}`
@@ -111,22 +122,38 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 2. 굽힘공식 (Flexure Formula)"
-        formula="σ = −M·y / I   (y는 중립축 기준, 위쪽이 +)"
+        formula={
+          <>
+            σ = <Frac num="−M·y" den="I" /> (y는 중립축 기준, 위쪽이 +)
+          </>
+        }
         eqLines={[
           `연단거리 c = ${fmt1(res.c * 1000, 2)} mm`,
-          `|σ| = ${fmt1(M_Nm * 1000, 1)} N·mm × ${fmt1(res.c * 1000, 2)} mm / ${fmt1(IMM4, 2)} mm⁴`,
+          <>
+            |σ| = <Frac num={`${fmt1(M_Nm * 1000, 1)} N·mm × ${fmt1(res.c * 1000, 2)} mm`} den={`${fmt1(IMM4, 2)} mm⁴`} />
+          </>,
         ]}
         final={`σ_top = ${fmt1(MPa(res.sigmaTop), 3)} MPa (압축), σ_bottom = ${fmt1(MPa(res.sigmaBottom), 3)} MPa (인장)`}
       />
       <StepCard
         title="Step 3. 곡률-모멘트 관계"
-        formula="κ = 1/ρ = M / (E·I)"
+        formula={
+          <>
+            κ = <Frac num="1" den="ρ" /> = <Frac num="M" den="E·I" />
+          </>
+        }
         eqLines={[
-          `κ = ${fmt1(M_Nm * 1000, 1)} N·mm / (${fmt1(E_MPa, 1)} MPa × ${fmt1(IMM4, 2)} mm⁴)`,
+          <>
+            κ = <Frac num={`${fmt1(M_Nm * 1000, 1)} N·mm`} den={`${fmt1(E_MPa, 1)} MPa × ${fmt1(IMM4, 2)} mm⁴`} />
+          </>,
           // mm 단위로 계산했으니 결과도 1/mm이다 — 여기에 ×1000을 해야 흔히 쓰는 1/m이 된다.
           `= ${(res.kappa / 1000).toExponential(3)} 1/mm  ×1000→  ${fmt1(res.kappa, 8)} 1/m`,
         ]}
-        final={`κ = ${fmt1(res.kappa, 8)} 1/m  (곡률반경 ρ = 1/κ = ${fmt1(1 / res.kappa, 2)} m)`}
+        final={
+          <>
+            κ = {fmt1(res.kappa, 8)} 1/m (곡률반경 ρ = <Frac num="1" den="κ" /> = {fmt1(1 / res.kappa, 2)} m)
+          </>
+        }
       />
     </>
   );

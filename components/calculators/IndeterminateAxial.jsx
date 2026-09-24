@@ -5,6 +5,7 @@ import { computeIndeterminate } from '@/lib/calc/indeterminateAxial';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
@@ -165,12 +166,39 @@ function Steps({ s, res }) {
   if (res.mode === 'rigidBeam') {
     return (
       <>
-        <StepCard title="Step 1. 평형방정식 ΣM_A=0" formula="F_B·b = P·L"
-          eqLines={[`F_B = ${s.rbP}×${s.rbL}/${s.rbB}`]} final={`F_B = ${kN(res.F_B)} kN`} />
-        <StepCard title="Step 2. 기둥 변형 (적합조건에 필요)" formula="δ_B = F_B·L_col/(E·A)" final={`δ_B = ${mm(res.delta_B)} mm`} />
-        <StepCard title="Step 3. 강체보 기하학적 적합조건"
-          formula="보가 강체이므로 변위는 A로부터 거리에 비례: δ_C = δ_B×(L/b)"
-          eqLines={[`δ_C = ${mm(res.delta_B)} × ${s.rbL}/${s.rbB}`]} final={`δ_C = ${mm(res.delta_C)} mm`} />
+        <StepCard
+          title="Step 1. 평형방정식 ΣM_A=0"
+          formula="F_B·b = P·L"
+          eqLines={[
+            <>
+              F_B = <Frac num={`${s.rbP}×${s.rbL}`} den={`${s.rbB}`} />
+            </>,
+          ]}
+          final={`F_B = ${kN(res.F_B)} kN`}
+        />
+        <StepCard
+          title="Step 2. 기둥 변형 (적합조건에 필요)"
+          formula={
+            <>
+              δ_B = <Frac num="F_B·L_col" den="E·A" />
+            </>
+          }
+          final={`δ_B = ${mm(res.delta_B)} mm`}
+        />
+        <StepCard
+          title="Step 3. 강체보 기하학적 적합조건"
+          formula={
+            <>
+              보가 강체이므로 변위는 A로부터 거리에 비례: δ_C = δ_B×(<Frac num="L" den="b" />)
+            </>
+          }
+          eqLines={[
+            <>
+              δ_C = {mm(res.delta_B)} × <Frac num={`${s.rbL}`} den={`${s.rbB}`} />
+            </>,
+          ]}
+          final={`δ_C = ${mm(res.delta_C)} mm`}
+        />
         <StepCard title="Step 4. ΣFy=0 (검산용 핀 반력)" formula="A_y = P − F_B" final={`A_y = ${kN(res.A_y)} kN`} />
       </>
     );
@@ -181,13 +209,51 @@ function Steps({ s, res }) {
       <StepCard title="Step 1. 평형방정식 (Equilibrium)" formula="R_A + R_B = P"
         eqLines={['두 반력의 합이 하중과 같아야 하지만, 미지수 2개(R_A,R_B)에 식 1개뿐 — 부정정(1차)']}
         final={`R_A + R_B = ${s.P} ${s.PUnit}`} />
-      <StepCard title="Step 2. 적합조건 (Compatibility)" formula="δ_AC + δ_CB = 0 (양단 고정, 전체 길이 불변)"
-        eqLines={['N_AC·a/(EA) + N_CB·b/(EA) = 0']} final="→ R_A = Pb/L, R_B = Pa/L" />
-      <StepCard title="Step 3. 반력 계산" formula="R_A = Pb/L,  R_B = Pa/L"
-        eqLines={[`R_A = ${s.P}×${s.b}/(${s.a}+${s.b})`, `R_B = ${s.P}×${s.a}/(${s.a}+${s.b})`]}
-        final={`R_A = ${kN(res.R_A)} kN,  R_B = ${kN(res.R_B)} kN`} />
-      <StepCard title="Step 4. 하중점 변위" formula="δ_C = N_AC·a / (EA)"
-        eqLines={[`δ_C = ${kN(res.N_AC)} kN × ${s.a} ${s.LUnit} / (EA)`]} final={`δ_C = ${mm(res.delta_C)} mm`} />
+      <StepCard
+        title="Step 2. 적합조건 (Compatibility)"
+        formula="δ_AC + δ_CB = 0 (양단 고정, 전체 길이 불변)"
+        eqLines={[
+          <>
+            <Frac num="N_AC·a" den="EA" /> + <Frac num="N_CB·b" den="EA" /> = 0
+          </>,
+        ]}
+        final={
+          <>
+            → R_A = <Frac num="Pb" den="L" />, R_B = <Frac num="Pa" den="L" />
+          </>
+        }
+      />
+      <StepCard
+        title="Step 3. 반력 계산"
+        formula={
+          <>
+            R_A = <Frac num="Pb" den="L" />, R_B = <Frac num="Pa" den="L" />
+          </>
+        }
+        eqLines={[
+          <>
+            R_A = <Frac num={`${s.P}×${s.b}`} den={`${s.a}+${s.b}`} />
+          </>,
+          <>
+            R_B = <Frac num={`${s.P}×${s.a}`} den={`${s.a}+${s.b}`} />
+          </>,
+        ]}
+        final={`R_A = ${kN(res.R_A)} kN,  R_B = ${kN(res.R_B)} kN`}
+      />
+      <StepCard
+        title="Step 4. 하중점 변위"
+        formula={
+          <>
+            δ_C = <Frac num="N_AC·a" den="EA" />
+          </>
+        }
+        eqLines={[
+          <>
+            δ_C = <Frac num={`${kN(res.N_AC)} kN × ${s.a} ${s.LUnit}`} den="EA" />
+          </>,
+        ]}
+        final={`δ_C = ${mm(res.delta_C)} mm`}
+      />
     </>
   );
 }

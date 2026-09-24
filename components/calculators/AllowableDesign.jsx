@@ -5,6 +5,7 @@ import { computeAllowableDesign } from '@/lib/calc/allowableDesign';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import {
   DualField,
   ToggleRow,
@@ -227,8 +228,16 @@ function Steps({ s, res }) {
   const allowStep = s.useFOS ? (
     <StepCard
       title="Step 0. Allowable Stress from Factor of Safety"
-      formula="σ_allow = failure strength / n"
-      eqLines={[`σ_allow = ${s.failureStrength} ${s.stressUnit} / ${s.n}`]}
+      formula={
+        <>
+          σ_allow = <Frac num="failure strength" den="n" />
+        </>
+      }
+      eqLines={[
+        <>
+          σ_allow = <Frac num={`${s.failureStrength} ${s.stressUnit}`} den={`${s.n}`} />
+        </>,
+      ]}
       final={`σ_allow = ${fmt1(fromBase(res.sigma_allow_Pa, 'MPa', STRESS_UNITS), 2)} MPa`}
     />
   ) : null;
@@ -240,8 +249,16 @@ function Steps({ s, res }) {
         {allowStep}
         <StepCard
           title="Step 1. Actual Stress"
-          formula="σ_actual = P / A"
-          eqLines={[`σ_actual = ${s.P} ${s.PUnit} / ${fmt1(A_disp, 2)} ${s.dimUnit}²`]}
+          formula={
+            <>
+              σ_actual = <Frac num="P" den="A" />
+            </>
+          }
+          eqLines={[
+            <>
+              σ_actual = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(A_disp, 2)} ${s.dimUnit}²`} />
+            </>,
+          ]}
           final={`σ_actual = ${fmt1(fromBase(res.sigma_actual_Pa, 'MPa', STRESS_UNITS), 2)} MPa`}
         />
         <StepCard
@@ -282,21 +299,54 @@ function Steps({ s, res }) {
   let shapeStep = null;
   if (res.d_required_m !== undefined) {
     shapeStep = (
-      <StepCard title="Step 2. Required Diameter" formula="d_required = √(4·A_required/π)"
-        eqLines={[`d_required = √(4 × ${fmt1(Areq_disp, 2)} ${s.dimUnit}² / π)`]}
-        final={`d_required = ${fmt1(fromBase(res.d_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`} />
+      <StepCard
+        title="Step 2. Required Diameter"
+        formula={
+          <>
+            d_required = √(<Frac num="4·A_required" den="π" />)
+          </>
+        }
+        eqLines={[
+          <>
+            d_required = √(<Frac num={`4 × ${fmt1(Areq_disp, 2)} ${s.dimUnit}²`} den="π" />)
+          </>,
+        ]}
+        final={`d_required = ${fmt1(fromBase(res.d_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`}
+      />
     );
   } else if (res.d_inner_required_m !== undefined) {
     shapeStep = (
-      <StepCard title="Step 2. Required Inner Diameter" formula="d₁_required = √(d₂² − 4·A_required/π)"
-        eqLines={[`d₁_required = √((${s.dims.d_outer})² − 4×${fmt1(Areq_disp, 2)}/π) ${s.dimUnit}`]}
-        final={`d₁_required = ${fmt1(fromBase(res.d_inner_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`} />
+      <StepCard
+        title="Step 2. Required Inner Diameter"
+        formula={
+          <>
+            d₁_required = √(d₂² − <Frac num="4·A_required" den="π" />)
+          </>
+        }
+        eqLines={[
+          <>
+            d₁_required = √(({s.dims.d_outer})² − <Frac num={`4×${fmt1(Areq_disp, 2)}`} den="π" />) {s.dimUnit}
+          </>,
+        ]}
+        final={`d₁_required = ${fmt1(fromBase(res.d_inner_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`}
+      />
     );
   } else if (res.h_required_m !== undefined) {
     shapeStep = (
-      <StepCard title="Step 2. Required Height" formula="h_required = A_required / b"
-        eqLines={[`h_required = ${fmt1(Areq_disp, 2)} ${s.dimUnit}² / ${s.dims.b} ${s.dimUnit}`]}
-        final={`h_required = ${fmt1(fromBase(res.h_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`} />
+      <StepCard
+        title="Step 2. Required Height"
+        formula={
+          <>
+            h_required = <Frac num="A_required" den="b" />
+          </>
+        }
+        eqLines={[
+          <>
+            h_required = <Frac num={`${fmt1(Areq_disp, 2)} ${s.dimUnit}²`} den={`${s.dims.b} ${s.dimUnit}`} />
+          </>,
+        ]}
+        final={`h_required = ${fmt1(fromBase(res.h_required_m, s.dimUnit, LENGTH_UNITS), 2)} ${s.dimUnit}`}
+      />
     );
   }
 
@@ -305,8 +355,16 @@ function Steps({ s, res }) {
       {allowStep}
       <StepCard
         title="Step 1. Required Area"
-        formula="A_required = P / σ_allow"
-        eqLines={[`A_required = ${s.P} ${s.PUnit} / ${fmt1(fromBase(res.sigma_allow_Pa, 'MPa', STRESS_UNITS), 2)} MPa`]}
+        formula={
+          <>
+            A_required = <Frac num="P" den="σ_allow" />
+          </>
+        }
+        eqLines={[
+          <>
+            A_required = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(fromBase(res.sigma_allow_Pa, 'MPa', STRESS_UNITS), 2)} MPa`} />
+          </>,
+        ]}
         final={`A_required = ${fmt1(Areq_disp, 2)} ${s.dimUnit}²`}
       />
       {shapeStep}

@@ -5,6 +5,7 @@ import { computeShear } from '@/lib/calc/shearStress';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import {
   DualField,
   SelectField,
@@ -147,17 +148,41 @@ function Steps({ s, res }) {
       <>
         <StepCard
           title="Step 1. Shear Area"
-          formula="A = (π/4)·d²"
-          eqLines={[`A = (π/4) × (${s.d} ${s.dimUnit})² = ${fmt1(A_disp, 3)} ${s.dimUnit}²`]}
+          formula={
+            <>
+              A = <Frac num="π" den="4" />·d²
+            </>
+          }
+          eqLines={[
+            <>
+              A = <Frac num="π" den="4" /> × ({s.d} {s.dimUnit})² = {fmt1(A_disp, 3)} {s.dimUnit}²
+            </>,
+          ]}
           final={`A = ${fmt1(A_disp, 3)} ${s.dimUnit}²`}
         />
         <StepCard
           title="Step 2. Shear Stress"
-          formula={s.mode === 'single' ? 'τ = P / A' : 'τ = P / (2A)  (전단면 2개)'}
+          formula={
+            s.mode === 'single' ? (
+              <>
+                τ = <Frac num="P" den="A" />
+              </>
+            ) : (
+              <>
+                τ = <Frac num="P" den="2A" /> (전단면 2개)
+              </>
+            )
+          }
           eqLines={[
-            s.mode === 'single'
-              ? `τ = ${s.P} ${s.PUnit} / ${fmt1(A_disp, 3)} ${s.dimUnit}²`
-              : `τ = ${s.P} ${s.PUnit} / (2 × ${fmt1(A_disp, 3)} ${s.dimUnit}²)`,
+            s.mode === 'single' ? (
+              <>
+                τ = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(A_disp, 3)} ${s.dimUnit}²`} />
+              </>
+            ) : (
+              <>
+                τ = <Frac num={`${s.P} ${s.PUnit}`} den={`2 × ${fmt1(A_disp, 3)} ${s.dimUnit}²`} />
+              </>
+            ),
           ]}
           final={`τ = ${fmt1(fromBase(res.tau_Pa, 'MPa', STRESS_UNITS), 2)} MPa`}
         />
@@ -176,8 +201,16 @@ function Steps({ s, res }) {
         />
         <StepCard
           title="Step 2. Bearing Stress"
-          formula="σ_b = P / A_b"
-          eqLines={[`σ_b = ${s.P} ${s.PUnit} / ${fmt1(Ab_disp, 3)} ${s.dimUnit}²`]}
+          formula={
+            <>
+              σ_b = <Frac num="P" den="A_b" />
+            </>
+          }
+          eqLines={[
+            <>
+              σ_b = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(Ab_disp, 3)} ${s.dimUnit}²`} />
+            </>,
+          ]}
           final={`σ_b = ${fmt1(fromBase(res.sigma_b_Pa, 'MPa', STRESS_UNITS), 2)} MPa`}
         />
       </>
@@ -187,8 +220,16 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. Shear Strain (radian 변환)"
-        formula="γ(rad) = γ(deg) × π/180"
-        eqLines={[`γ = ${s.gammaDeg}° × π/180`]}
+        formula={
+          <>
+            γ(rad) = γ(deg) × <Frac num="π" den="180" />
+          </>
+        }
+        eqLines={[
+          <>
+            γ = {s.gammaDeg}° × <Frac num="π" den="180" />
+          </>,
+        ]}
         final={`γ = ${fmt1(res.gamma_rad, 5)} rad`}
       />
       <StepCard

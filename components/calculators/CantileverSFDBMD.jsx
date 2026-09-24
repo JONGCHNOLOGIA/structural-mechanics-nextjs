@@ -5,6 +5,7 @@ import { computeCantileverSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { BeamSchematic, CurveDiagram } from './sm1/BeamDiagrams';
@@ -116,8 +117,16 @@ function Steps({ s, res }) {
       />
       <StepCard
         title="Step 2. 고정단 모멘트"
-        formula="M₀ = −(P·a + q·L²/2)"
-        eqLines={[`M₀ = −(${s.P}×${s.a} + ${s.q}×${s.L}²/2)`]}
+        formula={
+          <>
+            M₀ = −(P·a + <Frac num="q·L²" den="2" />)
+          </>
+        }
+        eqLines={[
+          <>
+            M₀ = −({s.P}×{s.a} + <Frac num={`${s.q}×${s.L}²`} den="2" />)
+          </>,
+        ]}
         final={`M₀ = ${fmt1(kNm(res.M0), 3)} kN·m (음수 = hogging)`}
       />
       <StepCard

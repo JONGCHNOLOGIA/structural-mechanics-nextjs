@@ -5,6 +5,7 @@ import { computeTorsionFormula } from '@/lib/calc/torsion';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, toBase, fromBase, fmt1, scaledPx } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { Dim, DimLineH } from './EditableDim';
@@ -102,25 +103,53 @@ function Steps({ s, res }) {
     <>
       <StepCard
         title="Step 1. 극관성모멘트"
-        formula={s.sectionType === 'solid_circular' ? 'Ip = πd⁴/32' : 'Ip = π(d₂⁴−d₁⁴)/32'}
+        formula={
+          s.sectionType === 'solid_circular' ? (
+            <>
+              Ip = <Frac num="πd⁴" den="32" />
+            </>
+          ) : (
+            <>
+              Ip = <Frac num="π(d₂⁴−d₁⁴)" den="32" />
+            </>
+          )
+        }
         eqLines={[dLabel, `Ip = ${fmt1(IpMM4, 2)} mm⁴`]}
         final={`Ip = ${fmt1(IpMM4, 2)} mm⁴`}
       />
       <StepCard
         title="Step 2. 최대 전단응력 (Torsion Formula)"
-        formula="τ_max = T·r / Ip"
+        formula={
+          <>
+            τ_max = <Frac num="T·r" den="Ip" />
+          </>
+        }
         eqLines={[
           `T = ${s.T} ${s.TUnit} = ${fmt1(T_Nmm, 1)} N·mm,  r = ${fmt1(rMM, 2)} mm`,
-          `τ_max = ${fmt1(T_Nmm, 1)} × ${fmt1(rMM, 2)} / ${fmt1(IpMM4, 2)}`,
+          <>
+            τ_max = <Frac num={`${fmt1(T_Nmm, 1)} × ${fmt1(rMM, 2)}`} den={`${fmt1(IpMM4, 2)}`} />
+          </>,
         ]}
         final={`τ_max = ${fmt1(fromBase(res.tauMax, 'MPa', STRESS_UNITS), 3)} MPa`}
       />
       {res.rInner > 0 && (
         <StepCard
           title="Step 3. 내경면 전단응력"
-          formula="τ_min = T·r₁ / Ip"
-          eqLines={[`τ_min = ${fmt1(T_Nmm, 1)} × ${fmt1(rInMM, 2)} / ${fmt1(IpMM4, 2)}`]}
-          final={`τ_min = ${fmt1(fromBase(res.tauMin, 'MPa', STRESS_UNITS), 3)} MPa (= τ_max × r₁/r₂)`}
+          formula={
+            <>
+              τ_min = <Frac num="T·r₁" den="Ip" />
+            </>
+          }
+          eqLines={[
+            <>
+              τ_min = <Frac num={`${fmt1(T_Nmm, 1)} × ${fmt1(rInMM, 2)}`} den={`${fmt1(IpMM4, 2)}`} />
+            </>,
+          ]}
+          final={
+            <>
+              τ_min = {fmt1(fromBase(res.tauMin, 'MPa', STRESS_UNITS), 3)} MPa (= τ_max × <Frac num="r₁" den="r₂" />)
+            </>
+          }
         />
       )}
     </>

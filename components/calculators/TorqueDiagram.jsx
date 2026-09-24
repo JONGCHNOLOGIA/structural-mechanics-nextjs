@@ -5,6 +5,7 @@ import { computeTorqueDiagram } from '@/lib/calc/torsion';
 import { LENGTH_UNITS, STRESS_UNITS, TORQUE_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { StepDiagram } from './sm1/Diagrams';
@@ -118,10 +119,18 @@ function Steps({ s, res }) {
     <StepCard
       key={i}
       title={`Step ${i + 1}. 구간 ${i + 1} 비틀림각`}
-      formula="φᵢ = Tᵢ·Lᵢ / (Gᵢ·Ipᵢ)"
+      formula={
+        <>
+          φᵢ = <Frac num="Tᵢ·Lᵢ" den="Gᵢ·Ipᵢ" />
+        </>
+      }
       eqLines={[
-        `Ip${i + 1} = πd⁴/32 = ${fmt1(p.Ip * 1e12, 1)} mm⁴`,
-        `φ${i + 1} = ${fmt1(p.T_Nm, 1)} N·m × ${fmt1(p.L_m, 3)} m / (${fmt1(fromBase(p.G_Pa, 'GPa', STRESS_UNITS), 1)} GPa × Ip${i + 1})`,
+        <>
+          Ip{i + 1} = <Frac num="πd⁴" den="32" /> = {fmt1(p.Ip * 1e12, 1)} mm⁴
+        </>,
+        <>
+          φ{i + 1} = <Frac num={`${fmt1(p.T_Nm, 1)} N·m × ${fmt1(p.L_m, 3)} m`} den={`${fmt1(fromBase(p.G_Pa, 'GPa', STRESS_UNITS), 1)} GPa × Ip${i + 1}`} />
+        </>,
       ]}
       final={`φ${i + 1} = ${fmt1((p.phi * 180) / Math.PI, 3)}°,  τ_max = ${fmt1(fromBase(p.tauMax, 'MPa', STRESS_UNITS), 2)} MPa`}
     />

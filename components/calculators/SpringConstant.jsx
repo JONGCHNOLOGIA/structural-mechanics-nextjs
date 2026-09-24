@@ -5,6 +5,7 @@ import { computeSpringConstant } from '@/lib/calc/springConstant';
 import { LENGTH_UNITS, FORCE_UNITS, STRESS_UNITS, AREA_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
 import EditableText from '@/components/EditableText';
+import Frac from '@/components/Frac';
 import { DualField, ToggleRow, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
 import { AxialForceDiagramBlock, AxialFBD } from './sm1/Diagrams';
@@ -112,15 +113,52 @@ function Steps({ s, res }) {
     <>
           {res.valid ? (
             <>
-              <StepCard title="Step 1. Axial Rigidity & Spring Constant" formula="k = EA / L"
-                eqLines={[`k = ${s.E} ${s.EUnit} × ${s.A} ${s.AUnit} / ${s.L} ${s.LUnit}`]}
-                final={`k = ${fmt1(res.k / 1e6, 3)} MN/m`} />
-              <StepCard title="Step 2. Flexibility" formula="f = 1/k = L/(EA)"
-                eqLines={[`f = 1 / ${fmt1(res.k / 1e6, 3)} MN/m`]}
-                final={`f = ${fmt1(res.f * 1e6, 4)} µm/N`} />
-              <StepCard title="Step 3. Displacement" formula="δ = P/k = PL/(EA)"
-                eqLines={[`δ = ${s.P} ${s.PUnit} / ${fmt1(res.k / 1e6, 3)} MN/m`]}
-                final={<>δ = <span className={tone}>{fmt1(fromBase(res.delta_m, 'mm', LENGTH_UNITS), 4)} mm</span></>} />
+              <StepCard
+                title="Step 1. Axial Rigidity & Spring Constant"
+                formula={
+                  <>
+                    k = <Frac num="EA" den="L" />
+                  </>
+                }
+                eqLines={[
+                  <>
+                    k = <Frac num={`${s.E} ${s.EUnit} × ${s.A} ${s.AUnit}`} den={`${s.L} ${s.LUnit}`} />
+                  </>,
+                ]}
+                final={`k = ${fmt1(res.k / 1e6, 3)} MN/m`}
+              />
+              <StepCard
+                title="Step 2. Flexibility"
+                formula={
+                  <>
+                    f = <Frac num="1" den="k" /> = <Frac num="L" den="EA" />
+                  </>
+                }
+                eqLines={[
+                  <>
+                    f = <Frac num="1" den={`${fmt1(res.k / 1e6, 3)} MN/m`} />
+                  </>,
+                ]}
+                final={`f = ${fmt1(res.f * 1e6, 4)} µm/N`}
+              />
+              <StepCard
+                title="Step 3. Displacement"
+                formula={
+                  <>
+                    δ = <Frac num="P" den="k" /> = <Frac num="PL" den="EA" />
+                  </>
+                }
+                eqLines={[
+                  <>
+                    δ = <Frac num={`${s.P} ${s.PUnit}`} den={`${fmt1(res.k / 1e6, 3)} MN/m`} />
+                  </>,
+                ]}
+                final={
+                  <>
+                    δ = <span className={tone}>{fmt1(fromBase(res.delta_m, 'mm', LENGTH_UNITS), 4)} mm</span>
+                  </>
+                }
+              />
             </>
           ) : (
             <InputNeededPlaceholder />
