@@ -193,7 +193,7 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
         <span className="page-subheader-title">문제 생성</span>
       </div>
 
-      <div style={{ maxWidth: 1600, margin: '20px auto 0', padding: '0 64px' }}>
+      <div className="pg-wrap" style={{ maxWidth: 1600, margin: '20px auto 0' }}>
         <EditableText
           as="div"
           contentKey={`problemGenerator.${subject}.intro`}
@@ -311,7 +311,7 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
       </div>
 
       {problems && (
-        <div style={{ maxWidth: 1600, margin: '0 auto 40px', padding: '0 64px' }}>
+        <div className="pg-wrap" style={{ maxWidth: 1600, margin: '0 auto 40px' }}>
           <EditableText
             as="div"
             contentKey="problemGenerator.resultNote"
@@ -332,7 +332,7 @@ function ProblemGeneratorContent({ chapters, chapterIcons, problemBank, generate
                 <div className="step-header static">
                   문제 {i + 1} · {p.ch.num} {p.st.name}
                 </div>
-                <div className="step-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div className="step-body pg-step-body" style={{ display: 'grid', gap: 20 }}>
                   {/* 왼쪽: 문제 */}
                   <div>
                     <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 12, whiteSpace: 'pre-line' }}>

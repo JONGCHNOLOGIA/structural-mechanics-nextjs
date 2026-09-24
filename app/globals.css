@@ -354,6 +354,12 @@ input[type='range']::-moz-range-thumb{
 .field-with-slider{ display:flex; align-items:center; gap:8px; }
 .field-with-slider .input-unit-group{ flex:1; min-width:0; }
 .mini-slider{ width:84px; flex:0 0 84px; accent-color:var(--crimson); }
+/* 문제 생성기 결과 영역(ProblemGeneratorView.jsx) 전용 — .panels/.board 같은 공용 셸이 아니라
+   이 페이지 안에서 따로 만든 폭 제한(64px 좌우 여백)이라 지난 모바일 패스 때 같이 못 잡았다.
+   실제 사용자가 폰에서 "문제/풀이 첨부가 좌우로 꽉 낀다"고 지적해서 발견한 부분. */
+.pg-wrap{ padding:0 64px; }
+.pg-step-body{ grid-template-columns:1fr 1fr; }
+
 .steps{ margin-top:4px; }
 .step-card{ border:1px solid var(--line); border-radius:0; margin-bottom:10px; }
 .step-header{
@@ -660,6 +666,9 @@ input[type='range']::-moz-range-thumb{
   .tabs{ padding:0 24px; }
   .panels{ grid-template-columns:minmax(0, 1fr); padding:0 24px; }
   .panel{ min-height:0; min-width:0; }
+  /* 문제 생성기 결과(문제 지문 | 풀이 사진 첨부) 2단도 같은 이유로 태블릿 세로부터 쌓는다. */
+  .pg-wrap{ padding:0 24px; }
+  .pg-step-body{ grid-template-columns:minmax(0, 1fr); }
   /* 3단일 때만 의미 있던 "스크롤해도 AI 튜터 패널은 그 자리에 붙어있기"(sticky)를 세로로 쌓인
      상태에서 그대로 두면 다른 두 패널 위로 계속 떠서 내용을 가린다 — 일반 흐름으로 풀어준다. */
   .panel-ai{ position:static; max-height:none; }
@@ -687,6 +696,7 @@ input[type='range']::-moz-range-thumb{
   .tabs{ padding:0 16px; }
   .panels{ padding:0 16px; gap:16px; }
   .panel{ padding:18px; }
+  .pg-wrap{ padding:0 16px; }
 
   .footer-top-inner{ padding:0 16px; }
   .footer-bottom-inner{ padding:28px 16px 20px; }
