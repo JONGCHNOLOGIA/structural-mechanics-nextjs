@@ -296,14 +296,26 @@ input[type='range']::-moz-range-thumb{
   transition:background 0.15s ease;
 }
 .block-card.drag-over{ background:var(--crimson-soft); border-color:var(--crimson); }
-.block-card .block-title{ font-size:11.5px; font-weight:800; color:var(--gray); margin-bottom:10px; padding-left:20px; }
+.block-card .block-title{ font-size:11.5px; font-weight:800; color:var(--gray); margin-bottom:10px; padding-left:58px; }
 .drag-handle{
   position:absolute; top:10px; left:10px; cursor:grab; color:var(--gray-soft); font-size:15px;
   line-height:1; user-select:none;
 }
 .drag-handle:active{ cursor:grabbing; }
+/* 위 drag-handle의 HTML5 draggable은 터치 기기에서 이벤트가 아예 안 붙는다(CompositeBeams.jsx/
+   TransformedSection.jsx 둘 다 해당) — 같은 자리 옆에 ▲▼ 버튼을 둬서 마우스가 없어도 순서를
+   바꿀 수 있게 한다. 24×20px로 잡은 건 "손가락으로 누르기 편한 최소 크기"(대략 24px 안팎)
+   가이드라인에 맞춘 것 — 원래 20×16px이던 걸 이 패스에서 올렸다. */
+.reorder-btns{ position:absolute; top:6px; left:28px; display:flex; flex-direction:column; gap:2px; }
+.reorder-btn{
+  width:24px; height:20px; padding:0; border:1px solid var(--line); border-radius:0;
+  background:var(--card); color:var(--gray-soft); font-size:10px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-family:inherit;
+}
+.reorder-btn:hover:not(:disabled){ border-color:var(--crimson); color:var(--crimson); }
+.reorder-btn:disabled{ opacity:0.3; cursor:default; }
 .remove-block{
-  position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%;
+  position:absolute; top:10px; right:10px; width:24px; height:24px; border-radius:50%;
   background:var(--card); border:1px solid var(--line); color:var(--gray-soft);
   font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
@@ -318,6 +330,10 @@ input[type='range']::-moz-range-thumb{
 .block-field-tile{
   border:1.3px solid var(--line); border-radius:0; padding:6px 4px 7px; text-align:center;
   background:var(--card); cursor:pointer; transition:border-color 0.15s ease;
+  /* FieldBlockCard.jsx는 필드 개수만큼 타일을 만드는데(repeat(N,1fr) 인라인 스타일), 그 1fr도
+     .panels/.board와 같은 이유로 min-width:0이 없으면 number input의 내용 크기만큼 안 줄어든다 —
+     타일 자체를 그리드 항목으로서 명시적으로 줄어들 수 있게 한다. */
+  min-width:0;
 }
 .block-field-tile:hover{ border-color:var(--gray-soft); }
 .block-field-tile.active{ font-weight:700; }
@@ -632,13 +648,18 @@ input[type='range']::-moz-range-thumb{
   .hero{ flex-direction:column; align-items:flex-start; padding:0 24px; gap:20px; }
   .hero-art{ align-self:center; }
 
-  .board{ grid-template-columns:1fr; padding:0 24px; margin:32px auto; gap:24px; }
+  /* 1fr 트랙 하나만 있어도 그 안의 내용(예: 필드 타일 grid, 계산기별 커스텀 레이아웃)이 더
+     넓으면 트랙 자체가 같이 넓어져서 화면 밖으로 밀려난다 — "1fr"는 아래로 줄어들 수 있는
+     최솟값이 auto(내용 크기)라 그렇다. minmax(0, 1fr)로 최솟값을 0으로 낮춰야 실제로
+     뷰포트 폭 밑으로 줄어든다. 실측(다른 계산기 페이지들의 필드 타일 grid)으로 확인한
+     실제 버그였다. */
+  .board{ grid-template-columns:minmax(0, 1fr); padding:0 24px; margin:32px auto; gap:24px; }
   .continue-learning{ padding:0 24px; }
 
   .page-subheader{ padding:0 24px; }
   .tabs{ padding:0 24px; }
-  .panels{ grid-template-columns:1fr; padding:0 24px; }
-  .panel{ min-height:0; }
+  .panels{ grid-template-columns:minmax(0, 1fr); padding:0 24px; }
+  .panel{ min-height:0; min-width:0; }
   /* 3단일 때만 의미 있던 "스크롤해도 AI 튜터 패널은 그 자리에 붙어있기"(sticky)를 세로로 쌓인
      상태에서 그대로 두면 다른 두 패널 위로 계속 떠서 내용을 가린다 — 일반 흐름으로 풀어준다. */
   .panel-ai{ position:static; max-height:none; }

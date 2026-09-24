@@ -80,17 +80,21 @@ export default function AreaCentroidTable() {
         a = 조각의 높이, l = 조각의 길이이고, <b>x̄는 오른쪽 끝에서 잰 거리</b>예요.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 10, fontSize: 10.5, fontWeight: 800, color: 'var(--gray-soft)' }}>
+        {/* 모양(134px)+넓이(76px)+x̄(56px)+설명 4칸을 고정폭으로 한 줄에 늘어놓던 걸, 좁은 화면(폰)
+            에서 칸이 넘치지 않도록 flexWrap을 켠다 — 설명 칸은 minWidth를 0으로 낮춰서(기본값
+            auto면 내용 길이만큼 폭을 요구해 줄바꿈 대신 그냥 넘쳐버린다) 필요하면 통째로 다음 줄로
+            떨어지게 한다. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 10.5, fontWeight: 800, color: 'var(--gray-soft)' }}>
           <span style={{ width: 134 }}>모양</span>
           <span style={{ width: 76 }}>넓이 (Area)</span>
           <span style={{ width: 56 }}>x̄</span>
         </div>
         {ROWS.map((r) => (
-          <div key={r.name} style={{ display: 'flex', gap: 10, alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: 6 }}>
+          <div key={r.name} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: 6 }}>
             <ShapeSVG row={r} />
             <span style={{ width: 76, fontSize: 12.5, fontWeight: 800 }}>{r.area}</span>
             <span style={{ width: 56, fontSize: 12.5, fontWeight: 800 }}>{r.xbar}</span>
-            <span style={{ flex: 1, fontSize: 10.5, color: 'var(--gray-soft)', lineHeight: 1.5 }}>{r.note}</span>
+            <span style={{ flex: '1 1 160px', minWidth: 0, fontSize: 10.5, color: 'var(--gray-soft)', lineHeight: 1.5 }}>{r.note}</span>
           </div>
         ))}
       </div>

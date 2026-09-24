@@ -151,6 +151,19 @@ export default function TransformedSection() {
     dragIndexRef.current = null;
   }
 
+  // 위 handleDrop의 HTML5 드래그앤드롭은 터치 기기에서 이벤트 자체가 안 붙어서, 인접 항목을
+  // 맞바꾸는 버튼을 별도로 둔다(CompositeBeams.jsx와 동일한 이유).
+  function moveBlock(index, dir) {
+    const j = index + dir;
+    if (j < 0 || j >= blocks.length) return;
+    setBlocks((prev) => {
+      const next = [...prev];
+      [next[index], next[j]] = [next[j], next[index]];
+      return next;
+    });
+    setRefIndex((r) => (r === index ? j : r === j ? index : r));
+  }
+
   return (
     <>
       {/* ---------------- Setting Menu ---------------- */}
@@ -185,6 +198,8 @@ export default function TransformedSection() {
               onDragStart={() => handleDragStart(i)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => handleDrop(i)}
+              onMoveUp={() => moveBlock(i, 1)}
+              onMoveDown={() => moveBlock(i, -1)}
             />
           ))}
 
@@ -333,7 +348,7 @@ export default function TransformedSection() {
 // Width/Height/E 필드를 각자 label+input로 통째로 늘어놓던 걸 CompositeBeams.jsx와 동일한
 // "활성 필드 슬라이더 1줄 + 타일 그리드" 패턴으로 압축한 버전. 이 계산기는 상단폭/하단폭이
 // 따로 있어서 타일이 4개(Top/Bottom/Height/E).
-function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onSetRef, onDragStart, onDragOver, onDrop }) {
+function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onSetRef, onDragStart, onDragOver, onDrop, onMoveUp, onMoveDown }) {
   const c = blockColor(block);
   const lenF = UNIT_OPTIONS.length[units.length];
   const disp = (base, factor) => base / factor;
@@ -353,6 +368,14 @@ function TransformedBlockCard({ block, units, isBottom, isTop, isRef, canRemove,
     <div className="block-card" onDragOver={onDragOver} onDrop={onDrop}>
       <span className="drag-handle" draggable title="끌어서 순서 변경" onDragStart={onDragStart}>
         ⠿
+      </span>
+      <span className="reorder-btns">
+        <button type="button" className="reorder-btn" disabled={isTop} onClick={onMoveUp} aria-label="위로 이동" title="위로 이동">
+          ▲
+        </button>
+        <button type="button" className="reorder-btn" disabled={isBottom} onClick={onMoveDown} aria-label="아래로 이동" title="아래로 이동">
+          ▼
+        </button>
       </span>
       <div className="block-title">
         <span className="color-dot" style={{ background: c.stroke }} />

@@ -179,6 +179,21 @@ export default function CompositeBeams() {
     markStale();
   }
 
+  // 위 handleDrop의 HTML5 드래그앤드롭(draggable/onDragStart/onDrop)은 터치 기기에서는 애초에
+  // 이벤트 자체가 안 붙는다 — 태블릿·폰에서는 순서를 바꿀 방법이 없었다. 같은 결과(배열 내
+  // 인접 항목 교환)를 내는 버튼을 별도로 둬서 마우스든 터치든 다 되게 한다.
+  function moveBlock(index, dir) {
+    setBlocks((prev) => {
+      const j = index + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[j]] = [next[j], next[index]];
+      return next;
+    });
+    setSandwichLinked(false);
+    markStale();
+  }
+
   function momentEffectiveRange() {
     const momR = cbSliderRangeFor('moment', units.moment);
     if (!momentRangeOverrideBase) return momR;
@@ -252,6 +267,8 @@ export default function CompositeBeams() {
               onDragStart={() => handleDragStart(i)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => handleDrop(i)}
+              onMoveUp={() => moveBlock(i, 1)}
+              onMoveDown={() => moveBlock(i, -1)}
             />
           );
         })}
@@ -375,7 +392,7 @@ export default function CompositeBeams() {
 // Width/Height/E 세 필드를 각자 label+input+unit+slider로 통째로 늘어놓던 걸 압축한 버전.
 // 세 필드 중 하나를 "활성 필드"로 골라 위쪽 슬라이더 한 줄로만 조작하고, 아래 3분할 타일은
 // 값 확인 + 직접 타이핑 + 활성 필드 전환(클릭)을 겸함.
-function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onDragStart, onDragOver, onDrop }) {
+function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange, onLengthUnitChange, onRemove, onDragStart, onDragOver, onDrop, onMoveUp, onMoveDown }) {
   const c = blockColor(block);
   const lenF = UNIT_OPTIONS.length[units.length];
   const disp = (base, factor) => base / factor;
@@ -394,6 +411,15 @@ function BlockCard({ block, units, isBottom, isTop, onFieldChange, onEUnitChange
     <div className="block-card" onDragOver={onDragOver} onDrop={onDrop}>
       <span className="drag-handle" draggable title="끌어서 순서 변경" onDragStart={onDragStart}>
         ⠿
+      </span>
+      {/* 터치 기기용 순서 변경 버튼 — 드래그앤드롭이 안 통하는 기기를 위한 대체 수단. */}
+      <span className="reorder-btns">
+        <button type="button" className="reorder-btn" disabled={isTop} onClick={onMoveUp} aria-label="위로 이동" title="위로 이동">
+          ▲
+        </button>
+        <button type="button" className="reorder-btn" disabled={isBottom} onClick={onMoveDown} aria-label="아래로 이동" title="아래로 이동">
+          ▼
+        </button>
       </span>
       <div className="block-title">
         <span className="color-dot" style={{ background: c.stroke }} />
