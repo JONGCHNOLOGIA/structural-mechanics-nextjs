@@ -8,7 +8,7 @@ export default function MaxStressPointDiagram({ widthLabel, heightLabel, MLabel,
   const pointY = cy - yFrac * (rh / 2);
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <rect x={x0} y={y0} width={rw} height={rh} fill="var(--crimson-soft)" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
       <line x1={x0 - 14} y1={cy} x2={x0 + rw + 14} y2={cy} stroke="#8A97A2" strokeWidth="1" strokeDasharray="4 3" />
       <text x={x0 - 18} y={cy + 4} fontSize="15" fill="#8A97A2" textAnchor="end">N.A.</text>

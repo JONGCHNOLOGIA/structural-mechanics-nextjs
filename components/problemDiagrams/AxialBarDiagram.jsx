@@ -21,7 +21,7 @@ export default function AxialBarDiagram({ leftSupport = 'free', rightSupport = '
   });
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <rect x={padL} y={barY - barH / 2} width={drawW} height={barH} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="1.8" />
 
       {/* 구간 경계선 */}

@@ -15,7 +15,7 @@ export default function CrossSectionDiagram({ blocks, angleDeg = 0, widthLabel }
   });
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <g transform={`rotate(${angleDeg} ${cx} ${cy})`}>
         {rects.map((r, i) => (
           <g key={i}>

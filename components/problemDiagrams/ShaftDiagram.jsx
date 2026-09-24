@@ -8,7 +8,7 @@ export default function ShaftDiagram({ dLabel, PLabel, MLabel, TLabel, show = { 
   const ry = 26;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 320, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <rect x={x1} y={cy - ry} width={x2 - x1} height={2 * ry} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="2" />
       <ellipse cx={x1} cy={cy} rx="9" ry={ry} fill="var(--card)" stroke="#51626F" strokeWidth="1.6" />
       <ellipse cx={x2} cy={cy} rx="9" ry={ry} fill="none" stroke="#51626F" strokeWidth="1.6" />

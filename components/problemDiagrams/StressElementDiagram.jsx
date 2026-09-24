@@ -11,7 +11,7 @@ export default function StressElementDiagram({ sigmaX, sigmaY, tauXY, sigmaXLabe
   const hasTau = tauXY !== undefined && tauXY !== 0;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 220, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <rect x={x0} y={y0} width={2 * s} height={2 * s} fill="var(--crimson-soft)" fillOpacity="0.4" stroke="#51626F" strokeWidth="1.6" />
 
       {/* σx: 좌우 면 (양수면 바깥, 음수면 안쪽) */}

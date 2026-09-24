@@ -14,7 +14,7 @@ export default function BeamDiagram({ support = 'simple', spanLabel, loads = [],
     ));
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 420, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 420, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <line x1={padL} y1={beamY} x2={padL + drawW} y2={beamY} stroke="#51626F" strokeWidth="3" />
 
       {/* 지점 */}

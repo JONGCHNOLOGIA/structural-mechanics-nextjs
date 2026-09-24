@@ -5,7 +5,7 @@ export default function VesselDiagram({ kind, rLabel, tLabel, pLabel }) {
   const R = 60;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxWidth: 260, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       {kind === 'sphere' ? (
         <>
           <circle cx={cx} cy={cy} r={R} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="2.2" />

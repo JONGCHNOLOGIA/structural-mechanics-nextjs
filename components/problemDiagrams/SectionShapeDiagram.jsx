@@ -11,7 +11,7 @@ export default function SectionShapeDiagram({ shape = 'rectangular', b, h, d, to
   if (shape === 'circular') {
     const r = 55;
     return (
-      <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block' }}>
+      <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
         <circle cx={cx} cy={cy} r={r} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="1.8" />
         <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="#8A97A2" strokeWidth="1" strokeDasharray="3 3" />
         <text x={cx} y={cy + r + 22} fontSize="13.5" fill="#51626F" textAnchor="middle" fontWeight="700">{`d = ${d} mm`}</text>
@@ -28,7 +28,7 @@ export default function SectionShapeDiagram({ shape = 'rectangular', b, h, d, to
   const rh = h != null ? Math.min(130, Math.max(40, h * 1.1)) : 90;
   const x = cx - rw / 2, y = cy - rh / 2;
   return (
-    <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block' }}>
+    <svg viewBox={`0 0 ${w} ${vh}`} style={{ width: '100%', maxWidth: 250, margin: '4px auto 0', display: 'block', fontFamily: "'Noto Serif KR', Georgia, 'Times New Roman', serif" }}>
       <rect x={x} y={y} width={rw} height={rh} fill="var(--crimson-soft)" fillOpacity="0.5" stroke="#51626F" strokeWidth="1.8" strokeDasharray={h == null ? '4 3' : undefined} />
       <text x={cx} y={y + rh + 18} fontSize="13.5" fill="#51626F" textAnchor="middle" fontWeight="700">{`b = ${b} mm`}</text>
       <text x={x - 10} y={cy + 4} fontSize="13.5" fill="#51626F" textAnchor="end" fontWeight="700">
