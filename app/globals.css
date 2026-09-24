@@ -44,24 +44,6 @@ body{
   flex-direction:column;
 }
 
-/* 계산기 패널(.panel — SETTING MENU/VISUALIZER/AI TUTOR 전부 이 클래스) 안의 설명·본문 텍스트를
-   문제 생성기 지문(.problem-prompt-text)과 같은 이유로 세리프로 바꿔서 "문제 연습" 가독성을
-   높인다. 다만 섹션 제목(h3, 접이식 헤더 .step-header)·공식/숫자 표시·탭·버튼류 같은 "양식"은
-   그대로 Pretendard로 남겨야 해서 되돌려놓는다 — 사용자가 스크린샷에 빨간 밑줄로 표시해 준
-   부분들(SETTING MENU/VISUALIZER 제목, "σ1,2=..." 공식, "교재 예제 풀어보기" 탭)이 여기 해당한다.
-   .step-formula/.step-final/.step-eq/.block-field-tile input 등은 이미 이 파일 뒤쪽에서 JetBrains
-   Mono를 따로 지정하고 있어서, 같은 우선순위면 나중에 나온 규칙이 이기는 CSS 캐스케이드 순서상
-   자동으로 이 규칙을 덮어쓴다 — 따로 다시 안 적어도 된다. */
-.panel{ font-family:'Noto Serif KR', Georgia, 'Times New Roman', serif; }
-.panel h3,
-.panel .step-header,
-.panel button,
-.panel .tab,
-.panel .badge,
-.panel .chevron{
-  font-family:'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
-}
-
 /* 사이트 전체가 공유하는 헤더(components/SiteHeader.jsx) 크롬 — home-header가 로비뿐 아니라
    로그인 화면·챕터 상세·문제 제작 등 모든 페이지의 <header>에 쓰인다.
    로고 | 가운데 네비 | 우측 로그인·바로가기 버튼을 한 줄에 배치하는 flex 컨테이너. */
@@ -393,8 +375,10 @@ input[type='range']::-moz-range-thumb{
 .step-header:hover{ background:var(--crimson-soft); }
 .chevron{ color:var(--crimson); font-size:11px; }
 .step-body{ padding:14px; font-size:12px; color:var(--gray); line-height:1.7; background:var(--card); border-radius:0; overflow:visible; }
+/* 공식(수식) 표시만 세리프로 — 계산 결과 숫자(.step-final)는 자릿수 정렬이 잘 보이는 모노스페이스를
+   그대로 쓰고, 기호로 된 공식 자체만 교재 느낌의 세리프로 바꾼다. */
 .step-formula{
-  font-family:'JetBrains Mono',monospace; font-size:13.5px; font-weight:700; color:var(--crimson);
+  font-family:'Noto Serif KR', Georgia, 'Times New Roman', serif; font-size:13.5px; font-weight:700; color:var(--crimson);
   background:var(--crimson-soft); border-radius:0; padding:9px 13px; margin-bottom:10px; display:inline-block;
   letter-spacing:0.01em;
 }
@@ -417,7 +401,7 @@ input[type='range']::-moz-range-thumb{
 }
 .y-ref-toggle button.active{ background:var(--crimson); border-color:var(--crimson); color:#fff; }
 .step-eq{
-  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink); background:var(--bg);
+  font-family:'Noto Serif KR', Georgia, 'Times New Roman', serif; font-size:12px; color:var(--ink); background:var(--bg);
   border-radius:0; padding:8px 11px; margin:5px 0; overflow-wrap:break-word; line-height:1.65;
   letter-spacing:0.005em;
 }
