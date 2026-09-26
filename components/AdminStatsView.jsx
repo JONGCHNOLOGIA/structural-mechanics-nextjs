@@ -7,7 +7,8 @@ import SiteHeader from '@/components/SiteHeader';
 import EditableText from '@/components/EditableText';
 import { chapters1 } from '@/lib/chapters1';
 import { chapters as chapters2 } from '@/lib/chapters';
-import { fetchWrongRateBySubtopic, fetchVisitCountsBySubtopic, fetchAiTutorStats } from '@/lib/adminStats';
+import { fetchWrongRateBySubtopic, fetchVisitCountsBySubtopic, fetchAiTutorStats, fetchOverallLearningStats } from '@/lib/adminStats';
+import AdminAiAnalysis from '@/components/AdminAiAnalysis';
 
 const ALL_CHAPTERS = [...chapters1, ...chapters2];
 
@@ -17,22 +18,55 @@ function subtopicName(chapterNum, slug) {
   return { chapterTitle: chapter?.title || chapterNum, name: subtopic?.name || slug };
 }
 
-// 교수자(role='instructor') 전용 — "어떤 유형을 어려워하는지"(오답률) / "어떤 시각화자료를
-// 많이 쓰는지"(방문수) / AI 튜터 질문 현황, 세 가지를 한 화면에 모은 것.
+// 교수자(role='instructor') 전용 — 맨 위 "AI 학습 분석" 요약 카드에 이어, "어떤 유형을
+// 어려워하는지"(오답률) / "어떤 시각화자료를 많이 쓰는지"(방문수)를 한 화면에 모은 것.
 // 학생 개인정보(이름·학번)는 집계 과정에서 아예 빼고 소주제·챕터 단위로만 합쳐서 보여준다.
+// (AI 튜터 질문 원문 목록 섹션은 화면에서 뺐지만, 그 집계(aiStats)는 "반복적으로 어려움을
+// 보인 주제" 카드의 신호로 여전히 쓴다 — 아래 toughTopics 참고)
 export default function AdminStatsView() {
   const { isAdmin, ready } = useUser();
   const [wrongRates, setWrongRates] = useState(null);
   const [visits, setVisits] = useState(null);
   const [aiStats, setAiStats] = useState(null);
-  const [openChapter, setOpenChapter] = useState(null);
+  const [overall, setOverall] = useState(null);
 
   useEffect(() => {
     if (!isAdmin) return;
     fetchWrongRateBySubtopic().then(setWrongRates);
     fetchVisitCountsBySubtopic().then(setVisits);
     fetchAiTutorStats().then(setAiStats);
+    fetchOverallLearningStats().then(setOverall);
   }, [isAdmin]);
+
+  // "주요 학습 주제" 카드 — 방문 수 상위 5개를 그대로.
+  const topTopics = (visits || []).slice(0, 5).map((r) => {
+    const { chapterTitle, name } = subtopicName(r.chapterNum, r.slug);
+    return { label: `${r.chapterNum} ${name}`, chapterTitle, visitors: r.visitors };
+  });
+
+  // "반복적으로 어려움을 보인 주제" 카드 — 오답률 상위(표본이 있을 때만)와 AI 튜터에게 반복
+  // 질문이 몰린 챕터(질문 2건 이상)를 합쳐서 보여준다. chat_logs는 챕터 단위까지만 기록해서
+  // 소주제 단위 신호(오답률)와 챕터 단위 신호(AI 질문 수)가 섞여 있을 수 있다.
+  const bySubtopic = (wrongRates || [])
+    .filter((r) => r.wrongRate > 0)
+    .slice(0, 5)
+    .map((r) => {
+      const { name } = subtopicName(r.chapterNum, r.slug);
+      return { label: `${r.chapterNum} ${name}`, detail: `오답률 ${r.wrongRate.toFixed(0)}% (${r.wrong}/${r.total}회)` };
+    });
+  const byAiQuestions = (aiStats?.byChapter || [])
+    .filter((c) => c.count >= 2 && ALL_CHAPTERS.some((ch) => ch.num === c.chapterNum))
+    .slice(0, 5)
+    .map((c) => {
+      const chapter = ALL_CHAPTERS.find((ch) => ch.num === c.chapterNum);
+      return { label: `${c.chapterNum} ${chapter.title}`, detail: `AI 튜터 질문 ${c.count}건` };
+    });
+  const seenLabels = new Set();
+  const toughTopics = [...bySubtopic, ...byAiQuestions].filter((t) => {
+    if (seenLabels.has(t.label)) return false;
+    seenLabels.add(t.label);
+    return true;
+  });
 
   if (!ready) return null;
 
@@ -68,6 +102,8 @@ export default function AdminStatsView() {
           defaultText="소주제·챕터 단위로 집계한 값을 보여줍니다."
           style={{ fontSize: 14, color: 'var(--gray)', marginBottom: 36 }}
         />
+
+        {overall === null ? <Loading /> : <AdminAiAnalysis overall={overall} topTopics={topTopics} toughTopics={toughTopics} />}
 
         <Section title="어떤 유형을 어려워하는지 — 소주제별 오답률">
           {wrongRates === null ? (
@@ -137,50 +173,6 @@ export default function AdminStatsView() {
                 })}
               </tbody>
             </table>
-          )}
-        </Section>
-
-        <Section title={`AI 튜터 질문 현황${aiStats ? ` (총 ${aiStats.total}건)` : ''}`}>
-          {aiStats === null ? (
-            <Loading />
-          ) : aiStats.byChapter.length === 0 ? (
-            <Empty contentKey="adminStats.aiTutorEmpty" defaultText="아직 AI 튜터에게 물어본 기록이 없어요." />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {aiStats.byChapter.map((c) => {
-                const chapter = ALL_CHAPTERS.find((ch) => ch.num === c.chapterNum);
-                const open = openChapter === c.chapterNum;
-                return (
-                  <div key={c.chapterNum} style={{ border: '1px solid var(--line)' }}>
-                    <button
-                      type="button"
-                      onClick={() => setOpenChapter(open ? null : c.chapterNum)}
-                      style={{
-                        width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '12px 16px', background: 'var(--bg)', border: 'none', cursor: 'pointer', textAlign: 'left',
-                      }}
-                    >
-                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>
-                        {c.chapterNum} {chapter?.title || ''}
-                      </span>
-                      <span style={{ fontSize: 12.5, color: 'var(--crimson)', fontWeight: 800 }}>{c.count}건 {open ? '▲' : '▼'}</span>
-                    </button>
-                    {open && (
-                      <div style={{ padding: '10px 16px 14px' }}>
-                        <div style={{ fontSize: 11.5, color: 'var(--gray-soft)', marginBottom: 8 }}>
-                          최근 질문 {c.recent.length}개 (원문 그대로)
-                        </div>
-                        {c.recent.map((q, i) => (
-                          <div key={i} style={{ fontSize: 13, padding: '6px 0', borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
-                            {q.content}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           )}
         </Section>
       </div>

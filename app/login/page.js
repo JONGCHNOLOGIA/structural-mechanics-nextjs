@@ -107,9 +107,9 @@ export default function LoginPage() {
             <button type="button" disabled={loading} className="login-demo-btn" style={{ opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('student')}>
               학생으로 시연
             </button>
-            {/* <button type="button" disabled={loading} className="login-demo-btn" style={{ opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('admin')}>
+            <button type="button" disabled={loading} className="login-demo-btn" style={{ opacity: loading ? 0.6 : 1 }} onClick={() => handleDemoLogin('admin')}>
               관리자로 시연
-            </button> */}
+            </button>
             </div>
         </div>
       </div>

@@ -521,6 +521,51 @@ input[type='range']::-moz-range-thumb{
   font-size:12.5px; color:var(--ink); background:var(--teal-soft); border-radius:0;
   padding:12px 14px; margin-top:8px; line-height:1.7; white-space:pre-wrap;
 }
+
+/* 교수자 통계 화면 맨 위 "AI 학습 분석"(components/AdminAiAnalysis.jsx) — 5개 카드를
+   반응형 그리드로 배치한다. 나머지 통계 섹션(.admin-table 등)과 톤을 맞추되, AI가 생성한
+   두 카드([AI 분석]/[수업 참고])만 teal-soft 배경으로 구분해서 "이건 AI가 쓴 글"이라는
+   걸 한눈에 알 수 있게 한다. */
+.ai-analysis-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;
+}
+.ai-analysis-card{
+  background:var(--bg); border:1px solid var(--line); border-radius:0; padding:16px 18px;
+  min-height:120px;
+}
+.ai-analysis-card-title{ font-size:12px; font-weight:800; color:var(--gray-soft); margin-bottom:10px; text-transform:uppercase; }
+.ai-analysis-card:nth-child(4) .ai-analysis-card-title,
+.ai-analysis-card:nth-child(5) .ai-analysis-card-title{ color:var(--teal); }
+.ai-analysis-card:nth-child(4),
+.ai-analysis-card:nth-child(5){ background:var(--teal-soft); border-color:transparent; }
+.ai-analysis-stat-row{
+  display:flex; justify-content:space-between; align-items:baseline; font-size:13px;
+  padding:5px 0; border-bottom:1px solid var(--line);
+}
+.ai-analysis-stat-row:last-child{ border-bottom:none; }
+.ai-analysis-stat-row b{ font-size:14.5px; color:var(--ink); }
+.ai-analysis-list-row{
+  display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px;
+  padding:5px 0; border-bottom:1px solid var(--line);
+}
+.ai-analysis-list-row:last-child{ border-bottom:none; }
+.ai-analysis-list-detail{ color:var(--gray-soft); font-weight:700; white-space:nowrap; }
+.ai-analysis-text{ font-size:13px; color:var(--ink); line-height:1.7; white-space:pre-wrap; }
+.ai-analysis-run-btn{
+  font-size:12.5px; font-weight:700; color:#fff; background:var(--ink); border:none; border-radius:0;
+  padding:9px 16px; cursor:pointer; font-family:inherit; transition:background 0.15s ease;
+}
+.ai-analysis-run-btn:hover{ background:var(--crimson); }
+.ai-analysis-run-btn:disabled{ background:var(--gray-soft); cursor:default; }
+.ai-analysis-payload-toggle{
+  margin-top:10px; font-size:11.5px; color:var(--gray-soft); background:none; border:none;
+  cursor:pointer; font-family:inherit; padding:0;
+}
+.ai-analysis-payload-toggle:hover{ color:var(--crimson); }
+.ai-analysis-payload{
+  margin-top:8px; font-size:11px; color:var(--gray); background:var(--card); border:1px solid var(--line);
+  padding:12px 14px; overflow-x:auto; max-height:260px; overflow-y:auto;
+}
 .note-box{
   font-size:11.5px; color:var(--gray); background:var(--teal-soft); border-radius:0;
   padding:9px 12px; margin-bottom:14px; line-height:1.6;
