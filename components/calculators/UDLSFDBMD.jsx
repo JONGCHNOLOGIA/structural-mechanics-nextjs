@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computeUDLSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
@@ -73,6 +74,9 @@ export default function UDLSFDBMD() {
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.UDLSFDBMD.aiHint"
               defaultText="💬 등분포하중에서는 왜 V가 직선, M이 포물선이 되는지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel
+              summary={`[CH.4-3 SFD/BMD] 단순보(왼쪽 핀, 오른쪽 롤러), 경간 L=${s.L}${s.LUnit}. 등분포하중 q=${s.q}${s.qUnit} (구간 ${s.qStart}~${s.qEnd}${s.LUnit}). 계산 결과: R_A=${fmt1(kN(res.RA), 3)}kN, R_B=${fmt1(kN(res.RB), 3)}kN, 최대 굽힘모멘트 |M|_max=${fmt1(kNm(res.Mmax), 3)}kN·m.`}
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computeOverhangSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
@@ -82,6 +83,9 @@ export default function OverhangSFDBMD() {
             />
             <EditableText as="div" className="ai-hint" contentKey="calc.OverhangSFDBMD.aiHint"
               defaultText="💬 돌출보에서 M의 부호가 구간마다 왜 바뀌는지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel
+              summary={`[CH.4-5 SFD/BMD] 돌출보(왼쪽 핀 x=0, 오른쪽 롤러 x=Lb=${s.Lb}${s.LUnit}, 전체길이 L=${s.L}${s.LUnit}, 돌출구간 ${s.Lb}~${s.L}${s.LUnit}). 집중하중 P=${s.P}${s.PUnit} (x=${s.a}${s.LUnit} 위치). 계산 결과: R_A=${fmt1(kN(res.RA), 3)}kN${res.RA < 0 ? '(음수)' : ''}, R_B=${fmt1(kN(res.RB), 3)}kN, 최대 |M|=${fmt1(kNm(res.Mmax), 3)}kN·m.`}
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computeTriangularLoad } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import { DualField, SelectField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
@@ -93,6 +94,7 @@ export default function TriangularLoadSFDBMD() {
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.TriangularLoadSFDBMD.aiHint"
               defaultText="💬 왜 삼각형 하중에서는 SFD가 곡선, BMD가 3차곡선이 되는지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel summary={buildInterpretSummary(s, res)} />
           </>
         ) : (
           <ErrorBox errors={res.errors} />
@@ -111,6 +113,22 @@ export default function TriangularLoadSFDBMD() {
       <AiTutorPanel question="삼각형 하중의 합력은 왜 도심이 한쪽으로 치우치나요?" />
     </>
   );
+}
+
+function buildInterpretSummary(s, res) {
+  const modeLabel =
+    s.mode === 'cantilever'
+      ? '캔틸레버(A 자유단, B 고정단)'
+      : s.mode === 'simple'
+      ? '단순보(A 핀, B 롤러)'
+      : '롤러+슬라이딩(A 롤러, B 슬라이딩)';
+  const resultLine =
+    s.mode === 'cantilever'
+      ? `고정단 반력 R_B=${fmt1(kN(res.RA), 3)}kN, 고정단모멘트 M_B=${fmt1(kNm(res.M0), 3)}kN·m`
+      : s.mode === 'simple'
+      ? `R_A=${fmt1(kN(res.RA), 3)}kN, R_B=${fmt1(kN(res.RB), 3)}kN, 최대모멘트(x=L/√3 위치)=${fmt1(kNm(res.Mmax), 3)}kN·m`
+      : `R_A=${fmt1(kN(res.RA), 3)}kN, 반력모멘트 M_B=${fmt1(kNm(res.MB), 3)}kN·m`;
+  return `[CH.4-6 SFD/BMD] 삼각형(선형변화) 분포하중, 지지조건: ${modeLabel}. 경간 L=${s.L}${s.LUnit}, 최대 하중강도 q₀=${s.q0}${s.qUnit} (B단에서 최대, A단에서 0). 계산 결과: ${resultLine}.`;
 }
 
 function Results({ mode, res }) {

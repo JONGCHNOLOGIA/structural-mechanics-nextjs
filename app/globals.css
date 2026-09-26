@@ -506,6 +506,21 @@ input[type='range']::-moz-range-thumb{
   font-size:12px; color:var(--crimson); background:var(--crimson-soft); border-radius:0;
   padding:10px 14px; margin-top:6px; line-height:1.6;
 }
+/* "AI 해석하기" 버튼(components/calculators/InterpretPanel.jsx) — 계산기가 이미 계산해 낸
+   결과값을 Gemini에게 그대로 넘겨 해석만 받는 기능이라, 새 질문을 입력하는 AI 튜터 채팅창과
+   구분되도록 결과 박스는 teal 계열로 둔다(ai-hint의 crimson 계열과 대비). */
+.interpret-panel{ margin-top:14px; }
+.interpret-btn{
+  width:100%; padding:10px; background:var(--ink); color:#fff; border:none; border-radius:0;
+  font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;
+  transition:background 0.15s ease;
+}
+.interpret-btn:hover{ background:var(--crimson); }
+.interpret-btn:disabled{ background:var(--gray-soft); cursor:default; }
+.interpret-result{
+  font-size:12.5px; color:var(--ink); background:var(--teal-soft); border-radius:0;
+  padding:12px 14px; margin-top:8px; line-height:1.7; white-space:pre-wrap;
+}
 .note-box{
   font-size:11.5px; color:var(--gray); background:var(--teal-soft); border-radius:0;
   padding:9px 12px; margin-bottom:14px; line-height:1.6;

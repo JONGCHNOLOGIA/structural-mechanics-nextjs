@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computePointLoadSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
@@ -90,6 +91,16 @@ export default function PointLoadSFDBMD() {
 
             <EditableText as="div" className="ai-hint" contentKey="calc.PointLoadSFDBMD.aiHint"
               defaultText="💬 왜 M이 최대가 되는 위치는 V가 0이 되는 지점(또는 하중점)인지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel
+              summary={[
+                `[CH.4-2 SFD/BMD] 단순보(왼쪽 핀, 오른쪽 롤러), 경간 L=${s.L}${s.LUnit}.`,
+                s.P1 > 0 ? `집중하중 P₁=${s.P1}${s.P1Unit} (x=${s.a1}${s.LUnit} 위치)` : null,
+                s.P2 > 0 ? `집중하중 P₂=${s.P2}${s.P2Unit} (x=${s.a2}${s.LUnit} 위치)` : null,
+                `계산 결과: R_A=${fmt1(kN(res.RA), 3)}kN, R_B=${fmt1(kN(res.RB), 3)}kN, 최대 굽힘모멘트 M_max=${fmt1(kNm(res.Mmax), 3)}kN·m.`,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

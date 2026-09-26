@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computeCantileverSFDBMD } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import Frac from '@/components/Frac';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
@@ -84,6 +85,16 @@ export default function CantileverSFDBMD() {
             </div>
             <EditableText as="div" className="ai-hint" contentKey="calc.CantileverSFDBMD.aiHint"
               defaultText="💬 캔틸레버는 왜 굽힘모멘트가 항상 음수(hogging)로 나오는지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel
+              summary={[
+                `[CH.4-4 SFD/BMD] 캔틸레버보(왼쪽 고정단, 오른쪽 자유단), 경간 L=${s.L}${s.LUnit}.`,
+                `집중하중 P=${s.P}${s.PUnit} (x=${s.a}${s.LUnit} 위치)`,
+                s.q > 0 ? `등분포하중 q=${s.q}${s.qUnit} (전체 경간)` : null,
+                `계산 결과: 고정단 반력 R=${fmt1(kN(res.R), 3)}kN, 고정단 모멘트 M₀=${fmt1(kNm(res.M0), 3)}kN·m (hogging, 음수).`,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />

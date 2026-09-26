@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { computeReactions } from '@/lib/calc/beamStatics';
 import { LENGTH_UNITS, FORCE_UNITS, TORQUE_UNITS, QINTENSITY_UNITS, fromBase, fmt1 } from '@/lib/calc/units1';
 import AiTutorPanel from './AiTutorPanel';
+import InterpretPanel from './InterpretPanel';
 import EditableText from '@/components/EditableText';
 import { DualField, ResetButton, ResultGrid, ResultCard, StepCard, ErrorBox, InputNeededPlaceholder } from './sm1/Controls';
 import { CalcGate, useCalcGate } from './sm1/CalcGate';
@@ -99,6 +100,18 @@ export default function BeamReactions() {
             </ResultGrid>
             <EditableText as="div" className="ai-hint" contentKey="calc.BeamReactions.aiHint"
               defaultText="💬 반력을 구할 때 왜 A점 모멘트를 잡는지, 오른쪽 AI 튜터에게 물어보세요." />
+            <InterpretPanel
+              summary={[
+                `[CH.4-1 반력] 단순보(왼쪽 핀, 오른쪽 롤러), 경간 L=${s.L}${s.LUnit}.`,
+                s.P1 > 0 ? `집중하중 P₁=${s.P1}${s.P1Unit} (x=${s.a1}${s.LUnit} 위치)` : null,
+                s.P2 > 0 ? `집중하중 P₂=${s.P2}${s.P2Unit} (x=${s.a2}${s.LUnit} 위치)` : null,
+                s.q > 0 ? `등분포하중 q=${s.q}${s.qUnit} (구간 ${s.qStart}~${s.qEnd}${s.LUnit})` : null,
+                s.M0 !== 0 ? `집중모멘트 M₀=${s.M0}${s.M0Unit} (CCW 양수)` : null,
+                `계산 결과: R_A=${fmt1(kN(res.RA), 3)}kN, R_B=${fmt1(kN(res.RB), 3)}kN.`,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            />
           </>
         ) : (
           <ErrorBox errors={res.errors} />
