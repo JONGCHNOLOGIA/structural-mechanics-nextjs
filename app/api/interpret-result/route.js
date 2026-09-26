@@ -33,7 +33,10 @@ export async function POST(req) {
       contents: [
         { role: 'user', parts: [{ text: `[계산 결과]\n${ctx}\n\n위 결과가 왜 이렇게 나왔는지 학생에게 설명해주세요.` }] },
       ],
-      generationConfig: { maxOutputTokens: 2000 },
+      // 2000으로 시작했다가, 오버행보처럼 회전평형 추론이 필요한 케이스에서 "생각(thinking)"
+      // 토큰이 예산을 다 먹어 답변이 문장 중간에 끊기는 걸 확인했다 — grade-solution과 같은
+      // 이유로 여유를 더 준다(lib/geminiFetch.js 주석 참고).
+      generationConfig: { maxOutputTokens: 3000 },
     });
     return Response.json({ answer });
   } catch (err) {
